@@ -3,9 +3,12 @@ import Dexie, { type Table } from 'dexie'
 /** Offline-first write queue. Every mutation is stored locally with an idempotency key, then flushed to the API. */
 export type OutboxItem = { id?: number; key: string; method: 'POST' | 'PUT' | 'DELETE'; url: string; body?: unknown; createdAt: number; attempts: number }
 
+export type Photo = { id?: number; date: string; pose: 'front' | 'side' | 'back'; blob: Blob; createdAt: number }
+
 class FuelDB extends Dexie {
   outbox!: Table<OutboxItem, number>
-  constructor() { super('fuel'); this.version(1).stores({ outbox: '++id, &key, createdAt' }) }
+  photos!: Table<Photo, number>
+  constructor() { super('fuel'); this.version(1).stores({ outbox: '++id, &key, createdAt' }); this.version(2).stores({ outbox: '++id, &key, createdAt', photos: '++id, date, pose' }) }
 }
 export const db = new FuelDB()
 
