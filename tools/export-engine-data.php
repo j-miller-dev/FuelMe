@@ -3,7 +3,7 @@ declare(strict_types=1);
 // Exports real engine output to web-prototype/src/engine-data.json so the prototype UI shows true numbers
 // (no formula duplication in TypeScript). Run: php tools/export-engine-data.php
 require __DIR__ . '/../tests/Engine/bootstrap.php';
-use App\Domain\Nutrition\{ExerciseCalculator as X, MacroPlanner as M, PeriWorkout as P};
+use App\Domain\Nutrition\{ExerciseCalculator as X, GoalPlanner as G, MacroPlanner as M, PeriWorkout as P};
 
 $kg = 74.0; $bf = 14.0;
 $week = [
@@ -47,7 +47,26 @@ foreach (M::DAYS as $d) foreach (X::CATALOGUE as $t => $def) foreach ($def['inte
         'othersKcalDelta'=>(int)round(array_sum(array_column($after['days'],'kcal')) - array_sum(array_column($baseline['days'],'kcal')))];
 }
 
-$out = ['meta'=>['weightKg'=>$kg,'bodyFatPct'=>$bf,'week'=>$week,'goals'=>$goals], 'catalogue'=>$cat, 'plans'=>$plans, 'sessions'=>$sessions, 'adjust'=>$adjust];
+// Macro plans over a calorie grid so a goal-derived calorie target can be shown with real macros (nearest 50 kcal).
+$grid = [];
+foreach (['bulk','maintain','cut'] as $ph) for ($k = 2000; $k <= 3800; $k += 50) {
+    $pl = M::plan($base(['phase'=>$ph,'kcalTarget'=>$k]));
+    $grid["$ph|$k"] = ['days'=>array_map($slim, $pl['days']), 'weekly'=>$pl['weekly'],
+        'warnings'=>array_map(fn($w)=>['level'=>$w['level'],'code'=>$w['code'],'msg'=>$w['msg']], $pl['warnings'])];
+}
+
+// Parity fixtures: the TypeScript port of GoalPlanner is tested against these PHP results.
+$cases = [];
+foreach ([[74.0,76.0,112,'intermediate',2950],[74.0,77.0,42,'intermediate',2950],[74.0,80.0,28,'advanced',2950],[80.0,76.0,56,'intermediate',2900],
+          [80.0,70.0,28,'intermediate',2900],[74.0,74.02,90,'intermediate',2950],[73.9,78.0,200,'novice',2980],[73.9,78.0,200,'advanced',2980]] as $c) {
+    $cases[] = ['kind'=>'assess','in'=>$c,'out'=>G::assess(...$c)];
+}
+foreach ([[2.0,0.5,74.0,168,'intermediate'],[4.0,0.5,74.0,90,'intermediate'],[3.0,0.6,73.9,240,'advanced']] as $c) {
+    $cases[] = ['kind'=>'muscle','in'=>$c,'out'=>G::fromMuscle(...$c)];
+}
+file_put_contents(__DIR__ . '/../web-prototype/src/goal-cases.json', json_encode($cases, JSON_UNESCAPED_SLASHES));
+
+$out = ['meta'=>['weightKg'=>$kg,'bodyFatPct'=>$bf,'week'=>$week,'goals'=>$goals], 'catalogue'=>$cat, 'plans'=>$plans, 'grid'=>$grid, 'sessions'=>$sessions, 'adjust'=>$adjust];
 $path = __DIR__ . '/../web-prototype/src/engine-data.json';
 file_put_contents($path, json_encode($out, JSON_UNESCAPED_SLASHES));
 printf("plans=%d sessions=%d adjust=%d bytes=%d\n", count($plans), count($sessions), count($adjust), filesize($path));

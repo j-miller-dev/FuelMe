@@ -1,6 +1,6 @@
 import { day } from '../mock'
 import MacroRings from '../lib/MacroRings'
-import { CLASS_LABEL, adjustInfo, getPlan, plannedSessions, sessionInfo, sessionLabel, todayDow, type Session, type Settings } from '../engine'
+import { CLASS_LABEL, adjustInfo, applySession, getPlan, plannedSessions, sessionInfo, sessionLabel, todayDow, type Session, type Settings } from '../engine'
 
 function Ring({ value, max, calibrating }: { value: number; max: number; calibrating: boolean }) {
   const r = 84, c = 2 * Math.PI * r, pct = Math.min(value / max, 1)
@@ -18,7 +18,7 @@ export default function Today({ settings, extra, eatBack, openSession, calibrati
   { settings: Settings; extra: Session | null; eatBack: boolean; openSession: () => void; calibrating?: boolean }) {
   const dow = todayDow(), plan = getPlan(settings).days[dow]
   const adj = extra ? adjustInfo(dow, extra) : null
-  const base = adj ? adj.after : plan
+  const base = adj ? applySession(plan, adj) : plan
   const eatBackKcal = extra && eatBack ? Math.round(sessionInfo(extra).net / 10) * 10 : 0
   const t = { kcal: base.kcal + eatBackKcal, p: base.protein, c: base.carbs + Math.round(eatBackKcal / 4), f: base.fat }
   const e = day.eaten

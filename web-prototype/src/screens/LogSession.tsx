@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { CLASS_LABEL, adjustInfo, catalogue, sessionInfo, todayDow, type Session } from '../engine'
+import { CLASS_LABEL, adjustInfo, applySession, catalogue, getPlan, sessionInfo, todayDow, type Session, type Settings } from '../engine'
 
 const MINUTES = [30, 45, 60, 90]
 const TYPES: [string, string][] = [['bjj', 'BJJ'], ['lifting', 'Lifting'], ['hiit', 'HIIT'], ['norwegian_4x4', 'Norwegian 4×4']]
 const pill = (on: boolean) => `min-h-11 flex-1 rounded-xl px-2 text-sm capitalize ${on ? 'bg-accent font-semibold text-canvas' : 'bg-raised'}`
 
-export default function LogSession({ current, eatBack, onAdd, onClear, onEatBack, close }:
-  { current: Session | null; eatBack: boolean; onAdd: (s: Session) => void; onClear: () => void; onEatBack: (v: boolean) => void; close: () => void }) {
+export default function LogSession({ settings, current, eatBack, onAdd, onClear, onEatBack, close }:
+  { settings: Settings; current: Session | null; eatBack: boolean; onAdd: (s: Session) => void; onClear: () => void; onEatBack: (v: boolean) => void; close: () => void }) {
   const [type, setType] = useState(current?.type ?? 'bjj')
   const [intensity, setIntensity] = useState(current?.intensity ?? 'standard')
   const [minutes, setMinutes] = useState(current?.minutes ?? 60)
@@ -14,7 +14,7 @@ export default function LogSession({ current, eatBack, onAdd, onClear, onEatBack
   const iv = ints.includes(intensity) ? intensity : ints[ints.length > 1 ? 1 : 0]
   const s: Session = { type, intensity: iv, minutes }
   const info = sessionInfo(s), adj = adjustInfo(todayDow(), s)
-  const b = adj.before, a = adj.after, dk = a.kcal - b.kcal, dc = a.carbs - b.carbs
+  const b = getPlan(settings).days[todayDow()], a = applySession(b, adj), dk = a.kcal - b.kcal, dc = a.carbs - b.carbs
   return (
     <div className="space-y-3 px-4 pb-32 pt-6">
       <div className="flex items-center justify-between"><h1 className="text-xl font-semibold">Log a session</h1><button className="min-h-11 text-sm text-muted" onClick={close}>Close</button></div>

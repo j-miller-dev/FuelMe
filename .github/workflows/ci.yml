@@ -17,4 +17,5 @@ jobs:
         with: { node-version: 22, cache: npm, cache-dependency-path: web-prototype/package-lock.json }
       - run: npm ci
       - run: npx tsx src/lib/outbox.test.ts
+      - run: npx tsx src/goal.test.ts
       - run: npm run build

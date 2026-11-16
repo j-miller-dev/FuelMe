@@ -13,13 +13,17 @@ export default function Targets({ settings, set }: { settings: Settings; set: (s
   const tot = d.protein * 4 + d.carbs * 4 + d.fat * 9
   return (
     <div className="space-y-3 px-4 pb-28">
+      {settings.override && <section className="rounded-2xl border border-accent/40 bg-surface p-4 text-sm">
+        <div className="text-accent">Targets from your goal</div><div className="mt-1">{settings.override.label}</div>
+        <p className="mt-1 text-xs text-muted">Calories solved to hit it at a safe weekly rate (protein 2.2 g/kg, flexible carbs). Changing anything below switches back to manual settings.</p>
+        <button className="mt-2 min-h-11 text-accent" onClick={() => set({ ...settings, override: null })}>Clear goal</button></section>}
       <section className="rounded-2xl bg-surface p-4 space-y-3">
         <div><div className="mb-1 text-xs text-muted">Goal</div>
-          <Seg<Goal> value={settings.goal} onChange={goal => set({ ...settings, goal })} options={[['bulk', 'Lean bulk'], ['maintain', 'Maintain'], ['cut', 'Cut']]} /></div>
+          <Seg<Goal> value={settings.goal} onChange={goal => set({ ...settings, goal, override: null })} options={[['bulk', 'Lean bulk'], ['maintain', 'Maintain'], ['cut', 'Cut']]} /></div>
         <div><div className="mb-1 text-xs text-muted">Protein</div>
-          <Seg<number> value={settings.protein} onChange={protein => set({ ...settings, protein: protein as Settings['protein'] })} options={[[1.8, '1.8 g/kg'], [2.2, '2.2 g/kg'], [2.6, '2.6 g/kg']]} /></div>
+          <Seg<number> value={settings.protein} onChange={protein => set({ ...settings, protein: protein as Settings['protein'], override: null })} options={[[1.8, '1.8 g/kg'], [2.2, '2.2 g/kg'], [2.6, '2.6 g/kg']]} /></div>
         <div><div className="mb-1 text-xs text-muted">Carbs</div>
-          <Seg<CarbMode> value={settings.mode} onChange={mode => set({ ...settings, mode })} options={[['flexible', 'Flexible'], ['cap', 'Cap at 300 g']]} /></div>
+          <Seg<CarbMode> value={settings.mode} onChange={mode => set({ ...settings, mode, override: null })} options={[['flexible', 'Flexible'], ['cap', 'Cap at 300 g']]} /></div>
         <p className="text-xs text-muted">Weekly average {Math.round(w.kcalAvg)} kcal at {weight} kg. Protein {Math.round(w.protein)} g, fat {Math.round(w.fat)} g ({w.fatGPerKg} g/kg), carbs flex with training.</p>
       </section>
 
