@@ -1,6 +1,6 @@
 <?php
 // Runs all engine checks. Exit code != 0 on any failure. Usage: php tests/Engine/run.php
-$scripts = ['macro_tests.php', 'simulate.php'];
+$scripts = ['macro_tests.php', 'simulate.php', '../Domain/domain_tests.php'];
 $fail = 0;
 foreach ($scripts as $s) {
     echo "=== $s ===\n";

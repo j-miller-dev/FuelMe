@@ -12,4 +12,9 @@ Source of truth: `BLUEPRINT.md`. Read it fully before any work; follow its miles
 
 ## Status
 - Engine ported and tested (macro_tests + 40-person TDEE simulation).
+- Also pure PHP + tested: `app/Domain/Shopping` (list builder), `app/Domain/Search` (QueryParser, Synonyms); data in `data/`.
+- `database/schema.sql`: Postgres reference schema (syntax-checked only, never run). Turn into Laravel migrations in M1.
+- `web-prototype/`: Vite + React + Tailwind v4 mock-data UI (Today, Capture review, Progress, Shopping, Onboarding),
+  Dexie outbox + PWA. Port screens into resources/js (Inertia) during M1/M3; keep the tokens in src/index.css.
+- Tailwind note: colour token is `canvas`, not `base` (`text-base` is a font-size).
 - M0 (Laravel scaffold, Docker, CI, Fortify + passkeys) and M1 not yet done: needs Composer.

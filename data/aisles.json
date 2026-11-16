@@ -1,0 +1,10 @@
+{
+  "order": ["Produce", "Meat & seafood", "Dairy & eggs", "Bakery", "Pantry", "Frozen", "Drinks", "Other"],
+  "categories": {
+    "vegetable": "Produce", "fruit": "Produce", "herb": "Produce",
+    "meat": "Meat & seafood", "poultry": "Meat & seafood", "fish": "Meat & seafood",
+    "dairy": "Dairy & eggs", "egg": "Dairy & eggs",
+    "bread": "Bakery", "cereal": "Pantry", "grain": "Pantry", "oil": "Pantry", "spice": "Pantry", "legume": "Pantry",
+    "frozen": "Frozen", "beverage": "Drinks"
+  }
+}
