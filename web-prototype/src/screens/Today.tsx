@@ -1,6 +1,7 @@
 import { day } from '../mock'
 import MacroRings from '../lib/MacroRings'
-import { CLASS_LABEL, adjustInfo, applySession, getPlan, plannedSessions, sessionInfo, sessionLabel, todayDow, type Session, type Settings } from '../engine'
+import { CLASS_LABEL, plannedSessions, sessionInfo, sessionLabel, todayTarget, type Session, type Settings } from '../engine'
+import type { LogItem } from '../lib/foods'
 
 function Ring({ value, max, calibrating }: { value: number; max: number; calibrating: boolean }) {
   const r = 84, c = 2 * Math.PI * r, pct = Math.min(value / max, 1)
@@ -14,20 +15,17 @@ function Ring({ value, max, calibrating }: { value: number; max: number; calibra
     </svg>)
 }
 
-export default function Today({ settings, extra, eatBack, openSession, calibrating = true }:
-  { settings: Settings; extra: Session | null; eatBack: boolean; openSession: () => void; calibrating?: boolean }) {
-  const dow = todayDow(), plan = getPlan(settings).days[dow]
-  const adj = extra ? adjustInfo(dow, extra) : null
-  const base = adj ? applySession(plan, adj) : plan
-  const eatBackKcal = extra && eatBack ? Math.round(sessionInfo(extra).net / 10) * 10 : 0
-  const t = { kcal: base.kcal + eatBackKcal, p: base.protein, c: base.carbs + Math.round(eatBackKcal / 4), f: base.fat }
-  const e = day.eaten
+export default function Today({ settings, extra, eatBack, logged, openSession, calibrating = true }:
+  { settings: Settings; extra: Session | null; eatBack: boolean; logged: LogItem[]; openSession: () => void; calibrating?: boolean }) {
+  const { dow, plan, base, t } = todayTarget(settings, extra, eatBack)
+  const add = logged.reduce((a, i) => ({ kcal: a.kcal + i.kcal * i.n, p: a.p + i.p * i.n, c: a.c + i.c * i.n, f: a.f + i.f * i.n }), { kcal: 0, p: 0, c: 0, f: 0 })
+  const e = { kcal: day.eaten.kcal + add.kcal, p: day.eaten.p + add.p, c: day.eaten.c + add.c, f: day.eaten.f + add.f }
   const sessions = [...plannedSessions(dow), ...(extra ? [extra] : [])]
   const main = sessions.length ? sessions.reduce((a, b) => (sessionInfo(b)?.net ?? 0) > (sessionInfo(a)?.net ?? 0) ? b : a) : null
   const peri = main ? sessionInfo(main)?.peri : null
   const delta = t.kcal - plan.kcal
   return (
-    <div className="px-4 pb-28">
+    <div className="px-4 pb-44">
       <header className="flex items-center justify-between pt-6"><h1 className="text-xl font-semibold">Today</h1>
         <span className="rounded-full bg-raised px-3 py-1 text-sm text-accent">{CLASS_LABEL[base.class]}</span></header>
       {sessions.length > 0 && <p className="mt-1 text-xs text-muted">{sessions.map(sessionLabel).join('  +  ')}</p>}
@@ -45,6 +43,8 @@ export default function Today({ settings, extra, eatBack, openSession, calibrati
           <div className="mt-2 text-sm">After: {peri.post.proteinG} g protein{peri.post.carbsG ? ` + ${peri.post.carbsG} g carbs` : ''}</div>
         </> : <><div className="text-sm text-accent">Rest day</div><div className="mt-1 text-sm text-muted">Hit protein, keep carbs lower. No special fuelling needed.</div></>}
       </section>
+      {logged.length > 0 && <section className="mt-3 rounded-2xl bg-surface p-4"><div className="text-sm text-accent">Added just now</div>
+        {logged.map(i => <div key={i.id + i.slot} className="mt-2 flex justify-between text-sm"><span className="min-w-0 truncate"><span className="text-muted">{i.slot} · </span>{i.n > 1 ? `${i.n} × ` : ''}{i.name}</span><span className="tabular-nums">{i.kcal * i.n}</span></div>)}</section>}
       <section className="mt-3 space-y-2">{day.meals.map(m => (<div key={m.name} className="flex justify-between rounded-2xl bg-surface p-4"><div><div className="font-medium">{m.name}</div><div className="text-sm text-muted">{m.items}</div></div><div>{m.kcal}</div></div>))}</section>
     </div>)
 }

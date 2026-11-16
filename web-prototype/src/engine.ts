@@ -32,3 +32,12 @@ export const applySession = (plan: DayPlan, adj: { before: DayPlan; after: DayPl
 export const sessionInfo = (x: Session) => (data.sessions as unknown as Record<string, { net: number; low: number; high: number; peri: Peri }>)[`${x.type}|${x.intensity}|${x.minutes}`]
 export const adjustInfo = (d: Dow, x: Session) => (data.adjust as Record<string, { before: DayPlan; after: DayPlan; othersKcalDelta: number }>)[`${d}|${x.type}|${x.intensity}|${x.minutes}`]
 export const sessionLabel = (x: Session) => `${catalogue[x.type]?.label ?? x.type} · ${x.intensity} · ${x.minutes} min`
+
+/** Today's targets after planned load, any extra session and the optional eat-back. Shared by Today and the Add screen. */
+export function todayTarget(settings: Settings, extra: Session | null, eatBack: boolean) {
+  const dow = todayDow(), plan = getPlan(settings).days[dow]
+  const adj = extra ? adjustInfo(dow, extra) : null
+  const base = adj ? applySession(plan, adj) : plan
+  const eb = extra && eatBack ? Math.round(sessionInfo(extra).net / 10) * 10 : 0
+  return { dow, plan, base, t: { kcal: base.kcal + eb, p: base.protein, c: base.carbs + Math.round(eb / 4), f: base.fat } }
+}

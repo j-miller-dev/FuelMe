@@ -20,5 +20,6 @@ Source of truth: `BLUEPRINT.md`. Read it fully before any work; follow its miles
 - `GoalPlanner` (PHP, tested): "X kg / +Y kg muscle by date" -> required %BW/wk, verdict, kcal target. TS port `web-prototype/src/goal.ts` is parity-tested against PHP fixtures (`goal-cases.json`); re-export after changing the PHP.
 - Muscle goals convert to a weight target via an editable lean-fraction ASSUMPTION; monthly muscle ceilings are an Aragon-style rule of thumb. Never present them as measurements.
 - Prototype goal macros come from a 50-kcal grid (`engine-data.json` -> grid), so they can differ from the exact target by up to 25 kcal. The real app calls the engine directly.
+- Add flow: `web-prototype/src/screens/AddFood.tsx` (tabs, favourites, latest, basket, "Log N foods"); mock foods in `src/lib/foods.ts` are illustrative, not AFCD. Charts: `src/lib/charts.tsx` (range chips, trend chart with band). UI ideas borrowed from MacroFactor screenshots: layouts and interactions only, never their assets or wording.
 - Tailwind note: colour token is `canvas`, not `base` (`text-base` is a font-size).
 - M0 (Laravel scaffold, Docker, CI, Fortify + passkeys) and M1 not yet done: needs Composer.

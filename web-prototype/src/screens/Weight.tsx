@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { fmtDate, mean, sd, todayIso, weekStart, type WeighIn } from '../lib/data'
+import { addDays, fmtDate, mean, sd, todayIso, weekStart, type WeighIn } from '../lib/data'
+import { RANGE_DAYS, RangeChips, Stat, TrendChart, type Range } from '../lib/charts'
 
 const W = 320
 function DotsChart({ rows, h = 150 }: { rows: { x: number; kg?: number; trend?: number }[]; h?: number }) {
@@ -18,9 +19,12 @@ export default function Weight({ weighIns, add }: { weighIns: WeighIn[]; add: (k
   const [view, setView] = useState<'daily' | 'weekly'>('daily')
   const [val, setVal] = useState(String(weighIns[weighIns.length - 1].kg))
   const [saved, setSaved] = useState(false)
+  const [range, setRange] = useState<Range>('1M')
+  const [fit, setFit] = useState(true)
   const last = weighIns[weighIns.length - 1], doneToday = last.date === todayIso()
 
-  const recent = weighIns.slice(-28)
+  const from = addDays(todayIso(), -RANGE_DAYS[range]), inRange = weighIns.filter(w => w.date >= from), recent = inRange.length > 1 ? inRange : weighIns.slice(-2)
+  const avg = mean(recent.map(w => w.kg)), diff = recent[recent.length - 1].trend - recent[0].trend
   const resid = weighIns.slice(-28).map(w => w.kg - w.trend)
   const noise = sd(resid)
   const wk = new Map<string, WeighIn[]>()
@@ -49,9 +53,15 @@ export default function Weight({ weighIns, add }: { weighIns: WeighIn[]; add: (k
         <button key={v} onClick={() => setView(v)} className={`min-h-11 flex-1 rounded-xl text-sm capitalize ${view === v ? 'bg-accent font-semibold text-canvas' : 'bg-surface'}`}>{v}</button>))}</div>
 
       {view === 'daily' ? <>
-        <section className="rounded-2xl bg-surface p-3">
-          <div className="mb-1 text-xs text-muted">Last 4 weeks · dots = scale, line = trend</div>
-          <DotsChart rows={recent.map((w, i) => ({ x: i, kg: w.kg, trend: w.trend }))} />
+        <section className="rounded-2xl bg-surface p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex gap-6"><Stat label="Average" value={avg.toFixed(1)} unit="kg" /><Stat label="Difference" value={`${diff >= 0 ? '+' : ''}${diff.toFixed(1)}`} unit="kg" /></div>
+            <button aria-label={fit ? 'Widen the chart axis' : 'Fit the chart axis to the data'} aria-pressed={!fit} className="size-11 rounded-full bg-raised" onClick={() => setFit(f => !f)}>{fit ? '⇕' : '⇔'}</button>
+          </div>
+          <div className="mb-2 text-xs text-muted">{fmtDate(recent[0].date)} to {fmtDate(recent[recent.length - 1].date)}</div>
+          <TrendChart pts={recent.map(w => ({ date: w.date, raw: w.kg, line: w.trend }))} fit={fit} unit="kg" />
+          <div className="mb-3 mt-1 flex gap-4 text-xs text-muted"><span><span className="mr-1 inline-block h-0.5 w-4 bg-accent/40 align-middle" />Scale weight</span><span><span className="mr-1 inline-block h-0.5 w-4 bg-accent align-middle" />Trend weight</span></div>
+          <RangeChips value={range} onChange={setRange} />
         </section>
         <section className="rounded-2xl bg-surface p-2">
           {weighIns.slice(-10).reverse().map(w => { const d = w.kg - w.trend; return (

@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { capture } from '../mock'
+import { SLOTS, type LogItem } from '../lib/foods'
 
 const chip = (c: number) => c >= 0.85 ? ['Sure', 'text-accent bg-accent/10'] : c >= 0.65 ? ['Check', 'text-carbs bg-carbs/10'] : ['Unsure', 'text-fat bg-fat/10']
 
-export default function Capture() {
+export default function Capture({ onLog }: { onLog: (items: LogItem[]) => void }) {
   const [items, setItems] = useState(capture.items)
   const [open, setOpen] = useState<string | null>(null)
   const [grams, setGrams] = useState<Record<string, number>>(Object.fromEntries(capture.items.map(i => [i.id, i.grams])))
@@ -48,7 +49,10 @@ export default function Capture() {
       <div className="fixed inset-x-0 bottom-16 mx-auto max-w-md bg-canvas/95 px-4 py-3 backdrop-blur">
         <div className="mb-2 flex justify-between text-sm tabular-nums"><span>{Math.round(tot.kcal)} kcal</span>
           <span className="text-muted">P {Math.round(tot.p)} · C {Math.round(tot.c)} · F {Math.round(tot.f)}</span></div>
-        <button className="min-h-12 w-full rounded-2xl bg-accent font-semibold text-canvas active:scale-[.98] transition">Log all {items.length} items</button>
+        <button className="min-h-12 w-full rounded-2xl bg-accent font-semibold text-canvas active:scale-[.98] transition" onClick={() => {
+          const h = new Date().getHours(), slot = SLOTS[h < 10 ? 0 : h < 15 ? 1 : h < 21 ? 2 : 3]
+          onLog(items.map(i => { const f = cur(i), k = grams[i.id] / 100
+            return { id: 'cap-' + i.id, name: f.brand ? `${f.brand} ${f.name}` : f.name, serving: `${grams[i.id]} g`, kcal: Math.round(f.kcal * k), p: Math.round(f.p * k), c: Math.round(f.c * k), f: Math.round(f.f * k), slot, n: 1 } })) }}>Log all {items.length} items</button>
       </div>
     </div>)
 }
