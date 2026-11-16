@@ -3,6 +3,7 @@ import { useEnergy } from '../lib/units'
 import { listSupps, logsOn, toggleTaken } from '../lib/supplements'
 import { todayIso } from '../lib/data'
 import type { Supplement } from '../lib/outbox'
+import QuickView from './QuickView'
 import { day } from '../mock'
 import MacroRings from '../lib/MacroRings'
 import { CLASS_LABEL, plannedSessions, sessionInfo, sessionLabel, todayTarget, type Session, type Settings } from '../engine'
@@ -72,6 +73,7 @@ export default function Today({ settings, extra, eatBack, logged, openSession, c
           <div className="mt-2 text-sm">After: {peri.post.proteinG} g protein{peri.post.carbsG ? ` + ${peri.post.carbsG} g carbs` : ''}</div>
         </> : <><div className="text-sm text-accent">Rest day</div><div className="mt-1 text-sm text-muted">Hit protein, keep carbs lower. No special fuelling needed.</div></>}
       </section>
+      <QuickView />
       <SuppQuick />
       <section className="mt-3 space-y-2" aria-label="Insights">{insights.map(i => <div key={i} className="rounded-2xl bg-surface p-3 text-sm"><span className="text-accent">Insight · </span>{i}</div>)}</section>
       {logged.length > 0 && <section className="mt-3 rounded-2xl bg-surface p-4"><div className="text-sm text-accent">Added just now</div>

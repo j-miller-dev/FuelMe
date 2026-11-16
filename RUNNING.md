@@ -20,6 +20,7 @@ Everything on screen is mock data except the engine plans (generated from the PH
     npx tsx src/lib/photos.test.ts
     npx tsx src/lib/nutrients.test.ts
     npx tsx src/lib/health.test.ts
+    npx tsx src/lib/quickview.test.ts
 
 After changing any PHP engine file: `php tools/export-engine-data.php` (rewrites `web-prototype/src/engine-data.json`).
 

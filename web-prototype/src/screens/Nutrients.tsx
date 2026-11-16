@@ -1,3 +1,6 @@
+import { AMINOS, aminoTargetMg } from '../lib/aminos'
+import MuscleAminos from './MuscleAminos'
+import { weight } from '../engine'
 import { NUTRIENTS, SAMPLE, lowestFirst, pct, status, type Nutrient } from '../lib/nutrients'
 
 const col = { met: 'bg-protein', near: 'bg-carbs', low: 'bg-fat', over: 'bg-fat', ok: 'bg-protein' } as const
@@ -26,6 +29,14 @@ export default function Nutrients() {
       {(['Minerals', 'Vitamins'] as const).map(g => (
         <section key={g} className="rounded-2xl bg-surface p-4"><div className="text-sm font-medium">{g}</div>
           <div className="divide-y divide-raised">{NUTRIENTS.filter(n => n.group === g).map(n => <Row key={n.key} n={n} />)}</div></section>))}
+      <MuscleAminos />
+      <section className="rounded-2xl bg-surface p-4"><div className="text-sm font-medium">All amino acids</div>
+        <div className="divide-y divide-raised">{AMINOS.map(a => { const t = aminoTargetMg(a, weight); const w = t ? Math.min(100, a.sample / t * 100) : null; return (
+          <div key={a.key} className="py-2"><div className="flex items-baseline justify-between text-sm"><span>{a.name}{a.src === 'check' && <span className="ml-1 text-[10px] text-muted">verify target</span>}</span>
+            <span className="text-xs text-muted">{a.sample.toLocaleString()}{t ? ` / ${t.toLocaleString()}` : ''} mg</span></div>
+            {w != null ? <div className="mt-1 h-2 rounded-full bg-raised"><div className="h-2 rounded-full bg-protein" style={{ width: `${w}%` }} /></div> : <div className="mt-1 text-xs text-muted">Intake only. No requirement set.</div>}
+            {a.note && <p className="mt-1 text-xs text-muted">{a.note}</p>}</div>) })}</div>
+        <p className="mt-2 text-xs text-muted">Targets are minimum requirements for adults scaled to {weight} kg. Histidine, isoleucine and leucine are confirmed; the rest are marked to verify. Amino acid data is patchy for packaged foods, so real totals can under-count.</p></section>
       <p className="text-xs text-muted">Targets are for an adult male 19-50. Iron, zinc and magnesium are Australian NHMRC values (magnesium 420 mg is the 31+ figure; 400 mg if you are under 31). Rows tagged "US ref" use US reference values until the NHMRC figure is checked. Sodium is a limit, not a goal. These are population reference values, not a personal prescription.</p>
     </div>)
 }
