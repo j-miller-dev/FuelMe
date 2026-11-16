@@ -1,18 +1,35 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useEnergy } from '../lib/units'
+import { listSupps, logsOn, toggleTaken } from '../lib/supplements'
+import { todayIso } from '../lib/data'
+import type { Supplement } from '../lib/outbox'
 import { day } from '../mock'
 import MacroRings from '../lib/MacroRings'
 import { CLASS_LABEL, plannedSessions, sessionInfo, sessionLabel, todayTarget, type Session, type Settings } from '../engine'
 import type { LogItem } from '../lib/foods'
 
+function SuppQuick() {
+  const [supps, setSupps] = useState<Supplement[]>([]), [taken, setTaken] = useState<number[]>([])
+  const refresh = async () => { setSupps(await listSupps()); setTaken((await logsOn(todayIso())).map(l => l.suppId)) }
+  useEffect(() => { void refresh() }, [])
+  if (!supps.length) return null
+  return (<section className="mt-3 rounded-2xl bg-surface p-4" aria-label="Supplements">
+    <div className="text-sm text-muted">Supplements</div>
+    <div className="mt-2 flex flex-wrap gap-2">{supps.map(s => { const on = taken.includes(s.id!); return (
+      <button key={s.id} aria-pressed={on} onClick={async () => { await toggleTaken(s.id!, todayIso()); void refresh() }}
+        className={`min-h-11 rounded-full px-4 text-sm ${on ? 'bg-accent/20 text-accent ring-1 ring-accent' : 'bg-raised'}`}>{on ? '✓ ' : ''}{s.name} {s.dose} {s.unit}</button>) })}</div></section>)
+}
+
 function Ring({ value, max, calibrating, mode }: { value: number; max: number; calibrating: boolean; mode: 'left' | 'eaten' }) {
+  const { show, unit } = useEnergy()
   const r = 84, c = 2 * Math.PI * r, pct = Math.min(value / max, 1)
   return (
-    <svg viewBox="0 0 200 200" className="h-56 w-56" role="img" aria-label={mode === 'left' ? `${max - value} calories remaining of ${max}` : `${value} calories eaten of ${max}`}>
+    <svg viewBox="0 0 200 200" className="h-56 w-56" role="img" aria-label={mode === 'left' ? `${show(max - value)} ${unit} remaining of ${show(max)}` : `${show(value)} ${unit} eaten of ${show(max)}`}>
       <circle cx="100" cy="100" r={r} fill="none" stroke="var(--color-raised)" strokeWidth="14" />
       <circle cx="100" cy="100" r={r} fill="none" stroke="var(--color-accent)" strokeWidth="14" strokeLinecap="round"
         strokeDasharray={c} strokeDashoffset={c * (1 - pct)} transform="rotate(-90 100 100)" style={{ transition: 'stroke-dashoffset 600ms cubic-bezier(.2,.8,.2,1)' }} />
-      <text x="100" y="100" textAnchor="middle" className="fill-white" style={{ fontSize: 44, fontWeight: 700 }}>{mode === 'left' ? max - value : value}</text>
-      <text x="100" y="124" textAnchor="middle" fill="var(--color-muted)" style={{ fontSize: 13 }}>{mode === 'left' ? (calibrating ? 'kcal left (≈)' : 'kcal left') : 'kcal eaten'}</text>
+      <text x="100" y="100" textAnchor="middle" className="fill-white" style={{ fontSize: 44, fontWeight: 700 }}>{show(mode === 'left' ? max - value : value)}</text>
+      <text x="100" y="124" textAnchor="middle" fill="var(--color-muted)" style={{ fontSize: 13 }}>{mode === 'left' ? (calibrating ? `${unit} left (≈)` : `${unit} left`) : `${unit} eaten`}</text>
     </svg>)
 }
 
@@ -55,6 +72,7 @@ export default function Today({ settings, extra, eatBack, logged, openSession, c
           <div className="mt-2 text-sm">After: {peri.post.proteinG} g protein{peri.post.carbsG ? ` + ${peri.post.carbsG} g carbs` : ''}</div>
         </> : <><div className="text-sm text-accent">Rest day</div><div className="mt-1 text-sm text-muted">Hit protein, keep carbs lower. No special fuelling needed.</div></>}
       </section>
+      <SuppQuick />
       <section className="mt-3 space-y-2" aria-label="Insights">{insights.map(i => <div key={i} className="rounded-2xl bg-surface p-3 text-sm"><span className="text-accent">Insight · </span>{i}</div>)}</section>
       {logged.length > 0 && <section className="mt-3 rounded-2xl bg-surface p-4"><div className="text-sm text-accent">Added just now</div>
         {logged.map(i => <div key={i.id + i.slot} className="mt-2 flex justify-between text-sm"><span className="min-w-0 truncate"><span className="text-muted">{i.slot} · </span>{i.n > 1 ? `${i.n} × ` : ''}{i.name}</span><span className="tabular-nums">{i.kcal * i.n}</span></div>)}</section>}

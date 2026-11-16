@@ -5,12 +5,13 @@ import Body from './Body'
 import GoalScreen from './Goal'
 import Photos from './Photos'
 import Nutrients from './Nutrients'
+import Health from './Health'
 import type { Measure, WeighIn } from '../lib/data'
 import type { Settings } from '../engine'
 import { series } from '../mock'
 
-type View = 'overview' | 'weight' | 'body' | 'photos' | 'nutrients' | 'goal'
-const VIEWS: [View, string][] = [['overview', 'Overview'], ['weight', 'Weight'], ['body', 'Body'], ['photos', 'Photos'], ['nutrients', 'Nutrients'], ['goal', 'Goal']]
+type View = 'overview' | 'weight' | 'body' | 'photos' | 'nutrients' | 'health' | 'goal'
+const VIEWS: [View, string][] = [['overview', 'Overview'], ['weight', 'Weight'], ['body', 'Body'], ['photos', 'Photos'], ['nutrients', 'Nutrients'], ['health', 'Health'], ['goal', 'Goal']]
 
 export default function Progress(p: { weighIns: WeighIn[]; addWeight: (kg: number) => void; measures: Measure[]; addMeasure: (s: string, v: number) => void; settings: Settings; setSettings: (s: Settings) => void }) {
   const [view, setView] = useState<View>('overview')
@@ -25,6 +26,7 @@ export default function Progress(p: { weighIns: WeighIn[]; addWeight: (kg: numbe
       {view === 'body' && <Body measures={p.measures} add={p.addMeasure} weightChangeKg={cur.trend - first.trend} />}
       {view === 'photos' && <Photos />}
       {view === 'nutrients' && <Nutrients />}
+      {view === 'health' && <Health />}
       {view === 'goal' && <GoalScreen trendKg={cur.trend} tdee={Math.round(last.tdee)} settings={p.settings} set={p.setSettings} />}
     </div>)
 }

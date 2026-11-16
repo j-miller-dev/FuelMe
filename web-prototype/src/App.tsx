@@ -5,7 +5,8 @@ import Progress from './screens/Progress'
 import Shopping from './screens/Shopping'
 import Targets from './screens/Targets'
 import LogSession from './screens/LogSession'
-import Onboarding from './screens/Onboarding'
+import Onboarding, { type Profile } from './screens/Onboarding'
+import { Units } from './lib/units'
 import AddFood from './screens/AddFood'
 import { todayTarget, type Session, type Settings } from './engine'
 import { day } from './mock'
@@ -17,6 +18,8 @@ type AddTab = 'scan' | 'search' | 'ai' | 'quick' | 'library'
 
 export default function App() {
   const [onboarded, setOnboarded] = useState(false)
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [kj, setKj] = useState(false)
   const [tab, setTab] = useState<Tab>('today')
   const [planView, setPlanView] = useState<'targets' | 'recipes'>('targets')
   const [adding, setAdding] = useState<AddTab | null>(null)
@@ -32,7 +35,7 @@ export default function App() {
   const addMeasure = (site: string, v: number) => setMeasures(m => m.map(x => x.site === site ? { ...x, points: [...x.points, { date: todayIso(), v }] } : x))
   const tgt = todayTarget(settings, extra, eatBack).t
   const eatenKcal = day.eaten.kcal + logged.reduce((a, i) => a + i.kcal * i.n, 0)
-  if (!onboarded) return <Onboarding done={() => setOnboarded(true)} />
+  if (!onboarded) return <Onboarding done={p => { setProfile(p); setKj(p.kj); setOnboarded(true) }} />
   const T = ({ id, label }: { id: Tab; label: string }) => (
     <button onClick={() => { setSession(false); setTab(id) }} className={`min-h-11 min-w-11 ${tab === id && !session ? 'text-accent' : ''}`}>{label}</button>)
   if (adding) return (
@@ -42,6 +45,7 @@ export default function App() {
         onClose={() => setAdding(null)} onCapture={() => { setAdding(null); setTab('log') }} />
     </div>)
   return (
+    <Units.Provider value={{ kj, setKj }}>
     <div className="mx-auto min-h-dvh max-w-md">
       {session ? <LogSession settings={settings} current={extra} eatBack={eatBack} onAdd={setExtra} onClear={() => { setExtra(null); setEatBack(false) }} onEatBack={setEatBack} close={() => setSession(false)} /> : <>
         {tab === 'today' && <Today settings={settings} extra={extra} eatBack={eatBack} logged={logged} openSession={() => setSession(true)} />}
@@ -50,7 +54,7 @@ export default function App() {
           <div className="px-4 pt-6"><h1 className="text-xl font-semibold">Plan</h1>
             <div className="mt-3 mb-3 flex gap-2">{(['targets', 'recipes'] as const).map(v => (
               <button key={v} onClick={() => setPlanView(v)} className={`min-h-11 flex-1 rounded-xl text-sm capitalize ${planView === v ? 'bg-accent font-semibold text-canvas' : 'bg-surface'}`}>{v === 'targets' ? 'Daily targets' : 'Recipes & shopping'}</button>))}</div></div>
-          {planView === 'targets' ? <Targets settings={settings} set={setSettings} /> : <Shopping />}</>}
+          {planView === 'targets' ? <Targets settings={settings} set={setSettings} profile={profile} /> : <Shopping />}</>}
         {tab === 'progress' && <Progress weighIns={weighIns} addWeight={addWeight} measures={measures} addMeasure={addMeasure} settings={settings} setSettings={setSettings} />}
       </>}
       {!session && tab === 'today' && <div className="fixed inset-x-0 bottom-[4.5rem] z-10 mx-auto flex max-w-md items-center gap-2 px-3">
@@ -65,5 +69,6 @@ export default function App() {
             className="-mt-8 size-14 rounded-full bg-accent text-3xl font-bold text-canvas shadow-lg shadow-accent/30 transition active:scale-95">+</button>
           <T id="plan" label="Plan" /><T id="progress" label="Progress" />
         </div></nav>
-    </div>)
+    </div>
+    </Units.Provider>)
 }

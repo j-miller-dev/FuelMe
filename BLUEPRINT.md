@@ -446,6 +446,12 @@ Inputs: event date, target weight (or weight class), current trend. Engine compu
 - **Progress photos** (M7): Front/Side/Back by date, side-by-side compare, delete. Stored privately on the owner's own server (never third-party); prototype keeps them on-device in IndexedDB. Strip EXIF location on upload.
 - **Micronutrient overview** (M3 data, M7 view): bars vs targets for an adult male 19-50, lowest-gap-first, sodium as a limit. Targets must come from NHMRC Nutrient Reference Values; the prototype has only iron (8 mg) and zinc (14 mg) verified, the rest are US stand-ins tagged `src:'US'` and must be replaced before release. Always show a data-coverage banner: packaged foods often lack micronutrient data so totals under-count.
 
+### 7B. Health tracking (additions)
+- **Supplements:** saved stack (name, dose, unit, optional nutrient contribution); one tap logs, tap again undoes; totals feed micronutrient view. Doses are user-entered, never recommended.
+- **Blood tests:** results with the lab's own reference range typed from the report; flags low/high against that range only; general food ideas for low results; always defer to GP. Creatine can raise creatinine without kidney change: show that note.
+- **Sun & vitamin D:** UV index (live from ARPANSA/BoM for Melbourne in the real app) x minutes x skin area x skin tone. Rules of thumb: 1 UVI-hour = 0.9 SED; 1 MED = 2 SED; whole body at 1 MED about 20,000 IU; 1/3 MED on 15% of body about 1,000 IU. Show a range, label as a rough estimate, and prefer a blood test.
+- **Profile:** height, DOB, sex, job activity, shift pattern, lifting years collected in onboarding; feeds the day-one prior only.
+
 ---
 
 ## 11. Milestones (feed one at a time)

@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import hitBanner from '../hit-banner.png'
+import { Units, useEnergy } from '../lib/units'
+import type { Profile } from './Onboarding'
+import { useContext } from 'react'
 import { CLASS_LABEL, DAYS, DAY_NAMES, getPlan, plannedSessions, sessionLabel, todayDow, weight, type CarbMode, type Dow, type Goal, type Settings, type Style } from '../engine'
 
 const Seg = <T extends string | number>({ value, options, onChange }: { value: T; options: [T, string][]; onChange: (v: T) => void }) => (
@@ -7,7 +10,10 @@ const Seg = <T extends string | number>({ value, options, onChange }: { value: T
     <button key={String(v)} onClick={() => onChange(v)} className={`min-h-11 flex-1 rounded-xl text-sm ${v === value ? 'bg-accent font-semibold text-canvas' : 'bg-raised'}`}>{l}</button>))}</div>)
 const classColor: Record<string, string> = { rest: 'bg-raised', light: 'bg-protein/30', moderate: 'bg-carbs/30', high: 'bg-accent/30', very_high: 'bg-fat/40' }
 
-export default function Targets({ settings, set }: { settings: Settings; set: (s: Settings) => void }) {
+const JOB: Record<string, string> = { desk: 'Desk', mixed: 'Mixed', on_feet: 'On feet', heavy: 'Heavy manual' }
+const age = (dob: string) => dob ? Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000) : null
+export default function Targets({ settings, set, profile }: { settings: Settings; set: (s: Settings) => void; profile: Profile | null }) {
+  const { kj, setKj } = useContext(Units), en = useEnergy()
   const plan = getPlan(settings)
   const [sel, setSel] = useState<Dow>(todayDow())
   const [open, setOpen] = useState(false)
@@ -34,7 +40,7 @@ export default function Targets({ settings, set }: { settings: Settings; set: (s
           return (
           <button key={k} onClick={() => setSel(k)} aria-label={`${DAY_NAMES[k]}: ${x.kcal} kcal, ${x.protein} protein, ${x.fat} fat, ${x.carbs} carbs`} aria-pressed={isSel}
             className={`flex h-[246px] flex-col items-stretch gap-1 rounded-xl p-0.5 ${isSel ? 'ring-2 ring-accent' : ''}`}>
-            <span className="rounded-full bg-accent/20 py-1 text-center text-[10px] font-semibold tabular-nums">{x.kcal}</span>
+            <span className="rounded-full bg-accent/20 py-1 text-center text-[10px] font-semibold tabular-nums">{en.show(x.kcal)}</span>
             <span className="flex min-h-0 flex-1 flex-col justify-end gap-1">
             <span className="flex items-center justify-center rounded-md text-[10px] tabular-nums text-canvas" style={{ background: 'var(--color-protein)', height: H(x.protein, 0.3) }}>{x.protein}P</span>
             <span className="flex items-center justify-center rounded-md text-[10px] tabular-nums text-canvas" style={{ background: 'var(--color-fat)', height: H(x.fat, 0.3) }}>{x.fat}F</span>
@@ -45,7 +51,7 @@ export default function Targets({ settings, set }: { settings: Settings; set: (s
       </section>
 
       <section className="rounded-2xl bg-surface p-4">
-        <div className="flex items-baseline justify-between"><h2 className="text-lg font-semibold">{DAY_NAMES[sel]} · {CLASS_LABEL[d.class]}</h2><span className="text-2xl font-bold tabular-nums">{d.kcal}<span className="text-sm text-muted"> kcal</span></span></div>
+        <div className="flex items-baseline justify-between"><h2 className="text-lg font-semibold">{DAY_NAMES[sel]} · {CLASS_LABEL[d.class]}</h2><span className="text-2xl font-bold tabular-nums">{en.show(d.kcal)}<span className="text-sm text-muted"> {en.unit}</span></span></div>
         <p className="text-xs text-muted">{plannedSessions(sel, settings.style).map(sessionLabel).join(' + ') || 'No training planned'}</p>
         <div className="mt-3 flex h-3 overflow-hidden rounded-full bg-raised" aria-hidden>
           <div style={{ width: `${d.protein * 4 / tot * 100}%`, background: 'var(--color-protein)' }} /><div style={{ width: `${d.carbs * 4 / tot * 100}%`, background: 'var(--color-carbs)' }} /><div style={{ width: `${d.fat * 9 / tot * 100}%`, background: 'var(--color-fat)' }} />
@@ -73,6 +79,10 @@ export default function Targets({ settings, set }: { settings: Settings; set: (s
         <p className="text-xs text-muted">Weekly average {Math.round(w.kcalAvg)} kcal at {weight} kg. Protein {Math.round(w.protein)} g, fat {Math.round(w.fat)} g ({w.fatGPerKg} g/kg), carbs flex with training.</p>
       </section>
 
+      {profile && <section className="rounded-2xl bg-surface p-4 text-sm"><div className="text-xs text-muted">Your profile</div>
+        <div className="mt-1">{profile.height} cm{age(profile.dob) != null ? ` · ${age(profile.dob)} y` : ''} · {profile.sex} · {JOB[profile.job]} job · lifting {profile.trainYears === 'lt1' ? '< 1 y' : profile.trainYears === '1to3' ? '1-3 y' : '3+ y'}</div>
+        <p className="mt-1 text-xs text-muted">In the real app these set your day-one calorie estimate. After a few weeks your own weigh-ins and logging take over. The prototype plans below use a fixed example profile.</p>
+        <div className="mt-2 flex gap-2">{[[false, 'kcal'], [true, 'kJ']].map(([v, l]) => <button key={String(l)} onClick={() => setKj(v as boolean)} className={`min-h-11 flex-1 rounded-xl ${kj === v ? 'bg-accent font-semibold text-canvas' : 'bg-raised'}`}>{String(l)}</button>)}</div></section>}
       {plan.warnings.filter(x => x.level !== 'info').map(x => <div key={x.code + x.msg} className="rounded-2xl border border-carbs/40 bg-surface p-3 text-sm text-carbs">{x.msg}</div>)}
     </div>)
 }
