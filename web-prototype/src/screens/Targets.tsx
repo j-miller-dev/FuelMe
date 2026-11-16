@@ -35,10 +35,11 @@ export default function Targets({ settings, set }: { settings: Settings; set: (s
           <button key={k} onClick={() => setSel(k)} aria-label={`${DAY_NAMES[k]}: ${x.kcal} kcal, ${x.protein} protein, ${x.fat} fat, ${x.carbs} carbs`} aria-pressed={isSel}
             className={`flex h-[246px] flex-col items-stretch gap-1 rounded-xl p-0.5 ${isSel ? 'ring-2 ring-accent' : ''}`}>
             <span className="rounded-full bg-accent/20 py-1 text-center text-[10px] font-semibold tabular-nums">{x.kcal}</span>
+            <span className="flex min-h-0 flex-1 flex-col justify-end gap-1">
             <span className="flex items-center justify-center rounded-md text-[10px] tabular-nums text-canvas" style={{ background: 'var(--color-protein)', height: H(x.protein, 0.3) }}>{x.protein}P</span>
             <span className="flex items-center justify-center rounded-md text-[10px] tabular-nums text-canvas" style={{ background: 'var(--color-fat)', height: H(x.fat, 0.3) }}>{x.fat}F</span>
-            <span className="flex items-center justify-center rounded-md text-[10px] tabular-nums text-canvas" style={{ background: 'var(--color-carbs)', height: H(x.carbs, 0.3) }}>{x.carbs}C</span>
-            <span className={`mt-auto pt-0.5 text-center text-xs ${k === todayDow() ? 'font-bold text-accent' : 'text-muted'}`}>{DAY_NAMES[k][0]}</span>
+            <span className="flex items-center justify-center rounded-md text-[10px] tabular-nums text-canvas" style={{ background: 'var(--color-carbs)', height: H(x.carbs, 0.3) }}>{x.carbs}C</span></span>
+            <span className={`pt-0.5 text-center text-xs ${k === todayDow() ? 'font-bold text-accent' : 'text-muted'}`}>{DAY_NAMES[k][0]}</span>
           </button>) })}</div>
         <p className="mt-2 text-xs text-muted">Block heights are to scale. Training days carry more carbs, rest days fewer.</p>
       </section>

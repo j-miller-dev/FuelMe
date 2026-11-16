@@ -1,17 +1,18 @@
+import { useState } from 'react'
 import { day } from '../mock'
 import MacroRings from '../lib/MacroRings'
 import { CLASS_LABEL, plannedSessions, sessionInfo, sessionLabel, todayTarget, type Session, type Settings } from '../engine'
 import type { LogItem } from '../lib/foods'
 
-function Ring({ value, max, calibrating }: { value: number; max: number; calibrating: boolean }) {
+function Ring({ value, max, calibrating, mode }: { value: number; max: number; calibrating: boolean; mode: 'left' | 'eaten' }) {
   const r = 84, c = 2 * Math.PI * r, pct = Math.min(value / max, 1)
   return (
-    <svg viewBox="0 0 200 200" className="h-56 w-56" role="img" aria-label={`${max - value} calories remaining of ${max}`}>
+    <svg viewBox="0 0 200 200" className="h-56 w-56" role="img" aria-label={mode === 'left' ? `${max - value} calories remaining of ${max}` : `${value} calories eaten of ${max}`}>
       <circle cx="100" cy="100" r={r} fill="none" stroke="var(--color-raised)" strokeWidth="14" />
       <circle cx="100" cy="100" r={r} fill="none" stroke="var(--color-accent)" strokeWidth="14" strokeLinecap="round"
         strokeDasharray={c} strokeDashoffset={c * (1 - pct)} transform="rotate(-90 100 100)" style={{ transition: 'stroke-dashoffset 600ms cubic-bezier(.2,.8,.2,1)' }} />
-      <text x="100" y="100" textAnchor="middle" className="fill-white" style={{ fontSize: 44, fontWeight: 700 }}>{max - value}</text>
-      <text x="100" y="124" textAnchor="middle" fill="var(--color-muted)" style={{ fontSize: 13 }}>{calibrating ? 'kcal left (≈)' : 'kcal left'}</text>
+      <text x="100" y="100" textAnchor="middle" className="fill-white" style={{ fontSize: 44, fontWeight: 700 }}>{mode === 'left' ? max - value : value}</text>
+      <text x="100" y="124" textAnchor="middle" fill="var(--color-muted)" style={{ fontSize: 13 }}>{mode === 'left' ? (calibrating ? 'kcal left (≈)' : 'kcal left') : 'kcal eaten'}</text>
     </svg>)
 }
 
@@ -24,12 +25,23 @@ export default function Today({ settings, extra, eatBack, logged, openSession, c
   const main = sessions.length ? sessions.reduce((a, b) => (sessionInfo(b)?.net ?? 0) > (sessionInfo(a)?.net ?? 0) ? b : a) : null
   const peri = main ? sessionInfo(main)?.peri : null
   const delta = t.kcal - plan.kcal
+  const [mode, setMode] = useState<'left' | 'eaten'>('left')
+  // Insights are derived only from today's numbers (no invented stats).
+  const insights: string[] = []
+  const pLeft = Math.round(t.p - e.p), cLeft = Math.round(t.c - e.c)
+  if (pLeft > 0) insights.push(`${pLeft} g protein still to go. A ${Math.round(pLeft / 2)} g serving at two of your remaining meals gets you there.`)
+  else insights.push('Protein target reached. Extra protein is fine but not needed.')
+  if (cLeft < -20) insights.push(`Carbs are ${-cLeft} g over today's target. Weekly calories are what count, so one day over is not a problem.`)
+  else if (main && cLeft > 0) insights.push(`${cLeft} g carbs left. Put most of them around your ${main.type === 'bjj' ? 'BJJ' : sessionLabel(main).split(' · ')[0].toLowerCase()} session.`)
   return (
     <div className="px-4 pb-44">
       <header className="flex items-center justify-between pt-6"><h1 className="text-xl font-semibold">Today</h1>
         <span className="rounded-full bg-raised px-3 py-1 text-sm text-accent">{CLASS_LABEL[base.class]}</span></header>
       {sessions.length > 0 && <p className="mt-1 text-xs text-muted">{sessions.map(sessionLabel).join('  +  ')}</p>}
-      <section className="mt-3 flex justify-center"><Ring value={e.kcal} max={t.kcal} calibrating={calibrating} /></section>
+      <section className="mt-3 flex flex-col items-center">
+        <div className="mb-2 flex gap-1 rounded-full bg-surface p-1" role="group" aria-label="Ring shows">{([['left', 'Remaining'], ['eaten', 'Consumed']] as const).map(([v, l]) => (
+          <button key={v} aria-pressed={mode === v} onClick={() => setMode(v)} className={`min-h-9 rounded-full px-4 text-sm ${mode === v ? 'bg-raised font-semibold text-accent' : 'text-muted'}`}>{l}</button>))}</div>
+        <Ring value={e.kcal} max={t.kcal} calibrating={calibrating} mode={mode} /></section>
       {delta !== 0 && <p className="text-center text-sm text-accent">{delta > 0 ? '+' : ''}{delta} kcal vs your planned {CLASS_LABEL[plan.class].toLowerCase()}</p>}
       {calibrating && <div className="mt-2 rounded-2xl bg-surface p-3 text-sm"><span className="text-carbs">Calibrating · day 9 of ~21.</span> <span className="text-muted">Targets are a starting estimate until your expenditure settles.</span></div>}
       <MacroRings eaten={{ p: e.p, c: e.c, f: e.f }} target={{ p: t.p, c: t.c, f: t.f }} />
@@ -43,6 +55,7 @@ export default function Today({ settings, extra, eatBack, logged, openSession, c
           <div className="mt-2 text-sm">After: {peri.post.proteinG} g protein{peri.post.carbsG ? ` + ${peri.post.carbsG} g carbs` : ''}</div>
         </> : <><div className="text-sm text-accent">Rest day</div><div className="mt-1 text-sm text-muted">Hit protein, keep carbs lower. No special fuelling needed.</div></>}
       </section>
+      <section className="mt-3 space-y-2" aria-label="Insights">{insights.map(i => <div key={i} className="rounded-2xl bg-surface p-3 text-sm"><span className="text-accent">Insight · </span>{i}</div>)}</section>
       {logged.length > 0 && <section className="mt-3 rounded-2xl bg-surface p-4"><div className="text-sm text-accent">Added just now</div>
         {logged.map(i => <div key={i.id + i.slot} className="mt-2 flex justify-between text-sm"><span className="min-w-0 truncate"><span className="text-muted">{i.slot} · </span>{i.n > 1 ? `${i.n} × ` : ''}{i.name}</span><span className="tabular-nums">{i.kcal * i.n}</span></div>)}</section>}
       <section className="mt-3 space-y-2">{day.meals.map(m => (<div key={m.name} className="flex justify-between rounded-2xl bg-surface p-4"><div><div className="font-medium">{m.name}</div><div className="text-sm text-muted">{m.items}</div></div><div>{m.kcal}</div></div>))}</section>
