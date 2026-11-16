@@ -276,6 +276,7 @@ Rule-based parser: regex for `qty unit of? name`, split on commas/"and"/"with"/n
 - Energy = **net** kcal `(MET − 1) × kg × hours` using the 2024 Compendium (and ABS 7.5 for judo/jujitsu); show ±25% range; user can override with a wearable value. See Appendix B for the catalogue and sources.
 - Scheduling: a **weekly training template** (e.g. BJJ Mon 06:30 · lifting Mon/Wed/Fri midday · BJJ Tue/Thu 11:30 · Sat 10:00; Friday 4×4). The planner uses the template for forecasting; **logged sessions override** the template for that day and trigger `replanRemainingDays()` (keeps the weekly total).
 - Optional Hevy CSV import to back-fill sessions (P1).
+- **Lifting style setting** (`style`: `hit` default | `volume`). HIT (Mentzer-style) = few sets to failure, long rests, so session-average MET is low (3.5, Compendium 02054 closest code, flagged ESTIMATE; ~40 min default, ~120 kcal net at 74 kg). Effects: lifting-only days get no extra carbs (BJJ/conditioning days drive carb periodisation); no carb-loading note for low-volume lifting (mixed meal with ~0.3-0.4 g/kg protein 1-3 h before); protein identical every day including rest days. Weekly kcal still conserved. Planner, grid and adjust tables are keyed by style.
 
 ---
 
@@ -437,6 +438,13 @@ Inputs: event date, target weight (or weight class), current trend. Engine compu
 - **Capture eval** (6.9) in CI. **Playwright** smoke: onboard → search → log → scan (mocked) → capture (mocked LLM) → weigh-in → check-in.
 - **Perf:** search p95 < 150 ms with 200k food rows; Lighthouse PWA ≥ 90; TTI < 2 s on mid-range Android.
 - **Data safety:** idempotent writes, optimistic UI with rollback, export/import round-trip test.
+
+---
+
+## 7A. Progress photos and micronutrients (additions)
+
+- **Progress photos** (M7): Front/Side/Back by date, side-by-side compare, delete. Stored privately on the owner's own server (never third-party); prototype keeps them on-device in IndexedDB. Strip EXIF location on upload.
+- **Micronutrient overview** (M3 data, M7 view): bars vs targets for an adult male 19-50, lowest-gap-first, sodium as a limit. Targets must come from NHMRC Nutrient Reference Values; the prototype has only iron (8 mg) and zinc (14 mg) verified, the rest are US stand-ins tagged `src:'US'` and must be replaced before release. Always show a data-coverage banner: packaged foods often lack micronutrient data so totals under-count.
 
 ---
 
