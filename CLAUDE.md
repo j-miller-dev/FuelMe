@@ -16,5 +16,6 @@ Source of truth: `BLUEPRINT.md`. Read it fully before any work; follow its miles
 - `database/schema.sql`: Postgres reference schema (syntax-checked only, never run). Turn into Laravel migrations in M1.
 - `web-prototype/`: Vite + React + Tailwind v4 mock-data UI (Today, Capture review, Progress, Shopping, Onboarding),
   Dexie outbox + PWA. Port screens into resources/js (Inertia) during M1/M3; keep the tokens in src/index.css.
+- Engine data for the UI is generated: `php tools/export-engine-data.php` writes web-prototype/src/engine-data.json (re-run after any engine change). In the real app these become API calls.
 - Tailwind note: colour token is `canvas`, not `base` (`text-base` is a font-size).
 - M0 (Laravel scaffold, Docker, CI, Fortify + passkeys) and M1 not yet done: needs Composer.

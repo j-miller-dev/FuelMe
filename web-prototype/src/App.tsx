@@ -3,24 +3,42 @@ import Today from './screens/Today'
 import Capture from './screens/Capture'
 import Progress from './screens/Progress'
 import Shopping from './screens/Shopping'
+import Targets from './screens/Targets'
+import LogSession from './screens/LogSession'
 import Onboarding from './screens/Onboarding'
+import type { Session, Settings } from './engine'
 
 type Tab = 'today' | 'log' | 'plan' | 'progress'
-const actions: [string, Tab | null][] = [['Search', null], ['Speak', 'log'], ['Scan', null], ['Quick-add', null], ['Meals', 'plan']]
+const actions: [string, string][] = [['Search', ''], ['Speak', 'log'], ['Scan', ''], ['Session', 'session'], ['Quick-add', ''], ['Meals', 'recipes']]
 
 export default function App() {
   const [onboarded, setOnboarded] = useState(false)
   const [tab, setTab] = useState<Tab>('today')
+  const [planView, setPlanView] = useState<'targets' | 'recipes'>('targets')
   const [sheet, setSheet] = useState(false)
+  const [session, setSession] = useState(false)
+  const [settings, setSettings] = useState<Settings>({ goal: 'bulk', mode: 'flexible', protein: 2.2 })
+  const [extra, setExtra] = useState<Session | null>(null)
+  const [eatBack, setEatBack] = useState(false)
   if (!onboarded) return <Onboarding done={() => setOnboarded(true)} />
   const T = ({ id, label }: { id: Tab; label: string }) => (
-    <button onClick={() => setTab(id)} className={`min-h-11 min-w-11 ${tab === id ? 'text-accent' : ''}`}>{label}</button>)
+    <button onClick={() => { setSession(false); setTab(id) }} className={`min-h-11 min-w-11 ${tab === id && !session ? 'text-accent' : ''}`}>{label}</button>)
+  const go = (to: string) => { setSheet(false); if (to === 'session') setSession(true); else if (to === 'recipes') { setSession(false); setTab('plan'); setPlanView('recipes') } else if (to) { setSession(false); setTab(to as Tab) } }
   return (
     <div className="mx-auto min-h-dvh max-w-md">
-      {tab === 'today' && <Today />}{tab === 'log' && <Capture />}{tab === 'plan' && <Shopping />}{tab === 'progress' && <Progress />}
+      {session ? <LogSession current={extra} eatBack={eatBack} onAdd={setExtra} onClear={() => { setExtra(null); setEatBack(false) }} onEatBack={setEatBack} close={() => setSession(false)} /> : <>
+        {tab === 'today' && <Today settings={settings} extra={extra} eatBack={eatBack} openSession={() => setSession(true)} />}
+        {tab === 'log' && <Capture />}
+        {tab === 'plan' && <>
+          <div className="px-4 pt-6"><h1 className="text-xl font-semibold">Plan</h1>
+            <div className="mt-3 mb-3 flex gap-2">{(['targets', 'recipes'] as const).map(v => (
+              <button key={v} onClick={() => setPlanView(v)} className={`min-h-11 flex-1 rounded-xl text-sm capitalize ${planView === v ? 'bg-accent font-semibold text-canvas' : 'bg-surface'}`}>{v === 'targets' ? 'Daily targets' : 'Recipes & shopping'}</button>))}</div></div>
+          {planView === 'targets' ? <Targets settings={settings} set={setSettings} /> : <Shopping />}</>}
+        {tab === 'progress' && <Progress />}
+      </>}
       {sheet && <div className="fixed inset-0 z-20 bg-black/60" onClick={() => setSheet(false)}>
-        <div className="absolute inset-x-0 bottom-0 mx-auto grid max-w-md grid-cols-5 gap-2 rounded-t-3xl bg-raised p-5" onClick={e => e.stopPropagation()}>
-          {actions.map(([a, to]) => <button key={a} className="min-h-14 rounded-xl bg-surface text-xs transition active:scale-95" onClick={() => { if (to) setTab(to); setSheet(false) }}>{a}</button>)}
+        <div className="absolute inset-x-0 bottom-0 mx-auto grid max-w-md grid-cols-3 gap-2 rounded-t-3xl bg-raised p-5" onClick={e => e.stopPropagation()}>
+          {actions.map(([a, to]) => <button key={a} className="min-h-14 rounded-xl bg-surface text-sm transition active:scale-95" onClick={() => go(to)}>{a}</button>)}
         </div></div>}
       <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-white/5 bg-surface/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-md items-center justify-around text-sm text-muted">
