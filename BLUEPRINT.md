@@ -74,7 +74,7 @@ Tests green (Pest + engine tests + Playwright smoke) · no TODOs left in shipped
 - **Morning check-in + personal insights**, **event mode** — 9A.6–9A.7.
 
 **P2**
-- Diet-break / refeed scheduling, body-fat tape estimate, readiness check-ins, widgets/shortcuts, partner profile, Apple/Google Health sync via companion shortcut.
+- Diet-break / refeed scheduling, body-fat tape estimate, readiness check-ins, widgets/shortcuts, partner profile, Apple/Google Health sync via companion shortcut or native wrapper (see 9A.5: Health Connect has no web API).
 
 ---
 
@@ -413,7 +413,10 @@ Reuse the capture pipeline (section 6): *"rolled five rounds, hard, about an hou
 - **Todoist (training schedule):** read-only integration using the user's Todoist API token (env/Settings). Map the configured training project/section/labels to the weekly `training_template` (session type, start time, duration, intensity via label or title convention). Pull nightly and on demand; **manual overrides win** and are never overwritten. Show a diff before applying changes. Never write to Todoist unless the user later enables "send shopping list" (section 5.6).
 - **Hevy (lifting):** CSV import mapping sets/reps/weight → session volume, duration, and top-set RPE if present; use for session intensity and for the insights in 9A.6. Inspect a real export in `/samples` before coding the parser.
 - **Polar H10 (heart rate):** Web Bluetooth (Chrome on Android; not supported on iOS Safari) using the standard Heart Rate service. A "Start session" screen records HR + timestamps; on finish compute duration, avg/max HR, **time in zones** (needs user HRmax, set manually) and a training-load score. **Do not** invent a calorie formula: v1 uses HR to suggest an *intensity class* (and RPE) for the MET table, and stores raw HR for later calibration. Keep recording resilient (reconnect, screen-wake lock).
-- All integrations are optional, behind Settings toggles, and fail soft.
+- **Polar after-the-session sync (optional, later):** Polar AccessLink API (free self-serve OAuth client at admin.polaraccesslink.com, user must be registered after consent) can pull exercise summaries, HR samples and zones once the strap data reaches Polar Flow. It has no continuous 24/7 stream. Live Web Bluetooth above remains the primary H10 route.
+- **COROS (watch + app):** the official COROS Partner API is for established platforms with a registered company, so it is **not** realistic for a single-user app. Practical routes, in order: (1) **FIT/bulk-export import** (COROS support offers a bulk export of your data) in M9 history import; (2) a self-hosted bridge via a third-party aggregator or Strava link if you accept the extra hop and terms; (3) investigate COROS's official MCP server for the *coach* only (it exposes workouts, sleep, HRV, resting HR; early reports of outages), never as a dependency. Known limit: COROS's API exposes sleep start/end, avg/resting HR and HRV, **not sleep stages or a sleep score**. Use sleep start/end and HRV/resting HR only for the check-in and insights (9A.6).
+- **Google Health Connect (Samsung Health / Google):** Health Connect stores data **on the phone** and has **no web/server API**, and the Google Fit REST API is being shut down, so a PWA **cannot** read it. Needs a small native Android wrapper (e.g. Capacitor Health Connect plugin) or a companion app that pushes steps/sleep/HR to the server. Treat as P2; do it only if COROS import and Polar H10 prove insufficient. Verify Samsung Health to Health Connect sharing on the actual phone before designing around it.
+- All integrations are optional, behind Settings toggles, and fail soft. Data from wearables feeds **intensity class, recovery and insights only**; it never adds calories to the daily budget.
 
 ### 9A.6 Morning check-in & personal insights
 - **10-second check-in** (optional, skippable): sleep quality 1–5, soreness 1–5, mood/energy 1–5, optional notes. Stored in `readiness_logs`.
