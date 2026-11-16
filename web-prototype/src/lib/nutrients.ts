@@ -4,10 +4,11 @@
  * Do NOT treat 'US' rows as Australian. limit = keep UNDER (not a goal to reach).
  */
 export type Nutrient = { key: string; name: string; unit: string; target: number; src: 'NHMRC' | 'US'; limit?: boolean; group: 'Vitamins' | 'Minerals' }
+// Magnesium RDI is 400 mg for men 19-30 and 420 mg for 31+ (NHMRC); 420 is used here.
 export const NUTRIENTS: Nutrient[] = [
   { key: 'iron', name: 'Iron', unit: 'mg', target: 8, src: 'NHMRC', group: 'Minerals' },
   { key: 'zinc', name: 'Zinc', unit: 'mg', target: 14, src: 'NHMRC', group: 'Minerals' },
-  { key: 'mg', name: 'Magnesium', unit: 'mg', target: 420, src: 'US', group: 'Minerals' },
+  { key: 'mg', name: 'Magnesium', unit: 'mg', target: 420, src: 'NHMRC', group: 'Minerals' },
   { key: 'k', name: 'Potassium', unit: 'mg', target: 3400, src: 'US', group: 'Minerals' },
   { key: 'ca', name: 'Calcium', unit: 'mg', target: 1000, src: 'US', group: 'Minerals' },
   { key: 'se', name: 'Selenium', unit: 'µg', target: 55, src: 'US', group: 'Minerals' },

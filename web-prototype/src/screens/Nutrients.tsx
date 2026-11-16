@@ -26,6 +26,6 @@ export default function Nutrients() {
       {(['Minerals', 'Vitamins'] as const).map(g => (
         <section key={g} className="rounded-2xl bg-surface p-4"><div className="text-sm font-medium">{g}</div>
           <div className="divide-y divide-raised">{NUTRIENTS.filter(n => n.group === g).map(n => <Row key={n.key} n={n} />)}</div></section>))}
-      <p className="text-xs text-muted">Targets are for an adult male 19-50. Iron and zinc are Australian NHMRC values. Rows tagged "US ref" use US reference values until the NHMRC figure is checked. Sodium is a limit, not a goal. These are population reference values, not a personal prescription.</p>
+      <p className="text-xs text-muted">Targets are for an adult male 19-50. Iron, zinc and magnesium are Australian NHMRC values (magnesium 420 mg is the 31+ figure; 400 mg if you are under 31). Rows tagged "US ref" use US reference values until the NHMRC figure is checked. Sodium is a limit, not a goal. These are population reference values, not a personal prescription.</p>
     </div>)
 }
