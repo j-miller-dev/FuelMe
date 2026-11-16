@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import hitBadge from '../hit-badge.png'
+import hitBanner from '../hit-banner.png'
 import { CLASS_LABEL, DAYS, DAY_NAMES, getPlan, plannedSessions, sessionLabel, todayDow, weight, type CarbMode, type Dow, type Goal, type Settings, type Style } from '../engine'
 
 const Seg = <T extends string | number>({ value, options, onChange }: { value: T; options: [T, string][]; onChange: (v: T) => void }) => (
@@ -58,7 +58,7 @@ export default function Targets({ settings, set }: { settings: Settings; set: (s
       </section>
 
       <section className="rounded-2xl bg-surface p-4 space-y-3">
-        <div><div className="mb-1 flex items-center gap-2 text-xs text-muted">{settings.style === 'hit' && <img src={hitBadge} alt="" className="size-8 rounded-lg" />}Lifting style</div>
+        <div>{settings.style === 'hit' && <img src={hitBanner} alt="HIT training mode" className="mb-2 w-full" />}<div className="mb-1 text-xs text-muted">Lifting style</div>
           <Seg<Style> value={settings.style} onChange={style => set({ ...settings, style })} options={[['hit', 'HIT (Mentzer-style)'], ['volume', 'Higher volume']]} />
           <p className="mt-2 text-xs text-muted">{settings.style === 'hit'
             ? 'Few hard sets to failure, long rests. A HIT session burns little (about 120 kcal net for 40 min, an estimate), so lifting-only days get no extra carbs. BJJ and conditioning days drive your carb and timing needs. Protein stays the same every day, rest days included, because recovery is the longer part of the cycle.'
