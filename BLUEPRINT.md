@@ -434,6 +434,42 @@ Inputs: event date, target weight (or weight class), current trend. Engine compu
 
 ---
 
+### 9B. Sleep & recovery loop (Milestone M11, after M10)
+Goal: one private place where sleep, training and food inform each other, in both directions: **sleep -> today's plan** and **food/training -> tonight's sleep**. Single user, own server, no sharing.
+
+**9B.1 Inputs (all optional, fail soft)**
+- Sleep start/end, resting HR, HRV from: manual check-in (always available), COROS export import (9A.5), Health Connect companion (P2), Polar sessions for training HR. COROS exposes **no sleep stages or score**, so do not build on them. Everything below works from **duration, timing, resting HR and HRV**.
+- Extra daily fields that actually drive sleep and are cheap to log: caffeine (mg and time of last), alcohol (standard drinks and time), last-meal time, session start time and intensity (already in workouts), supplement timing (already logged).
+- Shift-work aware: the owner works afternoons/evenings, so sleep windows are late. Never assume a 10pm bedtime. Compare work days vs off days separately.
+
+**9B.2 Derived metrics (computed by the engine, pure PHP, tested)**
+- Sleep duration vs the user's own target (user-set, no default prescribed), 7- and 28-day averages, **sleep debt** vs that target.
+- **Timing consistency:** SD of sleep midpoint over 7 days.
+- **HRV and resting HR vs the user's own 28-day baseline** (z-score style, never against population norms). One night means little; show trends.
+- Optional **FUEL sleep index**: a transparent composite of the four items above with editable weights, always labelled "our own simple index, not a clinical score". Every component is shown beside it. Do not imitate any vendor's score.
+
+**9B.3 Sleep -> plan (deterministic rules, options only, user confirms)**
+- Poor sleep (below own target or HRV well under baseline) **and** a hard session planned -> suggest: lighter session, move it, or extra carbs before. Offer, never auto-change.
+- Poor sleep alone **never** changes calories or macros and never triggers a cut. Protein stays constant (9.4).
+- Repeated short sleep for 2+ weeks -> a gentle, non-alarming prompt; persistent problems -> "worth raising with your GP" (no diagnosis, no apnoea or medical claims).
+
+**9B.4 Food/training -> sleep (n-of-1 analysis)**
+- Pre-declared hypothesis list (max about 8), e.g. late caffeine, alcohol, last-meal time, late hard session (BJJ finishing after a set time), prior-day carbs g/kg, total protein, vitamin D supplement time, screen of work-day vs off-day. No fishing across everything.
+- Method: lagged comparison (night after X vs night after not-X), stratified by work day / off day; rank correlation or median difference with a **bootstrap confidence interval**; report effect size, CI and n; apply false-discovery control across the list.
+- **Minimum 21 nights per comparison** (stricter than 9A.6's 8 pairs, because sleep is noisy). Label every result **"association, not proof"**; no causal wording.
+- **Self-experiments:** user starts a 14-day trial (e.g. no caffeine after 2pm); the app shows before/during with the same caveats. The coach may explain results but cannot invent new ones (9A.2).
+
+**9B.5 Screens**
+Sleep timeline (last 14 nights, work/off shading), 7/28-day trends with the personal baseline band, "What moves your sleep" (only items passing 9B.4), experiment tracker, and sleep/HRV chips on Today and in the weekly review (9A.3). Quick view cards (Today) can show sleep duration, HRV and resting HR.
+
+**9B.6 Data model additions**
+`sleep_nights(local_date, start_at, end_at, duration_min, source[manual|coros_import|health_connect], resting_hr, hrv_ms, hrv_method, quality_1_5 null)` · `daily_logs += caffeine_mg, caffeine_last_at, alcohol_std, alcohol_last_at, last_meal_at` · `experiments(name, variable, start, end, rule jsonb, outcome jsonb)` · `insight_runs(hypothesis, n, effect, ci_low, ci_high, shown bool, run_at)`.
+
+**9B.7 Acceptance for M11**
+(1) no sleep-vs-lifestyle result shown with n < 21 nights; (2) synthetic data where sleep depends only on work/off day -> the engine reports **no** diet effect; (3) a planted effect (late BJJ delays sleep by about 40 min) is recovered inside its CI; (4) sleep alone never changes calories or macros; (5) COROS export parser passes on a real sample in `/samples`; (6) false-discovery control test passes; (7) all sleep screens work with only manual check-ins.
+
+---
+
 ## 10. Testing & quality
 
 - **Engine:** port Appendix tests to Pest. Keep the simulation (`simulate.php`) as a CI job; fail if mean abs error (weeks 3–6) > 150 kcal or late-phase error isn't ≥ 2× better than the naïve formula. Invariants: weekly kcal conserved (±30 kcal), carbs/day within class range or flagged, fat ≥ floor, EA floor enforced, no NaN/negative macros.
@@ -473,6 +509,7 @@ Inputs: event date, target weight (or weight class), current trend. Engine compu
 | **M8** | Exercise logging, training template, day-type planner, replan, peri-workout card + meal composer | Planner invariants hold; double-day case correct |
 | **M9** | Offline outbox, PWA polish, history import (MacroFactor/Cronometer/Hevy), exports, insights | Airplane-mode logging syncs without duplicates |
 | **M10** | **Training companion:** imperfect-day mode, AI coach (grounded), weekly review, voice workout log, Todoist/Hevy/Polar sync, check-in + insights, event mode | Section 9A.9 acceptance list passes |
+| **M11** | **Sleep & recovery loop** (9B): sleep/HRV/resting HR import, personal baselines, sleep-informed plan options, n-of-1 insights, self-experiments | Section 9B.7 acceptance list passes |
 
 Kick-off prompts: *"Do M0 only…"* → review → *"Do M1…"* etc. For M6, first build `capture:eval` and the golden set, **then** the pipeline.
 
