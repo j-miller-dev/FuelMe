@@ -22,7 +22,7 @@ export default function App() {
   const [adding, setAdding] = useState<AddTab | null>(null)
   const [logged, setLogged] = useState<LogItem[]>([])
   const [session, setSession] = useState(false)
-  const [settings, setSettings] = useState<Settings>({ goal: 'bulk', mode: 'flexible', protein: 2.2 })
+  const [settings, setSettings] = useState<Settings>({ style: 'hit', goal: 'bulk', mode: 'flexible', protein: 2.2 })
   const [extra, setExtra] = useState<Session | null>(null)
   const [eatBack, setEatBack] = useState(false)
   const [weighIns, setWeighIns] = useState<WeighIn[]>(initialWeighIns)

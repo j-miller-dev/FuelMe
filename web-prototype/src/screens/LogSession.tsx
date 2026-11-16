@@ -13,7 +13,7 @@ export default function LogSession({ settings, current, eatBack, onAdd, onClear,
   const ints = Object.keys(catalogue[type].intensities)
   const iv = ints.includes(intensity) ? intensity : ints[ints.length > 1 ? 1 : 0]
   const s: Session = { type, intensity: iv, minutes }
-  const info = sessionInfo(s), adj = adjustInfo(todayDow(), s)
+  const info = sessionInfo(s), adj = adjustInfo(todayDow(), s, settings.style)
   const b = getPlan(settings).days[todayDow()], a = applySession(b, adj), dk = a.kcal - b.kcal, dc = a.carbs - b.carbs
   return (
     <div className="space-y-3 px-4 pb-32 pt-6">

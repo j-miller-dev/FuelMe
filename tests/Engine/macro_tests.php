@@ -49,6 +49,19 @@ check('post protein 20-50 g', $pw['post']['proteinG'] >= 20 && $pw['post']['prot
 $pw2 = P::plan(74.0, ['type'=>'bjj','intensity'=>'hard','minutes'=>60], 2.0, 6.0, ['type'=>'hiit','intensity'=>'moderate','minutes'=>30]);
 check('glycolytic double day -> 1.0-1.2 g/kg/h', ($pw2['post']['carbsGPerHour'][0] ?? 0) == 74 && $pw2['post']['carbsGPerHour'][1] == 89);
 
+// HIT (Mentzer-style) lifting
+$hit = X::session('lifting', 'hit', 40, 74);
+check('HIT lifting 40 min @74kg net = (3.5-1)*74*40/60 = 123', (int)$hit['netKcal'] === 123, (string)$hit['netKcal']);
+$weekHit = $week; foreach (['mon','wed','fri'] as $d) { $weekHit[$d] = array_map(fn($x) => $x['type']==='lifting' ? ['type'=>'lifting','intensity'=>'hit','minutes'=>40] : $x, $weekHit[$d]); }
+$ph = M::plan(['week'=>$weekHit] + $in);
+$pv = M::plan($in);
+check('HIT: weekly kcal conserved', abs(array_sum(array_column($ph['days'],'kcal')) - 7*3150) <= 30);
+check('HIT: protein identical every day (rest days included)', count(array_unique(array_column($ph['days'],'protein'))) === 1);
+check('HIT: lifting-only day (wed) carbs lower than volume lifting', $ph['days']['wed']['carbs'] < $pv['days']['wed']['carbs'], $ph['days']['wed']['carbs'].' vs '.$pv['days']['wed']['carbs']);
+check('HIT: BJJ day (thu) carbs still above rest day (sun)', $ph['days']['thu']['carbs'] > $ph['days']['sun']['carbs']);
+$pwh = P::plan(74.0, ['type'=>'lifting','intensity'=>'hit','minutes'=>40], 2.0, null, null);
+check('HIT peri: no carb loading note, no during carbs', str_contains($pwh['pre']['note'], 'no carb loading') && $pwh['during']['carbsGPerHour'] == [0,0]);
+
 // Print worked example
 echo "\n--- Worked example: 74 kg, 14% BF, lean bulk, 3150 kcal avg, 2.2 g/kg protein ---\n";
 printf("%-4s %-9s %5s %5s %4s %5s %6s %5s %4s\n", 'Day','Class','kcal','P','F','C','C g/kg','Train','EA');

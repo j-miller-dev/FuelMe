@@ -9,7 +9,8 @@ export type Peri = {
 }
 export type Goal = 'bulk' | 'maintain' | 'cut'
 export type CarbMode = 'flexible' | 'cap'
-export type Settings = { goal: Goal; mode: CarbMode; protein: 1.8 | 2.2 | 2.6; override?: { kcal: number; phase: Goal; label: string } | null }
+export type Style = 'hit' | 'volume'
+export type Settings = { style: Style; goal: Goal; mode: CarbMode; protein: 1.8 | 2.2 | 2.6; override?: { kcal: number; phase: Goal; label: string } | null }
 export type Session = { type: string; intensity: string; minutes: number }
 
 export const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
@@ -20,23 +21,23 @@ export const CLASS_LABEL: Record<string, string> = { rest: 'Rest day', light: 'L
 
 export const catalogue = data.catalogue as Record<string, { label: string; intensities: Record<string, { met: number; glycolytic: boolean }> }>
 export const weight = data.meta.weightKg
-export const plannedSessions = (d: Dow): Session[] => ((data.meta.week as Record<string, Session[]>)[d] ?? [])
+export const plannedSessions = (d: Dow, style: Style = 'hit'): Session[] => (((data.meta.weeks as unknown as Record<Style, Record<string, Session[]>>)[style])[d] ?? [])
 type PlanT = { days: Record<Dow, DayPlan>; weekly: Record<string, number>; warnings: { level: string; code: string; msg: string }[] }
 /** Plan for a goal-derived calorie target: nearest 50 kcal on the exported grid (2.2 g/kg protein, flexible carbs). */
-export const gridPlan = (phase: Goal, kcal: number) => (data.grid as unknown as Record<string, PlanT>)[`${phase}|${Math.min(3800, Math.max(2000, Math.round(kcal / 50) * 50))}`]
-export const getPlan = (s: Settings): PlanT => s.override ? gridPlan(s.override.phase, s.override.kcal)
-  : data.plans[`${s.goal}|${s.mode}|${s.protein}` as keyof typeof data.plans] as unknown as PlanT
+export const gridPlan = (phase: Goal, kcal: number, style: Style = 'hit') => (data.grid as unknown as Record<string, PlanT>)[`${style}|${phase}|${Math.min(3800, Math.max(2000, Math.round(kcal / 50) * 50))}`]
+export const getPlan = (s: Settings): PlanT => s.override ? gridPlan(s.override.phase, s.override.kcal, s.style)
+  : data.plans[`${s.style}|${s.goal}|${s.mode}|${s.protein}` as keyof typeof data.plans] as unknown as PlanT
 /** Apply the engine's "extra session" delta (computed on the baseline plan) to whichever plan is active. */
 export const applySession = (plan: DayPlan, adj: { before: DayPlan; after: DayPlan }): DayPlan =>
   ({ ...plan, class: adj.after.class, kcal: plan.kcal + adj.after.kcal - adj.before.kcal, carbs: plan.carbs + adj.after.carbs - adj.before.carbs, netKcal: adj.after.netKcal })
 export const sessionInfo = (x: Session) => (data.sessions as unknown as Record<string, { net: number; low: number; high: number; peri: Peri }>)[`${x.type}|${x.intensity}|${x.minutes}`]
-export const adjustInfo = (d: Dow, x: Session) => (data.adjust as Record<string, { before: DayPlan; after: DayPlan; othersKcalDelta: number }>)[`${d}|${x.type}|${x.intensity}|${x.minutes}`]
+export const adjustInfo = (d: Dow, x: Session, style: Style = 'hit') => (data.adjust as Record<string, { before: DayPlan; after: DayPlan; othersKcalDelta: number }>)[`${style}|${d}|${x.type}|${x.intensity}|${x.minutes}`]
 export const sessionLabel = (x: Session) => `${catalogue[x.type]?.label ?? x.type} · ${x.intensity} · ${x.minutes} min`
 
 /** Today's targets after planned load, any extra session and the optional eat-back. Shared by Today and the Add screen. */
 export function todayTarget(settings: Settings, extra: Session | null, eatBack: boolean) {
   const dow = todayDow(), plan = getPlan(settings).days[dow]
-  const adj = extra ? adjustInfo(dow, extra) : null
+  const adj = extra ? adjustInfo(dow, extra, settings.style) : null
   const base = adj ? applySession(plan, adj) : plan
   const eb = extra && eatBack ? Math.round(sessionInfo(extra).net / 10) * 10 : 0
   return { dow, plan, base, t: { kcal: base.kcal + eb, p: base.protein, c: base.carbs + Math.round(eb / 4), f: base.fat } }

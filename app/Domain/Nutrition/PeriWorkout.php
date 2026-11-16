@@ -41,6 +41,10 @@ final class PeriWorkout
             ];
         }
 
+        if (isset($pre['carbsG']) && !$r['glycolytic'] && $r['met'] < 5.0) {
+            $pre['note'] = 'Low-volume lifting (HIT) needs no carb loading. A normal mixed meal 1-3 h before is enough; protein matters more than carbs here.';
+        }
+
         // DURING
         $during = ($session['minutes'] >= 60 && $r['met'] >= 8.0)
             ? ['carbsGPerHour' => [30, 60], 'note' => 'Hard session >=60 min: 30-60 g/h carbs plus fluids/sodium.']

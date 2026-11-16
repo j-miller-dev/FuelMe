@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CLASS_LABEL, DAYS, DAY_NAMES, getPlan, plannedSessions, sessionLabel, todayDow, weight, type CarbMode, type Dow, type Goal, type Settings } from '../engine'
+import { CLASS_LABEL, DAYS, DAY_NAMES, getPlan, plannedSessions, sessionLabel, todayDow, weight, type CarbMode, type Dow, type Goal, type Settings, type Style } from '../engine'
 
 const Seg = <T extends string | number>({ value, options, onChange }: { value: T; options: [T, string][]; onChange: (v: T) => void }) => (
   <div className="flex gap-2">{options.map(([v, l]) => (
@@ -44,7 +44,7 @@ export default function Targets({ settings, set }: { settings: Settings; set: (s
 
       <section className="rounded-2xl bg-surface p-4">
         <div className="flex items-baseline justify-between"><h2 className="text-lg font-semibold">{DAY_NAMES[sel]} · {CLASS_LABEL[d.class]}</h2><span className="text-2xl font-bold tabular-nums">{d.kcal}<span className="text-sm text-muted"> kcal</span></span></div>
-        <p className="text-xs text-muted">{plannedSessions(sel).map(sessionLabel).join(' + ') || 'No training planned'}</p>
+        <p className="text-xs text-muted">{plannedSessions(sel, settings.style).map(sessionLabel).join(' + ') || 'No training planned'}</p>
         <div className="mt-3 flex h-3 overflow-hidden rounded-full bg-raised" aria-hidden>
           <div style={{ width: `${d.protein * 4 / tot * 100}%`, background: 'var(--color-protein)' }} /><div style={{ width: `${d.carbs * 4 / tot * 100}%`, background: 'var(--color-carbs)' }} /><div style={{ width: `${d.fat * 9 / tot * 100}%`, background: 'var(--color-fat)' }} />
         </div>
@@ -57,6 +57,11 @@ export default function Targets({ settings, set }: { settings: Settings; set: (s
       </section>
 
       <section className="rounded-2xl bg-surface p-4 space-y-3">
+        <div><div className="mb-1 text-xs text-muted">Lifting style</div>
+          <Seg<Style> value={settings.style} onChange={style => set({ ...settings, style })} options={[['hit', 'HIT (Mentzer-style)'], ['volume', 'Higher volume']]} />
+          <p className="mt-2 text-xs text-muted">{settings.style === 'hit'
+            ? 'Few hard sets to failure, long rests. A HIT session burns little (about 120 kcal net for 40 min, an estimate), so lifting-only days get no extra carbs. BJJ and conditioning days drive your carb and timing needs. Protein stays the same every day, rest days included, because recovery is the longer part of the cycle.'
+            : 'Many sets, shorter rests. Lifting days carry more carbs. Protein stays the same every day.'}</p></div>
         <div><div className="mb-1 text-xs text-muted">Goal</div>
           <Seg<Goal> value={settings.goal} onChange={goal => set({ ...settings, goal, override: null })} options={[['bulk', 'Lean bulk'], ['maintain', 'Maintain'], ['cut', 'Cut']]} /></div>
         <div><div className="mb-1 text-xs text-muted">Protein</div>

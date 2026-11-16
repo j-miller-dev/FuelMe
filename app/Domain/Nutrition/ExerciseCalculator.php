@@ -19,6 +19,7 @@ final class ExerciseCalculator
         ]],
         'lifting' => ['label' => 'Weight training', 'intensities' => [
             'light'    => ['met' => 3.5, 'src' => 'Compendium 02054 multiple exercises 8-15 reps', 'glycolytic' => false],
+            'hit'      => ['met' => 3.5, 'src' => 'Compendium 02054 (closest code). Mentzer-style HIT = few sets to failure with long rests, so the session-average MET is low. ESTIMATE.', 'glycolytic' => false],
             'standard' => ['met' => 5.0, 'src' => 'Compendium 02052 squats/deadlift slow or explosive', 'glycolytic' => false],
             'heavy'    => ['met' => 6.0, 'src' => 'Compendium 02050 resistance, vigorous effort', 'glycolytic' => false],
         ]],

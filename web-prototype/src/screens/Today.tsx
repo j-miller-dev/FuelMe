@@ -20,7 +20,7 @@ export default function Today({ settings, extra, eatBack, logged, openSession, c
   const { dow, plan, base, t } = todayTarget(settings, extra, eatBack)
   const add = logged.reduce((a, i) => ({ kcal: a.kcal + i.kcal * i.n, p: a.p + i.p * i.n, c: a.c + i.c * i.n, f: a.f + i.f * i.n }), { kcal: 0, p: 0, c: 0, f: 0 })
   const e = { kcal: day.eaten.kcal + add.kcal, p: day.eaten.p + add.p, c: day.eaten.c + add.c, f: day.eaten.f + add.f }
-  const sessions = [...plannedSessions(dow), ...(extra ? [extra] : [])]
+  const sessions = [...plannedSessions(dow, settings.style), ...(extra ? [extra] : [])]
   const main = sessions.length ? sessions.reduce((a, b) => (sessionInfo(b)?.net ?? 0) > (sessionInfo(a)?.net ?? 0) ? b : a) : null
   const peri = main ? sessionInfo(main)?.peri : null
   const delta = t.kcal - plan.kcal

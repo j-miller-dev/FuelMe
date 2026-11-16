@@ -19,7 +19,7 @@ export default function GoalScreen({ trendKg, tdee, settings, set }: { trendKg: 
   const targetKg = m ? m.targetKg : parseFloat(target) || trendKg
   const a = useMemo(() => assess(trendKg, targetKg, days, exp, tdee), [trendKg, targetKg, days, exp, tdee])
   const phase: Phase = a.direction === 'gain' ? 'bulk' : a.direction === 'loss' ? 'cut' : 'maintain'
-  const plan = gridPlan(phase, a.kcalTarget), carbs = DAYS.map(d => plan.days[d].carbs)
+  const plan = gridPlan(phase, a.kcalTarget, settings.style), carbs = DAYS.map(d => plan.days[d].carbs)
   const [label, cls] = STATUS[a.status]
   const kgPerWk = a.planRatePctPerWeek / 100 * trendKg
   const label2 = kind === 'muscle' ? `+${muscle} kg muscle by ${fmtDate(date)}` : `${targetKg.toFixed(1)} kg by ${fmtDate(date)}`
