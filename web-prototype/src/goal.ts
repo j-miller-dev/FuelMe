@@ -21,7 +21,7 @@ export function assess(trendKg: number, targetKg: number, days: number, experien
   const cap = direction === 'loss' ? CUT_CAP : BULK_CAP[experience], abs = Math.abs(rate)
   const status = direction === 'maintain' || abs <= cap + 1e-9 ? 'on_track' : abs <= 2 * cap ? 'too_fast' : 'not_achievable'
   const plan = sign * Math.min(abs, cap)
-  const balance = plan / 100 * trendKg * kcalPerKg / 7, pct = balance / tdee * 100
+  const balance = Math.round(plan / 100 * trendKg * kcalPerKg / 7 * 1e6) / 1e6, pct = balance / tdee * 100
   const warnings: string[] = []
   if (status !== 'on_track') warnings.push(status === 'too_fast'
     ? 'That date needs more than the safe weekly rate. Your plan uses the cap, so you will land short unless you move the date or the target.'

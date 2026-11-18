@@ -38,6 +38,7 @@ final class GoalPlanner
         };
         $plan = $sign * min($abs, $cap);
         $balance = $plan / 100 * $trendKg * $kcalPerKg / 7;
+        $balance = round($balance, 6); // kills float noise so exact halves (e.g. 137.5) round the same on every platform
         $pct = $balance / $tdee * 100;
         $warnings = [];
         if ($status !== 'on_track') {
