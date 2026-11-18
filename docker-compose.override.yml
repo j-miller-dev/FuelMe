@@ -1,0 +1,5 @@
+# Local development only: Docker Compose loads this file automatically. Coolify deploys with an explicit
+# `-f docker-compose.yml`, so it is ignored there (and the host port never collides with anything on the server).
+services:
+  app:
+    ports: ["${APP_PORT:-8000}:80"]
