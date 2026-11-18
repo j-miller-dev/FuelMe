@@ -15,3 +15,4 @@ public/hot
 !.env.example
 database/*.sqlite
 tests
+bootstrap/cache/*.php
