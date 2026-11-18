@@ -66,7 +66,7 @@ jobs:
 
   # Backup -> restore round trip. A backup that has never been restored is not a backup (BLUEPRINT M0 acceptance).
   backup-restore:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16
