@@ -108,8 +108,12 @@ jobs:
               "training_age"=>"1to3","lifting_style"=>"hit","energy_unit"=>"kcal","phase"=>"bulk","rate_pct_per_week"=>null,"protein_g_per_kg"=>2.2,
             ], "onboarding");
           '
+      - name: Diagnose pg client
+        run: |
+          command -v pg_dump; pg_dump --version; pg_isready
+          psql --no-psqlrc -tA -c 'select version()'
       - name: Back up
-        run: bash scripts/backup.sh
+        run: bash -x scripts/backup.sh
       - name: Restore into a scratch database and compare row counts
         run: bash scripts/restore-test.sh
       - name: A truncated dump must be rejected
