@@ -1,6 +1,6 @@
 # FUEL — personal adaptive nutrition app
 
-Single-user, self-hosted PWA. Laravel 12 + Inertia + React 19 + TS + Tailwind v4 + PostgreSQL 16.
+Single-user, self-hosted PWA. Laravel 12 + Inertia + React 19 + TS + Tailwind v4 + PostgreSQL 18.
 Source of truth: `BLUEPRINT.md`. Read it fully before any work; follow its milestones in order (M0 → M10).
 
 ## Rules

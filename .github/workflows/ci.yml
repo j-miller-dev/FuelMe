@@ -33,12 +33,12 @@ jobs:
           DB_CONNECTION=sqlite DB_DATABASE=database/database.sqlite php artisan migrate:reset --force
           DB_CONNECTION=sqlite DB_DATABASE=database/database.sqlite php artisan migrate --force
 
-  # The same suite and migrations against real PostgreSQL 16 (extensions, jsonb, constraints).
+  # The same suite and migrations against real PostgreSQL 18 (extensions, jsonb, constraints).
   postgres:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18
         env: { POSTGRES_DB: fuel_test, POSTGRES_USER: fuel, POSTGRES_PASSWORD: fuel }
         ports: ['5432:5432']
         options: >-
@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18
         env: { POSTGRES_DB: fuel, POSTGRES_USER: fuel, POSTGRES_PASSWORD: fuel }
         ports: ['5432:5432']
         options: >-
@@ -91,11 +91,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with: { php-version: '8.3', extensions: 'mbstring, intl, pgsql, pdo_pgsql, gmp, bcmath', coverage: none }
-      - name: Install a pg client that matches the server (16)
+      - name: Install a pg client that matches the server (18)
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgresql-client-16
-          echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+          sudo apt-get install -y postgresql-client-18
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: cp .env.example .env && php artisan key:generate
       - run: php artisan migrate --force

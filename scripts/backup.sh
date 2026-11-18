@@ -32,9 +32,8 @@ if [ "$(date +%u)" = "7" ]; then
   cp "$final" "$BACKUP_DIR/weekly/$(basename "$final")"
 fi
 
-prune() { # dir keep
-  # shellcheck disable=SC2012
-  ls -1t "$1"/fuel-*.dump 2>/dev/null | tail -n +"$(( $2 + 1 ))" | while read -r old; do
+prune() { # dir keep: delete all but the newest <keep> dumps. An empty or missing dir is fine (find, not ls: no glob failure under pipefail).
+  { find "$1" -maxdepth 1 -type f -name 'fuel-*.dump' -printf '%T@ %p\n' 2>/dev/null || true; } | sort -rn | tail -n +"$(( $2 + 1 ))" | cut -d' ' -f2- | while read -r old; do
     echo "[backup] pruning $old"; rm -f "$old"
   done
 }

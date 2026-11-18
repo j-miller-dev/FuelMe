@@ -1,4 +1,4 @@
--- FUEL schema (PostgreSQL 16). Reference for M1 Laravel migrations. Single user, but user_id kept everywhere.
+-- FUEL schema (PostgreSQL 18). Reference for M1 Laravel migrations. Single user, but user_id kept everywhere.
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
 

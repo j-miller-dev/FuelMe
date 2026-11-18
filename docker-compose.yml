@@ -1,6 +1,6 @@
 # FUEL stack: app, queue worker, scheduler, redis, nightly backup.
-# PostgreSQL is NOT in this file: use Coolify's Postgres 16 and set DB_HOST/DB_PORT/DB_DATABASE/DB_USERNAME/DB_PASSWORD.
-# Local:   cp .env.example .env, point DB_* at a reachable Postgres 16, then docker compose up --build (http://localhost:8000)
+# PostgreSQL is NOT in this file: use Coolify's Postgres 18 and set DB_HOST/DB_PORT/DB_DATABASE/DB_USERNAME/DB_PASSWORD.
+# Local:   cp .env.example .env, point DB_* at a reachable Postgres 18, then docker compose up --build (http://localhost:8000)
 # Coolify: deploy this file as a Docker Compose resource; set the env vars from .env.example in the UI.
 x-app: &app
   build: .
