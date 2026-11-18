@@ -1,5 +1,6 @@
-# FUEL stack: app, queue worker, scheduler, postgres, redis, nightly backup.
-# Local:   cp .env.example .env && docker compose up --build   (then http://localhost:8000)
+# FUEL stack: app, queue worker, scheduler, redis, nightly backup.
+# PostgreSQL is NOT in this file: use Coolify's Postgres 16 and set DB_HOST/DB_PORT/DB_DATABASE/DB_USERNAME/DB_PASSWORD.
+# Local:   cp .env.example .env, point DB_* at a reachable Postgres 16, then docker compose up --build (http://localhost:8000)
 # Coolify: deploy this file as a Docker Compose resource; set the env vars from .env.example in the UI.
 x-app: &app
   build: .
@@ -8,8 +9,6 @@ x-app: &app
   env_file: [.env]
   environment: &app-env
     DB_CONNECTION: pgsql
-    DB_HOST: postgres
-    DB_PORT: 5432
     REDIS_HOST: redis
     CACHE_STORE: redis
     QUEUE_CONNECTION: redis
@@ -17,7 +16,6 @@ x-app: &app
   volumes:
     - storage:/app/storage
   depends_on:
-    postgres: { condition: service_healthy }
     redis: { condition: service_healthy }
 
 services:
@@ -38,21 +36,6 @@ services:
     depends_on:
       app: { condition: service_healthy }
 
-  postgres:
-    image: postgres:16
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${DB_DATABASE:-fuel}
-      POSTGRES_USER: ${DB_USERNAME:-fuel}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -70,15 +53,13 @@ services:
       context: .
       dockerfile: docker/backup/Dockerfile
     restart: unless-stopped
-    depends_on:
-      postgres: { condition: service_healthy }
     environment:
       TZ: ${FUEL_TIMEZONE:-Australia/Melbourne}
-      PGHOST: postgres
-      PGPORT: 5432
-      PGDATABASE: ${DB_DATABASE:-fuel}
-      PGUSER: ${DB_USERNAME:-fuel}
-      PGPASSWORD: ${DB_PASSWORD}
+      PGHOST: ${DB_HOST:?set DB_HOST}
+      PGPORT: ${DB_PORT:-5432}
+      PGDATABASE: ${DB_DATABASE:?set DB_DATABASE}
+      PGUSER: ${DB_USERNAME:?set DB_USERNAME}
+      PGPASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
       BACKUP_DIR: /backups
       BACKUP_AT: ${BACKUP_AT:-02:30}
       BACKUP_KEEP_DAILY: ${BACKUP_KEEP_DAILY:-14}
@@ -90,7 +71,6 @@ services:
       - backups:/backups
 
 volumes:
-  pgdata:
   redisdata:
   storage:
   backups:

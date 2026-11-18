@@ -4,13 +4,19 @@ Passkeys, the camera and PWA install all need **HTTPS on a stable hostname**. Co
 
 ## 1. Deploy
 1. In Coolify: New Resource -> Docker Compose -> this repo -> `docker-compose.yml`. Attach your domain to the `app` service (port 80).
-2. Set environment variables (see `.env.example`). Required: `APP_KEY` (`php artisan key:generate --show`), `APP_URL=https://your.domain` (the passkey relying-party ID is derived from this host; changing it later breaks existing passkeys), `DB_PASSWORD`.
-3. Deploy. The `app` container runs migrations on boot. Health check: `/up`.
-4. Open the site and create your account (first-run only), then set `REGISTRATION_ENABLED=false` and redeploy. Registration also closes by itself once a user exists.
-5. On your phone: Security -> Add a passkey, then browser menu -> Install app.
+2. Database: use the Coolify-managed PostgreSQL 16 (not in the compose file). Create a database for FUEL and attach the app to the same Coolify network so its hostname resolves. The DB user must be allowed to `CREATE EXTENSION` (a superuser is fine); the first migration enables `pg_trgm`, `unaccent` and `btree_gin`.
+3. Set environment variables in Coolify (see `.env.example`):
+   - `APP_KEY` (`php artisan key:generate --show`)
+   - `APP_URL=https://your.domain` (the passkey relying-party ID is derived from this host; changing it later breaks existing passkeys)
+   - `DB_HOST` (Coolify's internal Postgres hostname), `DB_PORT=5432`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+   - `REGISTRATION_ENABLED=true` for first run only
+   The backup service reuses these `DB_*` values and refuses to start if one is missing.
+4. Deploy. The `app` container runs migrations on boot. Health check: `/up`.
+5. Open the site and create your account (first-run only), then set `REGISTRATION_ENABLED=false` and redeploy. Registration also closes by itself once a user exists.
+6. On your phone: Security -> Add a passkey, then browser menu -> Install app.
 
 ## 2. Backups
-The `backup` service runs `scripts/backup.sh` daily at 02:30 (`FUEL_TIMEZONE`), keeps 14 daily and 8 Sunday dumps in the `backups` volume, and checks each dump is readable.
+The `backup` service (a `postgres:16` image, matching Coolify's server version) runs `scripts/backup.sh` daily at 02:30 (`FUEL_TIMEZONE`), keeps 14 daily and 8 Sunday dumps in the `backups` volume, and checks each dump is readable.
 
 Set an off-box copy; a backup on the same disk is not protection. Any rclone remote works. S3-compatible example (Hetzner Object Storage), no config file needed:
 
