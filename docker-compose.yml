@@ -1,0 +1,96 @@
+# FUEL stack: app, queue worker, scheduler, postgres, redis, nightly backup.
+# Local:   cp .env.example .env && docker compose up --build   (then http://localhost:8000)
+# Coolify: deploy this file as a Docker Compose resource; set the env vars from .env.example in the UI.
+x-app: &app
+  build: .
+  image: fuel-app
+  restart: unless-stopped
+  env_file: [.env]
+  environment: &app-env
+    DB_CONNECTION: pgsql
+    DB_HOST: postgres
+    DB_PORT: 5432
+    REDIS_HOST: redis
+    CACHE_STORE: redis
+    QUEUE_CONNECTION: redis
+    SESSION_DRIVER: redis
+  volumes:
+    - storage:/app/storage
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+
+services:
+  app:
+    <<: *app
+    command: ["app"]
+    ports: ["${APP_PORT:-8000}:80"]
+
+  worker:
+    <<: *app
+    command: ["worker"]
+    depends_on:
+      app: { condition: service_healthy }
+
+  scheduler:
+    <<: *app
+    command: ["scheduler"]
+    depends_on:
+      app: { condition: service_healthy }
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-fuel}
+      POSTGRES_USER: ${DB_USERNAME:-fuel}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backup:
+    build:
+      context: .
+      dockerfile: docker/backup/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      TZ: ${FUEL_TIMEZONE:-Australia/Melbourne}
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: ${DB_DATABASE:-fuel}
+      PGUSER: ${DB_USERNAME:-fuel}
+      PGPASSWORD: ${DB_PASSWORD}
+      BACKUP_DIR: /backups
+      BACKUP_AT: ${BACKUP_AT:-02:30}
+      BACKUP_KEEP_DAILY: ${BACKUP_KEEP_DAILY:-14}
+      BACKUP_KEEP_WEEKLY: ${BACKUP_KEEP_WEEKLY:-8}
+      BACKUP_RCLONE_REMOTE: ${BACKUP_RCLONE_REMOTE:-}
+      # rclone reads RCLONE_CONFIG_<REMOTE>_* env vars, so no config file is needed (see docs/DEPLOY.md).
+    env_file: [.env]
+    volumes:
+      - backups:/backups
+
+volumes:
+  pgdata:
+  redisdata:
+  storage:
+  backups:

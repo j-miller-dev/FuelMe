@@ -1,6 +1,8 @@
 name: CI
 on: [push, pull_request]
+
 jobs:
+  # Pure-PHP engine + 40-person TDEE simulation. No Composer needed (BLUEPRINT 10: simulation is a CI gate).
   engine:
     runs-on: ubuntu-latest
     steps:
@@ -8,6 +10,114 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with: { php-version: '8.3' }
       - run: php tests/Engine/run.php
+
+  # Laravel app on the fast in-memory SQLite database: Pest (Engine + Feature) and the front-end type check/build.
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.3', extensions: 'mbstring, intl, sqlite3, pdo_sqlite, gmp, bcmath', coverage: none }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run build
+      - run: ./vendor/bin/pest
+      - name: Migrations are reversible
+        run: |
+          touch database/database.sqlite
+          DB_CONNECTION=sqlite DB_DATABASE=database/database.sqlite php artisan migrate --force
+          DB_CONNECTION=sqlite DB_DATABASE=database/database.sqlite php artisan migrate:reset --force
+          DB_CONNECTION=sqlite DB_DATABASE=database/database.sqlite php artisan migrate --force
+
+  # The same suite and migrations against real PostgreSQL 16 (extensions, jsonb, constraints).
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_DB: fuel_test, POSTGRES_USER: fuel, POSTGRES_PASSWORD: fuel }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U fuel -d fuel_test" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: fuel_test
+      DB_USERNAME: fuel
+      DB_PASSWORD: fuel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.3', extensions: 'mbstring, intl, pgsql, pdo_pgsql, gmp, bcmath', coverage: none }
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      - name: Migrate, roll back, migrate again (reversible on Postgres)
+        run: |
+          php artisan migrate --force
+          php artisan migrate:reset --force
+          php artisan migrate --force
+      - name: Feature tests on PostgreSQL
+        run: ./vendor/bin/pest --testsuite=Feature
+
+  # Backup -> restore round trip. A backup that has never been restored is not a backup (BLUEPRINT M0 acceptance).
+  backup-restore:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_DB: fuel, POSTGRES_USER: fuel, POSTGRES_PASSWORD: fuel }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U fuel -d fuel" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: fuel
+      DB_USERNAME: fuel
+      DB_PASSWORD: fuel
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: fuel
+      PGPASSWORD: fuel
+      PGDATABASE: fuel
+      BACKUP_DIR: ${{ github.workspace }}/backups
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.3', extensions: 'mbstring, intl, pgsql, pdo_pgsql, gmp, bcmath', coverage: none }
+      - name: Install a pg client that matches the server (16)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-16
+          echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      - run: php artisan migrate --force
+      - name: Seed a user, a profile and targets through the real onboarding code path
+        run: |
+          php artisan tinker --execute '
+            $u = App\Models\User::factory()->create();
+            app(App\Services\OnboardingService::class)->apply($u, [
+              "sex"=>"male","dob"=>"1996-01-01","height_cm"=>180,"weight_kg"=>74,"body_fat_pct"=>14,"job"=>"on_feet","shift"=>"afternoon",
+              "training_age"=>"1to3","lifting_style"=>"hit","energy_unit"=>"kcal","phase"=>"bulk","rate_pct_per_week"=>null,"protein_g_per_kg"=>2.2,
+            ], "onboarding");
+          '
+      - name: Back up
+        run: bash scripts/backup.sh
+      - name: Restore into a scratch database and compare row counts
+        run: bash scripts/restore-test.sh
+      - name: A truncated dump must be rejected
+        run: |
+          f=$(ls -1t "$BACKUP_DIR"/daily/fuel-*.dump | head -n1)
+          head -c 200 "$f" > "$BACKUP_DIR/bad.dump"
+          if bash scripts/restore-test.sh "$BACKUP_DIR/bad.dump"; then echo "corrupt dump was accepted"; exit 1; fi
+
   web-prototype:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: web-prototype } }

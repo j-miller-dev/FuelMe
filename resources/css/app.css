@@ -1,0 +1,40 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+/* FUEL design tokens (BLUEPRINT section 4). Dark-first; light follows the OS. Colour token is `canvas`, not `base`. */
+:root {
+  --canvas: #0B0D10; --surface: #12161B; --raised: #1A2027;
+  --ink: #E8ECF0; --muted: #8A94A0;
+  --accent: #4DF0B0; --on-accent: #0B0D10;
+  --protein: #5B9DFF; --carbs: #FFB547; --fat: #FF6B8A; --danger: #FF6B6B;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --canvas: #F4F6F8; --surface: #FFFFFF; --raised: #E9EDF1;
+    --ink: #12161B; --muted: #566270;
+    --accent: #0A7F58; --on-accent: #FFFFFF;
+    --protein: #1D6FE0; --carbs: #B26A00; --fat: #C72C54; --danger: #C62828;
+    color-scheme: light;
+  }
+}
+
+@theme inline {
+  --color-canvas: var(--canvas); --color-surface: var(--surface); --color-raised: var(--raised);
+  --color-ink: var(--ink); --color-muted: var(--muted);
+  --color-accent: var(--accent); --color-on-accent: var(--on-accent);
+  --color-protein: var(--protein); --color-carbs: var(--carbs); --color-fat: var(--fat); --color-danger: var(--danger);
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+}
+
+html, body { background: var(--canvas); color: var(--ink); }
+body {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  -webkit-tap-highlight-color: transparent;
+  padding-top: env(safe-area-inset-top);
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
