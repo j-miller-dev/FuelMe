@@ -97,6 +97,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-common
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          # The runner's libpq-dev (unused here; setup-php ships pdo_pgsql prebuilt) conflicts with the PGDG upgrade over /usr/bin/pg_config.
+          sudo apt-get remove -y libpq-dev
           sudo apt-get install -y postgresql-client-18
           echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
       - run: composer install --no-interaction --prefer-dist --no-progress
