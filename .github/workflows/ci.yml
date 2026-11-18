@@ -93,7 +93,10 @@ jobs:
         with: { php-version: '8.3', extensions: 'mbstring, intl, pgsql, pdo_pgsql, gmp, bcmath', coverage: none }
       - name: Install a pg client that matches the server (18)
         run: |
+          # The runner's default apt sources do not carry 18: add the official PostgreSQL (PGDG) repository first.
           sudo apt-get update
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get install -y postgresql-client-18
           echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
       - run: composer install --no-interaction --prefer-dist --no-progress
