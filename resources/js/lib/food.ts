@@ -18,6 +18,7 @@ export interface FoodHit {
 export interface LogRow {
   id: number; local_date: string; meal_slot: Slot; food_id: number | null; name: string; grams: number | null; serving_label: string | null
   kcal: number; protein: number; carbs: number; fat: number; fibre: number | null; source: string
+  meal_id?: number | null; portions?: number | null
 }
 export interface Macros { kcal: number; protein: number; carbs: number; fat: number }
 

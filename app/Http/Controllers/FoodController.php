@@ -56,6 +56,8 @@ class FoodController extends Controller
     public function destroy(Request $request, Food $food): JsonResponse
     {
         $this->authorizeOwn($request, $food);
+        $usedIn = DB::table('meal_items')->join('meals', 'meals.id', '=', 'meal_items.meal_id')->where('meal_items.food_id', $food->id)->distinct()->pluck('meals.name')->all();
+        abort_if($usedIn, 422, 'Used in ' . implode(', ', array_slice($usedIn, 0, 3)) . '. Take it out of the meal first.');
         $food->delete();   // food_logs.food_id is set null; their name + macro snapshots stay
 
         return response()->json(['deleted' => $food->id]);

@@ -26,7 +26,7 @@ class FoodLog extends Model
             'id' => $this->id, 'local_date' => $this->local_date->toDateString(), 'meal_slot' => $this->meal_slot,
             'food_id' => $this->food_id, 'name' => $this->name, 'grams' => $this->grams, 'serving_label' => $this->serving_label,
             'kcal' => $this->kcal, 'protein' => $this->protein, 'carbs' => $this->carbs, 'fat' => $this->fat, 'fibre' => $this->fibre,
-            'source' => $this->source,
+            'source' => $this->source, 'meal_id' => $this->meal_id, 'portions' => $this->portions === null ? null : (float) $this->portions,
         ];
     }
 }

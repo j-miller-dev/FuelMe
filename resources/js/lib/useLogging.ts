@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, uuid } from '@/lib/http'
+import type { Meal } from '@/lib/meal'
 import { hitName, macrosFor, type FoodHit, type LogRow, type Slot } from '@/lib/food'
 
 export type NewLog =
   | { kind: 'food'; food: FoodHit; grams: number; slot: Slot; serving_label: string | null }
+  | { kind: 'meal'; meal: Meal; portions: number; batch_id: number | null; slot: Slot }
   | { kind: 'quick'; name: string; kcal: number | null; protein: number; carbs: number; fat: number; slot: Slot }
 
 export interface Toast { msg: string; undo?: () => void; error?: boolean }
@@ -39,13 +41,20 @@ export function useLogging(initial: LogRow[], date: string) {
         const kcal = it.kcal && it.kcal > 0 ? it.kcal : Math.round(4 * it.protein + 4 * it.carbs + 9 * it.fat)
         return { id: tempId--, local_date: date, meal_slot: it.slot, food_id: null, name: it.name || 'Quick add', grams: null, serving_label: null, kcal, protein: it.protein, carbs: it.carbs, fat: it.fat, fibre: null, source: 'quick' }
       }
+      if (it.kind === 'meal') {
+        const p = it.meal.computed.portion
+        return { id: tempId--, local_date: date, meal_slot: it.slot, food_id: null, name: it.meal.name, grams: p.grams * it.portions, serving_label: `${it.portions} ${it.portions === 1 ? 'portion' : 'portions'}`,
+          kcal: p.kcal * it.portions, protein: p.protein * it.portions, carbs: p.carbs * it.portions, fat: p.fat * it.portions, fibre: null, source: 'meal', meal_id: it.meal.id, portions: it.portions }
+      }
       const m = macrosFor(it.food.per100, it.grams)
       return { id: tempId--, local_date: date, meal_slot: it.slot, food_id: it.food.id, name: hitName(it.food), grams: it.grams, serving_label: it.serving_label, ...m, fibre: null, source: 'search' }
     })
     setLogs((l) => [...l, ...temps])
     const body = {
       local_date: date,
-      items: items.map((it) => it.kind === 'quick'
+      items: items.map((it) => it.kind === 'meal'
+        ? { idempotency_key: uuid(), meal_slot: it.slot, source: 'meal', meal_id: it.meal.id, portions: it.portions, batch_id: it.batch_id }
+        : it.kind === 'quick'
         ? { idempotency_key: uuid(), meal_slot: it.slot, source: 'quick', name: it.name, kcal: it.kcal, protein: it.protein, carbs: it.carbs, fat: it.fat }
         : { idempotency_key: uuid(), meal_slot: it.slot, source: 'search', food_id: it.food.id, grams: it.grams, serving_label: it.serving_label }),
     }
@@ -66,7 +75,9 @@ export function useLogging(initial: LogRow[], date: string) {
   const repeat = useCallback(async (l: LogRow, slot: Slot = l.meal_slot) => {
     const temp: LogRow = { ...l, id: tempId--, meal_slot: slot, source: 'search' }
     setLogs((x) => [...x, temp])
-    const item = l.food_id && l.grams
+    const item = l.meal_id && l.portions
+      ? { idempotency_key: uuid(), meal_slot: slot, source: 'meal', meal_id: l.meal_id, portions: l.portions }
+      : l.food_id && l.grams
       ? { idempotency_key: uuid(), meal_slot: slot, source: 'search', food_id: l.food_id, grams: l.grams, serving_label: l.serving_label }
       : { idempotency_key: uuid(), meal_slot: slot, source: 'quick', name: l.name, kcal: l.kcal, protein: l.protein, carbs: l.carbs, fat: l.fat }
     try {

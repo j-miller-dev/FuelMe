@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Foods\LocalDay;
+use App\Domain\Foods\MealMath;
 use App\Domain\Foods\Portion;
 use App\Models\Food;
 use App\Models\FoodLog;
@@ -26,8 +27,11 @@ class LogController extends Controller
             'items' => ['required', 'array', 'min:1', 'max:40'],
             'items.*.idempotency_key' => ['required', 'uuid'],
             'items.*.meal_slot' => ['required', Rule::in(FoodLog::SLOTS)],
-            'items.*.source' => ['required', Rule::in(['search', 'quick'])],
+            'items.*.source' => ['required', Rule::in(['search', 'quick', 'meal'])],
             'items.*.food_id' => ['nullable', 'integer', 'exists:foods,id'],
+            'items.*.meal_id' => ['nullable', 'integer', 'exists:meals,id'],
+            'items.*.batch_id' => ['nullable', 'integer', 'exists:meal_batches,id'],
+            'items.*.portions' => ['nullable', 'numeric', 'min:0.05', 'max:50'],
             'items.*.grams' => ['nullable', 'numeric', 'min:0.1', 'max:5000'],
             'items.*.serving_label' => ['nullable', 'string', 'max:80'],
             'items.*.name' => ['nullable', 'string', 'max:200'],
@@ -49,7 +53,7 @@ class LogController extends Controller
 
                     continue;
                 }
-                $snap = $this->snapshot($it, $user->id, $i);
+                $snap = ($it['source'] ?? '') === 'meal' ? $this->mealSnapshot($it, $user->id) : $this->snapshot($it, $user->id, $i);
                 $out[] = FoodLog::create($snap + [
                     'user_id' => $user->id, 'local_date' => $date, 'logged_at' => now(), 'meal_slot' => $it['meal_slot'],
                     'source' => $it['source'], 'idempotency_key' => $it['idempotency_key'],
@@ -82,6 +86,10 @@ class LogController extends Controller
                 ['kcal' => $log->kcal, 'protein' => $log->protein, 'carbs' => $log->carbs, 'fat' => $log->fat, 'fibre' => $log->fibre],
                 (float) $log->grams, (float) $data['grams'],
             ) + ['grams' => $data['grams'], 'serving_label' => $data['serving_label'] ?? null];
+            if ($log->portions !== null) {   // a meal log keeps its portions in step, so a prep batch's remaining count stays right
+                $changes['portions'] = round((float) $log->portions * (float) $data['grams'] / (float) $log->grams, 2);
+                $changes['serving_label'] = null;
+            }
         }
         if (isset($data['meal_slot'])) {
             $changes['meal_slot'] = $data['meal_slot'];
@@ -140,6 +148,45 @@ class LogController extends Controller
         });
 
         return response()->json(['logs' => array_map(fn ($l) => $l->toPayload(), $created)], 201);
+    }
+
+    /**
+     * A logged meal: macros come from the recipe as it is NOW, then are frozen into the log. Give portions (1, 0.5, 1.5) or a weight
+     * (250 g of a 400 g portion = 0.625). A batch, when given, is drawn down and cannot go below zero.
+     *
+     * @return array<string,mixed>
+     */
+    private function mealSnapshot(array $it, int $userId): array
+    {
+        abort_if(empty($it['meal_id']), 422, 'Pick a meal.');
+        abort_unless(DB::table('meals')->where('id', $it['meal_id'])->where('user_id', $userId)->exists(), 404);
+        $meal = app(MealController::class)->one((int) $it['meal_id'], $userId);
+        $calc = $meal['computed'];
+        abort_if($calc['incomplete'] > 0, 422, "{$meal['name']} has an ingredient with no energy data. Edit the meal first.");
+
+        $portions = ! empty($it['portions']) ? (float) $it['portions']
+            : (! empty($it['grams']) ? MealMath::portionsForGrams((float) $it['grams'], (float) $calc['portion']['grams']) : 1.0);
+        abort_if($portions < 0.05 || $portions > 50, 422, 'That is not a sensible number of portions.');
+
+        $batchId = null;
+        if (! empty($it['batch_id'])) {
+            $batch = collect($meal['batches'])->firstWhere('id', (int) $it['batch_id']);
+            abort_unless($batch, 404);
+            abort_if($portions > $batch['remaining'] + 0.0001, 422, 'Only ' . rtrim(rtrim(number_format($batch['remaining'], 2, '.', ''), '0'), '.') . ' portions left in that batch.');
+            $batchId = (int) $it['batch_id'];
+        }
+
+        $label = ! empty($it['portions']) || empty($it['grams'])
+            ? rtrim(rtrim(number_format($portions, 2, '.', ''), '0'), '.') . ($portions == 1.0 ? ' portion' : ' portions')
+            : rtrim(rtrim(number_format((float) $it['grams'], 1, '.', ''), '0'), '.') . ' g';
+
+        return [
+            'food_id' => null, 'meal_id' => (int) $it['meal_id'], 'batch_id' => $batchId, 'portions' => round($portions, 2), 'name' => $meal['name'],
+            'grams' => round($calc['portion']['grams'] * $portions, 2), 'serving_label' => $label,
+            'kcal' => round($calc['portion']['kcal'] * $portions, 2), 'protein' => round($calc['portion']['protein'] * $portions, 2),
+            'carbs' => round($calc['portion']['carbs'] * $portions, 2), 'fat' => round($calc['portion']['fat'] * $portions, 2),
+            'fibre' => round($calc['portion']['fibre'] * $portions, 2),
+        ];
     }
 
     /** @return array<string,mixed> the name/grams/macros columns for one item */
