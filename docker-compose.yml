@@ -9,14 +9,14 @@ x-app: &app
   env_file: [.env]
   environment: &app-env
     DB_CONNECTION: pgsql
-    REDIS_HOST: redis
+    REDIS_HOST: fuel-redis
     CACHE_STORE: redis
     QUEUE_CONNECTION: redis
     SESSION_DRIVER: redis
   volumes:
     - storage:/app/storage
   depends_on:
-    redis: { condition: service_healthy }
+    fuel-redis: { condition: service_healthy }
 
 services:
   app:
@@ -37,7 +37,8 @@ services:
     depends_on:
       app: { condition: service_healthy }
 
-  redis:
+  # Not named plain "redis": on Coolify's shared network another stack's "redis" answers to the same alias and connections land on either.
+  fuel-redis:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]

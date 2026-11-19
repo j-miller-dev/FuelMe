@@ -120,3 +120,11 @@ it('rejects an invalid recipe', function () {
     $this->actingAs($u)->postJson('/meals', ['items' => []] + $base)->assertStatus(422);
     $this->actingAs($u)->postJson('/meals', ['tags' => ['nope']] + $base)->assertStatus(422);
 });
+
+it('survives a profile saved with a bad timezone', function () {
+    $u = loggedInUser();
+    DB::table('profiles')->where('user_id', $u->id)->update(['tz' => '0']);
+
+    $this->actingAs($u)->get('/')->assertOk();
+    $this->actingAs($u)->postJson('/logs', ['items' => [['idempotency_key' => (string) Str::uuid(), 'meal_slot' => 'snack', 'source' => 'quick', 'name' => 'x', 'kcal' => 100]]])->assertCreated();
+});

@@ -7,7 +7,8 @@ return [
      */
     'registration_enabled' => env('REGISTRATION_ENABLED', true),
 
-    'default_timezone' => env('FUEL_TIMEZONE', 'Australia/Melbourne'),
+    // A mistyped FUEL_TIMEZONE (e.g. "0") must not take the Today page down: anything that is not a real zone name falls back.
+    'default_timezone' => in_array(env('FUEL_TIMEZONE'), timezone_identifiers_list(), true) ? env('FUEL_TIMEZONE') : 'Australia/Melbourne',
 
     // Day rolls over at this local hour so late-night eating lands on the right day (BLUEPRINT section 3).
     'rollover_hour' => (int) env('FUEL_ROLLOVER_HOUR', 3),
