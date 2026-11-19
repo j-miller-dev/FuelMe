@@ -1,4 +1,4 @@
-import { Head, router, useForm } from '@inertiajs/react'
+import { Head, Link, router, useForm } from '@inertiajs/react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
@@ -78,6 +78,7 @@ export default function Security({ passkeys }: { passkeys: Passkey[] }) {
         </form>
       </section>
 
+      <Link href="/settings/about" className="mb-4 block text-center text-sm text-muted underline">About &amp; data sources</Link>
       <Button variant="ghost" className="w-full" onClick={() => router.post('/logout')}>Sign out</Button>
     </AppLayout>
   )

@@ -1,16 +1,51 @@
 {
-  "capsicum": ["bell pepper", "pepper"],
-  "mince": ["ground beef", "minced beef"],
-  "rockmelon": ["cantaloupe"],
-  "zucchini": ["courgette"],
-  "coriander": ["cilantro"],
-  "yoghurt": ["yogurt"],
-  "weet-bix": ["weetbix", "weet bix"],
-  "up&go": ["up & go", "sanitarium up & go"],
-  "prawn": ["shrimp"],
-  "eggplant": ["aubergine"],
-  "spring onion": ["scallion", "green onion"],
-  "porterhouse": ["sirloin steak"],
-  "chips": ["fries", "hot chips"],
-  "biscuit": ["cookie"]
+  "capsicum": [
+    "bell pepper",
+    "pepper"
+  ],
+  "mince": [
+    "ground beef",
+    "minced beef"
+  ],
+  "rockmelon": [
+    "cantaloupe"
+  ],
+  "zucchini": [
+    "courgette"
+  ],
+  "coriander": [
+    "cilantro"
+  ],
+  "yoghurt": [
+    "yogurt"
+  ],
+  "weet-bix": [
+    "weetbix",
+    "weet bix",
+    "wheat biscuit"
+  ],
+  "up&go": [
+    "up & go",
+    "sanitarium up & go"
+  ],
+  "prawn": [
+    "shrimp"
+  ],
+  "eggplant": [
+    "aubergine"
+  ],
+  "spring onion": [
+    "scallion",
+    "green onion"
+  ],
+  "porterhouse": [
+    "sirloin steak"
+  ],
+  "chips": [
+    "fries",
+    "hot chips"
+  ],
+  "biscuit": [
+    "cookie"
+  ]
 }

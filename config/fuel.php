@@ -12,6 +12,12 @@ return [
     // Day rolls over at this local hour so late-night eating lands on the right day (BLUEPRINT section 3).
     'rollover_hour' => (int) env('FUEL_ROLLOVER_HOUR', 3),
 
+    // Open Food Facts asks automated clients for a custom User-Agent. Generic by default; add your own contact if you like.
+    'off_user_agent' => env('FUEL_OFF_USER_AGENT', 'FUEL/1.0 (self-hosted personal nutrition app)'),
+
+    // Weekly refresh of the Australian Open Food Facts subset (downloads ~1.5 GB, then deletes it). Off by default.
+    'off_auto_import' => (bool) env('FUEL_OFF_AUTO_IMPORT', false),
+
     // 7700 kcal per kg of body-weight change (BLUEPRINT 9.1; configurable).
     'kcal_per_kg' => (float) env('FUEL_KCAL_PER_KG', 7700),
 

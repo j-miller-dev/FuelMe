@@ -24,3 +24,5 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 database/*.sqlite
+/storage/imports/*
+!/storage/imports/.gitignore

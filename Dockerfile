@@ -32,7 +32,7 @@ COPY --from=assets /app/public/build /app/public/build
 COPY docker/app/Caddyfile /etc/caddy/Caddyfile
 COPY docker/app/entrypoint.sh /usr/local/bin/entrypoint
 RUN chmod +x /usr/local/bin/entrypoint \
- && mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
+ && mkdir -p storage/framework/{cache,sessions,views} storage/logs storage/imports bootstrap/cache \
  && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 80

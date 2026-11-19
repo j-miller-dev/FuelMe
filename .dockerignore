@@ -16,3 +16,4 @@ public/hot
 database/*.sqlite
 tests
 bootstrap/cache/*.php
+storage/imports

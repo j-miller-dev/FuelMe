@@ -42,3 +42,15 @@ Real restore (replaces the live database):
     docker compose start app worker scheduler
 
 CI runs backup -> restore-test (plus a corrupt-dump rejection) against Postgres 18 on every push.
+
+## 4. Load the food database (first deploy, once)
+
+Search is empty until the food data is imported. In Coolify open the app resource, Terminal, pick the `app` container, and run:
+
+```bash
+php artisan foods:import-afcd --download --cleanup
+php artisan foods:import-off --download --cleanup
+php artisan foods:reindex
+```
+
+Details, attribution and how to refresh weekly are in `docs/DATA.md`.

@@ -63,6 +63,9 @@ jobs:
           php artisan migrate --force
       - name: Feature tests on PostgreSQL
         run: ./vendor/bin/pest --testsuite=Feature
+      # BLUEPRINT 10: food search p95 < 150 ms with 200k rows (fails the job if exceeded; local result is ~75 ms).
+      - name: Food search benchmark
+        run: php artisan migrate:fresh --force && php artisan foods:bench --rows=200000
 
   # Backup -> restore round trip. A backup that has never been restored is not a backup (BLUEPRINT M0 acceptance).
   backup-restore:

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Domain\Search\Synonyms;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +12,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // AU synonyms live in data/synonyms.json so they can be extended without code changes.
+        $this->app->singleton(Synonyms::class, fn () => Synonyms::fromFile(base_path('data/synonyms.json')));
     }
 
     /**
