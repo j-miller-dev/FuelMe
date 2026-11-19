@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Foods;
 
-use Illuminate\Support\Facades\DB;
-
 /**
  * Streams the Open Food Facts CSV export (tab separated, optionally .gz) and imports the Australian subset.
  * Lines that do not mention en:australia are skipped before parsing, so the 10+ GB export is cheap to scan.
@@ -79,36 +77,6 @@ final class OffImporter
     /** @param list<array{food:array,serving:?array}> $batch */
     private function flush(array $batch): int
     {
-        $now = now();
-        // The same barcode can appear twice in a dump; keep the last. Skip barcodes the user already owns (unique barcode).
-        $byBarcode = [];
-        foreach ($batch as $m) {
-            $byBarcode[$m['food']['barcode']] = $m;
-        }
-        $owned = DB::table('foods')->whereIn('barcode', array_keys($byBarcode))->where('source', '!=', 'off')->pluck('barcode')->all();
-        $byBarcode = array_diff_key($byBarcode, array_flip($owned));
-        if (!$byBarcode) {
-            return 0;
-        }
-
-        $rows = array_map(fn ($m) => $m['food'] + ['created_at' => $now, 'updated_at' => $now], array_values($byBarcode));
-        $update = array_values(array_diff(array_keys($rows[0]), ['source', 'source_id', 'user_id', 'barcode', 'created_at']));
-
-        DB::transaction(function () use ($rows, $byBarcode, $update) {
-            DB::table('foods')->upsert($rows, ['source', 'source_id'], $update);
-            $ids = DB::table('foods')->where('source', 'off')->whereIn('source_id', array_keys($byBarcode))->pluck('id', 'source_id');
-            DB::table('food_servings')->whereIn('food_id', $ids->values())->delete();
-            $servings = [];
-            foreach ($byBarcode as $code => $m) {
-                if ($m['serving']) {
-                    $servings[] = ['food_id' => $ids[$code], 'label' => $m['serving']['label'], 'grams' => $m['serving']['grams']];
-                }
-            }
-            if ($servings) {
-                DB::table('food_servings')->insert($servings);
-            }
-        });
-
-        return count($rows);
+        return count(OffStore::save($batch));
     }
 }

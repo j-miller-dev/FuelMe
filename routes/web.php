@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\BarcodeController;
+use App\Http\Controllers\FoodController;
 use App\Http\Controllers\FoodSearchController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\OnboardingController;
@@ -18,6 +20,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [OnboardingController::class, 'show'])->name('profile.edit');
     Route::put('/profile', [OnboardingController::class, 'store'])->name('profile.update');
 
+    Route::get('/foods', [FoodController::class, 'index'])->name('foods.index');
+    Route::post('/foods', [FoodController::class, 'store'])->name('foods.store');
+    Route::put('/foods/{food}', [FoodController::class, 'update'])->name('foods.update');
+    Route::delete('/foods/{food}', [FoodController::class, 'destroy'])->name('foods.destroy');
+    Route::get('/foods/barcode', [BarcodeController::class, 'show'])->middleware('throttle:60,1')->name('foods.barcode');
     Route::get('/foods/quick', [FoodSearchController::class, 'quick'])->name('foods.quick');
     Route::post('/foods/{food}/favourite', [FoodSearchController::class, 'favourite'])->name('foods.favourite');
 

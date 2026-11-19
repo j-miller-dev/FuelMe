@@ -15,6 +15,9 @@ return [
     // Open Food Facts asks automated clients for a custom User-Agent. Generic by default; add your own contact if you like.
     'off_user_agent' => env('FUEL_OFF_USER_AGENT', 'FUEL/1.0 (self-hosted personal nutrition app)'),
 
+    // Live barcode lookups (BLUEPRINT 5.4). Override only to point at a mirror or a test server.
+    'off_api_base' => env('FUEL_OFF_API_BASE', 'https://world.openfoodfacts.org'),
+
     // Weekly refresh of the Australian Open Food Facts subset (downloads ~1.5 GB, then deletes it). Off by default.
     'off_auto_import' => (bool) env('FUEL_OFF_AUTO_IMPORT', false),
 

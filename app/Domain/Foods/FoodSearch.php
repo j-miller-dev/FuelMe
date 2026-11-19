@@ -156,7 +156,7 @@ final class FoodSearch
             {$trgmBranch}
         ),
         cand AS (SELECT f.* FROM foods f JOIN ids ON ids.id = f.id)
-        SELECT c.id, c.source, c.name, c.brand, c.category, c.state, c.is_liquid, c.density_g_ml, c.needs_check, c.quality,
+        SELECT c.id, c.source, c.name, c.brand, c.barcode, c.stores, c.category, c.state, c.is_liquid, c.density_g_ml, c.needs_check, c.quality,
                c.per100_kcal, c.per100_protein, c.per100_carbs, c.per100_fat, c.per100_fibre, c.per100_sugar,
                c.per100_sat_fat, c.per100_sodium, c.use_count, c.last_used_at,
                (
@@ -227,7 +227,8 @@ final class FoodSearch
             $portion = ServingResolver::resolve($qty, $unit, (bool) $r->is_liquid, $r->density_g_ml !== null ? (float) $r->density_g_ml : null, $sv);
 
             return [
-                'id' => (int) $r->id, 'source' => $r->source, 'name' => $r->name, 'brand' => $r->brand, 'category' => $r->category,
+                'id' => (int) $r->id, 'source' => $r->source, 'name' => $r->name, 'brand' => $r->brand, 'barcode' => $r->barcode ?? null,
+                'stores' => is_string($r->stores ?? null) ? (json_decode($r->stores, true) ?: []) : (array) ($r->stores ?? []), 'category' => $r->category,
                 'state' => $r->state, 'is_liquid' => (bool) $r->is_liquid, 'needs_check' => (bool) $r->needs_check,
                 'per100' => [
                     'kcal' => $this->f($r->per100_kcal), 'protein' => $this->f($r->per100_protein), 'carbs' => $this->f($r->per100_carbs),

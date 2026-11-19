@@ -40,3 +40,20 @@ Open Food Facts asks bots for a User-Agent; the default is generic. Set `FUEL_OF
 Ranking (BLUEPRINT 5.3): `0.40 trigram + 0.20 token match + 0.20 personal + 0.10 source + 0.10 quality - missing-macro penalty`. Token match also rewards names that *start* with the query. A personal alias outranks everything. The personal term uses use count and recency; the time-of-day boost waits for food logging (M3).
 
 Benchmark: `php artisan foods:bench` adds 200k synthetic rows, runs 16 typical queries, prints p50/p95, removes the rows. Last local result on PostgreSQL 18: p50 42 ms, p95 74 ms (limit 150 ms). CI runs it.
+
+## Barcodes and your own foods (M4)
+
+`GET /foods/barcode?code=...` resolves a scan in this order:
+
+1. **Local database**, trying the other spellings of the same product (UPC-A, EAN-13 with a leading zero, GTIN-14). About 40 ms.
+2. **Live Open Food Facts lookup** (`/api/v2/product/{code}`, your `FUEL_OFF_USER_AGENT`, 6 s timeout), only when the code passes the GTIN check digit. A usable product is saved to `foods` for good, so each product is fetched at most once (about 900 ms the first time, 40 ms after). A miss is remembered for 6 hours. A timeout, rate limit or outage reports `offline` and caches nothing.
+3. **Not found / incomplete** (product exists but has no usable nutrition): the app offers "Add it", pre-filled with the barcode and whatever OFF knows (name, brand, serving).
+
+Statuses: `found`, `invalid` (bad length or check digit, nearly always a camera misread), `not_found`, `incomplete`, `offline`.
+
+**Scanning.** Native `BarcodeDetector` where the browser can read EAN-13, otherwise the zxing WASM decoder (about 1 MB, loaded only then, served from this origin, not precached). Formats: EAN-13, EAN-8, UPC-A. The camera needs HTTPS (fine on Coolify) or localhost. Every scan screen also has a "type the barcode" box, which is the fallback when the camera is denied. "Scan several" logs each product at its usual amount and keeps scanning.
+
+**Your foods** (`/foods`, linked from Security): create from a nutrition panel per 100 g or per serve (converted for you), optional fibre/sugar/sat fat/sodium/barcode, a duplicate warning from the same search, edit, delete. Impossible values are refused with a plain message (macros over 100 g per 100 g, over 900 kcal per 100 g). Calories more than 20% away from 4P+4C+9F are kept but flagged "check". Deleting a food never changes logged history.
+
+Not built: photo of the nutrition panel (needs an Anthropic key; BLUEPRINT marks it optional).
+

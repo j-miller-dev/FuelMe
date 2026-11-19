@@ -7,9 +7,9 @@ export function slotForHour(h: number): Slot {
   return h >= 4 && h < 10 ? 'breakfast' : h >= 10 && h < 15 ? 'lunch' : h >= 15 && h < 21 ? 'dinner' : 'snack'
 }
 
-export interface Per100 { kcal: number | null; protein: number | null; carbs: number | null; fat: number | null; fibre: number | null }
+export interface Per100 { kcal: number | null; protein: number | null; carbs: number | null; fat: number | null; fibre: number | null; sugar?: number | null; sat_fat?: number | null; sodium_mg?: number | null }
 export interface FoodHit {
-  id: number; source: string; name: string; brand: string | null; category: string | null; state: string | null
+  id: number; source: string; name: string; brand: string | null; barcode: string | null; stores: string[]; category: string | null; state: string | null
   is_liquid: boolean; needs_check: boolean; per100: Per100
   servings: { label: string; grams: number }[]
   portion: { grams: number | null; label: string }

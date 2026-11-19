@@ -3,10 +3,12 @@ import { api } from '@/lib/http'
 import { SLOTS, SLOT_LABEL, defaultGrams, hitName, macrosFor, unitOf, type FoodHit, type Slot } from '@/lib/food'
 import type { NewLog } from '@/lib/useLogging'
 import { fmtEnergy, energyLabel, type EnergyUnit } from '@/lib/units'
+import { FoodForm, type FoodPrefill } from '@/components/foods/FoodForm'
 import { PortionSheet } from './PortionSheet'
+import { ScanTab } from './ScanTab'
 import { Sheet } from './Sheet'
 
-type Tab = 'search' | 'quick' | 'copy'
+type Tab = 'search' | 'scan' | 'quick' | 'copy'
 interface Quick { frequent: FoodHit[]; recents: FoodHit[]; favourites: FoodHit[] }
 interface SearchResponse { query: { term: string; qty: number | null; unit: string | null }; results: FoodHit[] }
 
@@ -22,6 +24,8 @@ export function AddSheet({ slot, setSlot, eaten, target, unit, previous, onAdd, 
   const [quick, setQuick] = useState<Quick | null>(null)
   const [picked, setPicked] = useState<FoodHit | null>(null)
   const [added, setAdded] = useState<Record<number, number>>({})
+  const [creating, setCreating] = useState<FoodPrefill | null>(null)
+  const [injected, setInjected] = useState<FoodHit | null>(null)
   const seq = useRef(0)
 
   const loadQuick = useCallback(() => api<Quick>('/foods/quick').then(setQuick).catch(() => setQuick({ frequent: [], recents: [], favourites: [] })), [])
@@ -96,7 +100,7 @@ export function AddSheet({ slot, setSlot, eaten, target, unit, previous, onAdd, 
         ))}
       </div>
       <div className="mt-3 flex border-b border-raised px-4" role="tablist">
-        {([['search', 'Search'], ['quick', 'Quick add'], ['copy', 'Copy']] as const).map(([k, l]) => (
+        {([['search', 'Search'], ['scan', 'Scan'], ['quick', 'Quick add'], ['copy', 'Copy']] as const).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
             className={`min-h-11 flex-1 text-sm ${tab === k ? 'border-b-2 border-accent font-medium' : 'text-muted'}`}>{l}</button>
         ))}
@@ -111,7 +115,7 @@ export function AddSheet({ slot, setSlot, eaten, target, unit, previous, onAdd, 
               searchErr ? <p role="alert" className="mt-4 text-sm text-danger">{searchErr}</p>
                 : results === null ? <p className="mt-4 text-sm text-muted">Searching…</p>
                 : results.length ? <ul className="mt-2">{results.map((h) => <Row key={h.id} h={h} hint={h.source === 'afcd' ? 'AFCD' : h.source === 'off' ? 'Packaged' : undefined} />)}</ul>
-                : <p className="mt-4 text-sm text-muted">No match. Try fewer words, or use Quick add.</p>
+                : <p className="mt-4 text-sm text-muted">No match. Try fewer words, or create the food yourself.</p>
             ) : quick === null ? <p className="mt-4 text-sm text-muted">Loading…</p> : (
               <>
                 <Section title="Frequent now" items={quick.frequent} />
@@ -121,8 +125,11 @@ export function AddSheet({ slot, setSlot, eaten, target, unit, previous, onAdd, 
                 {emptyQuick ? <p className="mt-6 text-sm text-muted">Type at least two letters to search AFCD and Australian packaged foods. Foods you log show up here for one-tap repeats.</p> : null}
               </>
             )}
+            <button onClick={() => setCreating({ name: q.trim() })} className="mt-4 min-h-11 w-full rounded-xl bg-surface text-sm text-accent">Can't find it? Create a food</button>
           </>
         )}
+
+        {tab === 'scan' && <ScanTab slot={slot} injected={injected} onAdd={onAdd} onPick={setPicked} onCreate={setCreating} />}
 
         {tab === 'quick' && <QuickAdd slot={slot} onAdd={(it) => { void onAdd([it]); onClose() }} />}
 
@@ -145,6 +152,12 @@ export function AddSheet({ slot, setSlot, eaten, target, unit, previous, onAdd, 
           </div>
         )}
       </div>
+
+      {creating && (
+        <FoodForm prefill={creating} onClose={() => setCreating(null)}
+          onUseExisting={(h) => { setCreating(null); setPicked(h) }}
+          onSaved={(h) => { setCreating(null); if (tab === 'scan') setInjected(h); else setPicked(h) }} />
+      )}
 
       {picked && (
         <PortionSheet title={hitName(picked)} subtitle={[picked.category, picked.state].filter(Boolean).join(' · ')} per100={picked.per100} unit={unitOf(picked) as 'g' | 'mL'}
