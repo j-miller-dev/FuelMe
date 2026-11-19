@@ -48,19 +48,27 @@ final class FoodSearch
                 return DB::select($this->sql($variants, true), $this->only($bind, true, count($variants)));
             });
         }
-        $results = $this->hydrate($rows, $parsed['qty'], $parsed['unit']);
+        $results = $this->hydrate($rows, $parsed['qty'], $parsed['unit'], $userId);
 
         return ['query' => $meta, 'results' => $results];
     }
 
-    /** Recently used foods, for the empty query (frequent/recent/favourites proper arrive with logging in M3). */
-    public function recent(?int $userId, int $limit = self::LIMIT): array
+    /** Foods in the given order, hydrated like search results (portion/last-used/favourite included). Unknown or invisible ids are dropped. */
+    public function byIds(array $ids, ?int $userId): array
     {
-        $rows = DB::table('foods')
-            ->where(fn ($q) => $q->whereNull('user_id')->orWhere('user_id', $userId))
-            ->whereNotNull('last_used_at')->orderByDesc('last_used_at')->limit($limit)->get();
+        if (!$ids) {
+            return [];
+        }
+        $rows = DB::table('foods')->whereIn('id', $ids)->where(fn ($q) => $q->whereNull('user_id')->orWhere('user_id', $userId ?? 0))->get()
+            ->map(fn ($r) => (object) ((array) $r + ['score' => 0]))->keyBy('id');
+        $ordered = [];
+        foreach ($ids as $id) {
+            if (isset($rows[$id])) {
+                $ordered[] = $rows[$id];
+            }
+        }
 
-        return $this->hydrate($rows->map(fn ($r) => (object) ((array) $r + ['score' => 0]))->all(), null, null);
+        return $this->hydrate($ordered, null, null, $userId);
     }
 
     /** Synonym expansion plus singular forms ("2 eggs" must find "Egg, chicken, whole"), deduped and capped. */
@@ -202,15 +210,19 @@ final class FoodSearch
     }
 
     /** @param list<object> $rows */
-    private function hydrate(array $rows, ?float $qty, ?string $unit): array
+    private function hydrate(array $rows, ?float $qty, ?string $unit, ?int $userId): array
     {
         if (!$rows) {
             return [];
         }
         $ids = array_map(fn ($r) => $r->id, $rows);
         $servings = DB::table('food_servings')->whereIn('food_id', $ids)->orderBy('id')->get()->groupBy('food_id');
+        // The weight you last logged of each food (default portion next time) and which are favourites.
+        $last = $userId ? DB::table('food_logs')->whereIn('id', fn ($q) => $q->selectRaw('max(id)')->from('food_logs')
+            ->where('user_id', $userId)->whereIn('food_id', $ids)->whereNotNull('grams')->groupBy('food_id'))->pluck('grams', 'food_id') : collect();
+        $favs = $userId ? DB::table('food_favourites')->where('user_id', $userId)->whereIn('food_id', $ids)->pluck('food_id')->flip() : collect();
 
-        return array_map(function ($r) use ($servings, $qty, $unit) {
+        return array_map(function ($r) use ($servings, $qty, $unit, $last, $favs) {
             $sv = ($servings[$r->id] ?? collect())->map(fn ($s) => ['label' => $s->label, 'grams' => (float) $s->grams])->values()->all();
             $portion = ServingResolver::resolve($qty, $unit, (bool) $r->is_liquid, $r->density_g_ml !== null ? (float) $r->density_g_ml : null, $sv);
 
@@ -224,6 +236,8 @@ final class FoodSearch
                 ],
                 'servings' => $sv,
                 'portion' => $portion,
+                'last_grams' => isset($last[$r->id]) ? (float) $last[$r->id] : null,
+                'is_favourite' => isset($favs[$r->id]),
                 'score' => round((float) $r->score, 4),
             ];
         }, $rows);

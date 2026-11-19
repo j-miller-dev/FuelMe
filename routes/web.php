@@ -2,18 +2,29 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\FoodSearchController;
+use App\Http\Controllers\LogController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\SecurityController;
+use App\Http\Controllers\TodayController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
-    Route::get('/', [PlanController::class, 'show'])->name('home');
+    Route::get('/', [TodayController::class, 'show'])->name('home');
+    Route::get('/plan', [PlanController::class, 'show'])->name('plan');
 
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');
     Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
     Route::get('/profile', [OnboardingController::class, 'show'])->name('profile.edit');
     Route::put('/profile', [OnboardingController::class, 'store'])->name('profile.update');
+
+    Route::get('/foods/quick', [FoodSearchController::class, 'quick'])->name('foods.quick');
+    Route::post('/foods/{food}/favourite', [FoodSearchController::class, 'favourite'])->name('foods.favourite');
+
+    Route::post('/logs', [LogController::class, 'store'])->middleware('throttle:240,1')->name('logs.store');
+    Route::post('/logs/copy', [LogController::class, 'copy'])->name('logs.copy');
+    Route::patch('/logs/{log}', [LogController::class, 'update'])->name('logs.update');
+    Route::delete('/logs/{log}', [LogController::class, 'destroy'])->name('logs.destroy');
 
     Route::get('/foods/search', [FoodSearchController::class, 'index'])->middleware('throttle:120,1')->name('foods.search');
 

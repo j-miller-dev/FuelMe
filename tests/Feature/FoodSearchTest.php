@@ -116,8 +116,7 @@ it('handles hostile and empty input', function () {
     expect(DB::table('foods')->count())->toBe(1);
 });
 
-it('returns recently used foods for an empty query', function () {
-    food('Old thing');
-    $r = food('Recent thing', ['last_used_at' => now()]);
-    expect(array_column(find('')->json('results'), 'id'))->toBe([$r]);
+it('returns nothing for an empty query (recents live at /foods/quick)', function () {
+    food('Recent thing', ['last_used_at' => now()]);
+    expect(find('')->json('results'))->toBe([]);
 });

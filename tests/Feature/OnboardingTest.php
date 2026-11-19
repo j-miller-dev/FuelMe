@@ -55,7 +55,7 @@ it('produces a prior TDEE and first targets (M1 acceptance)', function () {
 it('renders the plan page from the stored targets, in kJ when asked', function () {
     me()->post('/onboarding', onboardingInput(['energy_unit' => 'kj']));
 
-    me()->get('/')->assertInertia(fn (Assert $p) => $p
+    me()->get('/plan')->assertInertia(fn (Assert $p) => $p
         ->component('Plan')
         ->where('energyUnit', 'kj')
         ->where('goal.phase', 'bulk')

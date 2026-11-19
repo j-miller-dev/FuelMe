@@ -3,7 +3,8 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 const tabs = [
-  { href: '/', label: 'Plan' },
+  { href: '/', label: 'Today' },
+  { href: '/plan', label: 'Plan' },
   { href: '/profile', label: 'Profile' },
   { href: '/settings/security', label: 'Security' },
 ] as const
@@ -13,7 +14,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const path = url.split('?')[0]
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col">
-      <main className="flex-1 px-4 pb-28 pt-6">{children}</main>
+      <main className="flex-1 px-4 pb-40 pt-6">{children}</main>
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-10 border-t border-raised bg-canvas/95 backdrop-blur" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <ul className="mx-auto flex max-w-md">
           {tabs.map((t) => (
