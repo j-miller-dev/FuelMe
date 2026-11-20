@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Domain\Foods\LocalDay;
 use App\Models\FoodLog;
 use App\Models\TargetHistory;
+use App\Services\ProgressService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,7 +13,7 @@ use Inertia\Response;
 
 class TodayController extends Controller
 {
-    public function show(Request $request): Response|RedirectResponse
+    public function show(Request $request, ProgressService $progress): Response|RedirectResponse
     {
         $user = $request->user();
         $profile = $user->profile;
@@ -24,6 +25,7 @@ class TodayController extends Controller
         $date = $request->query('date');
         $date = is_string($date) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) && $date <= $today && $date > date('Y-m-d', strtotime($today . ' -400 days')) ? $date : $today;
 
+        $overview = $progress->overview($user);
         $target = TargetHistory::where('user_id', $user->id)->latest('effective_from')->latest('id')->firstOrFail();
         $key = LocalDay::dayKey($date);
         $day = $target->plan_json['plan']['days'][$key] ?? null;
@@ -42,7 +44,10 @@ class TodayController extends Controller
             ],
             'logs' => $logs->map->toPayload()->values(),
             'previous' => ['date' => $prev, 'count' => $prevLogs->count(), 'kcal' => (int) round($prevLogs->sum('kcal'))],
-            'calibrating' => true, // until M7's expenditure filter reports a settled estimate
+            'calibrating' => $overview['summary']['calibrating'] ?? true,
+            // The undereating nudge shows on today only, so history pages are not cluttered. Never shaming: it just offers 2-3 usual foods.
+            'nudge' => $date === $today && ($overview['undereating']['flag'] ?? false) ? $overview['undereating'] : null,
+            'weighedToday' => (bool) \Illuminate\Support\Facades\DB::table('weight_logs')->where('user_id', $user->id)->where('local_date', $today)->exists(),
             'serverHour' => (int) now($profile->tz)->format('G'),
         ]);
     }

@@ -9,6 +9,7 @@ use App\Http\Controllers\LogController;
 use App\Http\Controllers\MealController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\ShoppingController;
 use App\Http\Controllers\TodayController;
@@ -16,6 +17,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [TodayController::class, 'show'])->name('home');
+    Route::get('/progress', [ProgressController::class, 'show'])->name('progress');
+    Route::post('/weights', [ProgressController::class, 'weigh'])->middleware('throttle:60,1')->name('weights.store');
+    Route::delete('/weights/{weight}', [ProgressController::class, 'destroyWeight'])->whereNumber('weight')->name('weights.destroy');
+    Route::post('/progress/checkin', [ProgressController::class, 'applyCheckin'])->name('progress.checkin');
     Route::get('/plan', [PlanController::class, 'show'])->name('plan');
 
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');

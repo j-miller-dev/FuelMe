@@ -12,7 +12,8 @@ interface Props {
   date: string; isToday: boolean; dayClass: string | null
   target: { kcal: number; protein: number; carbs: number; fat: number }
   logs: LogRow[]; previous: { date: string; count: number; kcal: number }
-  calibrating: boolean; serverHour: number
+  calibrating: boolean; serverHour: number; weighedToday: boolean
+  nudge: { lowDays: number; loggedDays: number; gapKcal: number; gapProtein: number; adds: { name: string; grams: number; unit: string; kcal: number; protein: number }[] } | null
 }
 
 const CLASS_LABEL: Record<string, string> = { rest: 'Rest day', light: 'Light day', moderate: 'Moderate day', high: 'High day', very_high: 'Very high day' }
@@ -48,6 +49,13 @@ export default function Today(p: Props) {
       <div className="mt-3"><CalorieRing eaten={t.kcal} target={p.target.kcal} unit={unit} calibrating={p.calibrating} /></div>
       {p.calibrating ? (
         <div className="mt-2 rounded-2xl bg-surface p-3 text-sm"><span className="text-carbs">Calibrating.</span> <span className="text-muted">Targets are a starting estimate until your weigh-ins and food logs refine your expenditure.</span></div>
+      ) : null}
+      {p.isToday && !p.weighedToday ? <Link href="/progress" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>Weigh in today</span><span className="text-accent" aria-hidden>›</span></Link> : null}
+      {p.nudge ? (
+        <Link href="/progress" className="mt-2 block rounded-2xl bg-surface p-3 text-sm">
+          <span className="font-medium">A little under target lately.</span>{' '}
+          <span className="text-muted">{p.nudge.adds.length ? `Easy adds from your usual foods: ${p.nudge.adds.map((a) => a.name).join(', ')}.` : 'Tap for ideas.'}</span>
+        </Link>
       ) : null}
       <MacroRings eaten={t} target={p.target} />
 

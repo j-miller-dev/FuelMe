@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 
 const tabs = [
   { href: '/', label: 'Today' },
+  { href: '/progress', label: 'Progress' },
   { href: '/plan', label: 'Plan' },
   { href: '/profile', label: 'Profile' },
   { href: '/settings/security', label: 'Security' },

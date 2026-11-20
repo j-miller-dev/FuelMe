@@ -64,6 +64,24 @@ class TargetService
     }
 
     /**
+     * Re-plan the macros around a NEW calorie target (the weekly check-in). Same planner as onboarding, so protein and fat rules and the
+     * carb periodisation are identical; only the calorie target and the body weight (now the trend weight) change.
+     *
+     * @param array{sex:string,body_fat_pct:?float,lifting_style:string,phase:string,protein_g_per_kg:?float,carb_mode?:string} $in
+     * @return array{days:array,weekly:array,warnings:array}
+     */
+    public function replan(array $in, float $trendKg, float $kcalTarget): array
+    {
+        $week = config('fuel.seed_week.' . $in['lifting_style']) ?? config('fuel.seed_week.hit');
+        $plan = MacroPlanner::plan([
+            'weightKg' => $trendKg, 'sex' => $in['sex'], 'bodyFatPct' => $in['body_fat_pct'] ?? null, 'phase' => $in['phase'], 'kcalTarget' => $kcalTarget,
+            'week' => $week, 'proteinGPerKg' => $in['protein_g_per_kg'] ?? null, 'carbMode' => $in['carb_mode'] ?? 'flexible',
+        ]);
+
+        return ['days' => $plan['days'], 'weekly' => $plan['weekly'], 'warnings' => $plan['warnings']];
+    }
+
+    /**
      * Deterministic "why" lines (BLUEPRINT principle 2). Every number is read from the engine output.
      *
      * @return list<string>
