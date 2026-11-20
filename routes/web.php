@@ -13,6 +13,7 @@ use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\ShoppingController;
 use App\Http\Controllers\TodayController;
+use App\Http\Controllers\TrainingController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
@@ -21,6 +22,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/weights', [ProgressController::class, 'weigh'])->middleware('throttle:60,1')->name('weights.store');
     Route::delete('/weights/{weight}', [ProgressController::class, 'destroyWeight'])->whereNumber('weight')->name('weights.destroy');
     Route::post('/progress/checkin', [ProgressController::class, 'applyCheckin'])->name('progress.checkin');
+    Route::get('/training', [TrainingController::class, 'show'])->name('training');
+    Route::post('/training/template', [TrainingController::class, 'storeTemplate'])->name('training.template.store');
+    Route::put('/training/template/{id}', [TrainingController::class, 'updateTemplate'])->whereNumber('id')->name('training.template.update');
+    Route::delete('/training/template/{id}', [TrainingController::class, 'destroyTemplate'])->whereNumber('id')->name('training.template.destroy');
+    Route::post('/workouts', [TrainingController::class, 'store'])->middleware('throttle:60,1')->name('workouts.store');
+    Route::post('/workouts/template-session', [TrainingController::class, 'mark'])->name('workouts.mark');
+    Route::patch('/workouts/{workout}', [TrainingController::class, 'update'])->whereNumber('workout')->name('workouts.update');
+    Route::delete('/workouts/{workout}', [TrainingController::class, 'destroy'])->whereNumber('workout')->name('workouts.destroy');
     Route::get('/plan', [PlanController::class, 'show'])->name('plan');
 
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');

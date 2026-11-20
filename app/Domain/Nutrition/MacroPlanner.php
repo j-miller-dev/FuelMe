@@ -14,7 +14,7 @@ namespace App\Domain\Nutrition;
 final class MacroPlanner
 {
     /** Burke 2011 / ACSM-AND-DC 2016 daily carbohydrate ranges, g/kg/day. */
-    private const CARB_RANGE = [
+    public const CARB_RANGE = [
         'rest'      => [3.0, 5.0],
         'light'     => [3.0, 5.0],
         'moderate'  => [5.0, 7.0],
@@ -50,7 +50,7 @@ final class MacroPlanner
             $eff = 0.0;
             $net = 0.0;
             foreach ($p['week'][$d] ?? [] as $s) {
-                $r = ExerciseCalculator::session($s['type'], $s['intensity'], $s['minutes'], $kg);
+                $r = ExerciseCalculator::session($s['type'], $s['intensity'], $s['minutes'], $kg, isset($s['customMet']) ? (float) $s['customMet'] : null);
                 $w = $r['met'] >= 6.0 ? 1.0 : ($r['met'] >= 4.0 ? 0.5 : 0.25);
                 $eff += $s['minutes'] * $w;
                 $net += $r['netKcal'];
@@ -171,7 +171,7 @@ final class MacroPlanner
     }
 
     /** Distribute $total across keys proportional to weights, honouring [min,max]; if impossible, degrade gracefully. */
-    private static function waterFill(array $w, array $min, array $max, float $total, array &$warnings): array
+    public static function waterFill(array $w, array $min, array $max, float $total, array &$warnings): array
     {
         $sumMin = array_sum($min);
         $sumMax = array_sum($max);

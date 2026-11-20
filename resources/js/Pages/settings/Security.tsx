@@ -78,6 +78,7 @@ export default function Security({ passkeys }: { passkeys: Passkey[] }) {
         </form>
       </section>
 
+      <Link href="/training" className="mb-2 block text-center text-sm text-muted underline">Training week</Link>
       <Link href="/shopping" className="mb-2 block text-center text-sm text-muted underline">Shopping lists</Link>
       <Link href="/meals" className="mb-2 block text-center text-sm text-muted underline">Meals</Link>
       <Link href="/foods" className="mb-2 block text-center text-sm text-muted underline">Your foods</Link>

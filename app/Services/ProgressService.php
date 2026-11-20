@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
  */
 class ProgressService
 {
-    public function __construct(private QuickFoods $quick, private TargetService $targets) {}
+    public function __construct(private QuickFoods $quick, private TargetService $targets, private TrainingService $training) {}
 
     /** @return array<string,mixed>|null null until there is a first weigh-in */
     public function overview(User $user): ?array
@@ -133,7 +133,7 @@ class ProgressService
         $plan = $this->targets->replan([
             'sex' => $profile->sex, 'body_fat_pct' => $profile->body_fat_pct, 'lifting_style' => $profile->lifting_style, 'phase' => $user->goal->phase,
             'protein_g_per_kg' => $profile->protein_g_per_kg_override, 'carb_mode' => $profile->carb_mode,
-        ], $o['summary']['trendKg'], (float) $c['proposedKcal']);
+        ], $o['summary']['trendKg'], (float) $c['proposedKcal'], $this->training->templateWeek($user));
 
         $w = $plan['weekly'];
         TargetHistory::create([

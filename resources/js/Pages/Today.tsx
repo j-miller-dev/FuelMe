@@ -4,6 +4,8 @@ import AppLayout from '@/layouts/AppLayout'
 import { AddSheet } from '@/components/today/AddSheet'
 import { PortionSheet } from '@/components/today/PortionSheet'
 import { CalorieRing, MacroRings } from '@/components/today/Rings'
+import { TrainingCard } from '@/components/today/TrainingCard'
+import type { TrainingProps } from '@/lib/training'
 import { SLOTS, SLOT_LABEL, slotForHour, totals, type LogRow, type Slot } from '@/lib/food'
 import { useLogging } from '@/lib/useLogging'
 import { energyLabel, fmtEnergy, type EnergyUnit } from '@/lib/units'
@@ -12,7 +14,7 @@ interface Props {
   date: string; isToday: boolean; dayClass: string | null
   target: { kcal: number; protein: number; carbs: number; fat: number }
   logs: LogRow[]; previous: { date: string; count: number; kcal: number }
-  calibrating: boolean; serverHour: number; weighedToday: boolean
+  calibrating: boolean; serverHour: number; weighedToday: boolean; training: TrainingProps
   nudge: { lowDays: number; loggedDays: number; gapKcal: number; gapProtein: number; adds: { name: string; grams: number; unit: string; kcal: number; protein: number }[] } | null
 }
 
@@ -58,6 +60,7 @@ export default function Today(p: Props) {
         </Link>
       ) : null}
       <MacroRings eaten={t} target={p.target} />
+      <TrainingCard training={p.training} date={p.date} isToday={p.isToday} unit={unit} hour={p.serverHour} />
 
       {bySlot.length === 0 ? (
         <section className="mt-4 rounded-2xl bg-surface p-5 text-center">

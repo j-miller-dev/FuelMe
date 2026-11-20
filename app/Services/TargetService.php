@@ -70,9 +70,9 @@ class TargetService
      * @param array{sex:string,body_fat_pct:?float,lifting_style:string,phase:string,protein_g_per_kg:?float,carb_mode?:string} $in
      * @return array{days:array,weekly:array,warnings:array}
      */
-    public function replan(array $in, float $trendKg, float $kcalTarget): array
+    public function replan(array $in, float $trendKg, float $kcalTarget, ?array $week = null): array
     {
-        $week = config('fuel.seed_week.' . $in['lifting_style']) ?? config('fuel.seed_week.hit');
+        $week ??= config('fuel.seed_week.' . $in['lifting_style']) ?? config('fuel.seed_week.hit');
         $plan = MacroPlanner::plan([
             'weightKg' => $trendKg, 'sex' => $in['sex'], 'bodyFatPct' => $in['body_fat_pct'] ?? null, 'phase' => $in['phase'], 'kcalTarget' => $kcalTarget,
             'week' => $week, 'proteinGPerKg' => $in['protein_g_per_kg'] ?? null, 'carbMode' => $in['carb_mode'] ?? 'flexible',
