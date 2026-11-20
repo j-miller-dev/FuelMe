@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\BarcodeController;
+use App\Http\Controllers\CaptureController;
 use App\Http\Controllers\FoodController;
 use App\Http\Controllers\FoodSearchController;
 use App\Http\Controllers\LogController;
@@ -43,6 +44,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/shopping/{list}/done', [ShoppingController::class, 'done'])->whereNumber('list')->name('shopping.done');
     Route::patch('/shopping/items/{item}', [ShoppingController::class, 'updateItem'])->whereNumber('item')->name('shopping.items.update');
     Route::delete('/shopping/items/{item}', [ShoppingController::class, 'destroyItem'])->whereNumber('item')->name('shopping.items.destroy');
+    Route::post('/capture/parse', [CaptureController::class, 'parse'])->middleware('throttle:20,1')->name('capture.parse');
+    Route::post('/capture/learn', [CaptureController::class, 'learn'])->middleware('throttle:60,1')->name('capture.learn');
     Route::get('/foods/barcode', [BarcodeController::class, 'show'])->middleware('throttle:60,1')->name('foods.barcode');
     Route::get('/foods/quick', [FoodSearchController::class, 'quick'])->name('foods.quick');
     Route::post('/foods/{food}/favourite', [FoodSearchController::class, 'favourite'])->name('foods.favourite');

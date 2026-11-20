@@ -1,0 +1,16 @@
+{
+  "note": "Words the rule-based parser (and the LLM prompt) treat specially. Brands are stripped from the food query and used to boost matches; brand_foods are brands that ARE the food name and stay in the query.",
+  "stores": {"aldi": "aldi", "coles": "coles", "woolworths": "woolworths", "woolies": "woolworths", "iga": "iga", "costco": "costco"},
+  "brands": ["jalna", "burgen", "bega", "sanitarium", "uncle tobys", "chobani", "pauls", "dairy farmers", "farmers union", "arnott's", "arnotts", "carman's", "carmans", "sunrice", "mission", "tip top", "helga's", "helgas", "abbott's", "abbotts", "yoplait", "danone", "lindt", "cadbury", "nestle", "kellogg's", "kelloggs", "bulk nutrients", "musashi", "optimum nutrition", "built", "quest", "barebells", "john west", "sirena", "primo", "hellmann's", "hellmanns", "kraft", "heinz", "masterfoods", "praise", "bundaberg", "cocobella", "vitasoy", "bonsoy", "so good", "devondale", "perfect italiano", "mainland", "philadelphia", "lurpak", "western star", "bertolli", "bellamy's", "nutri-grain", "special k"],
+  "brand_foods": ["weetbix", "weet-bix", "vegemite", "milo", "tim tam", "tim tams", "up&go", "up & go", "up and go", "nutella", "twisties", "shapes", "vita-weat", "vitaweat", "cheezels", "fruit tingles", "cheerios", "froot loops", "coco pops", "rice bubbles", "sultana bran", "just right", "uncle toby's"],
+  "asr_fixes": {"grease yoghurt": "greek yoghurt", "greek yogurt": "greek yoghurt", "port a house": "porterhouse", "porter house": "porterhouse", "weet bix": "weetbix", "weet-bix": "weetbix", "tim tams": "tim tam", "up and go": "up&go", "up & go": "up&go", "hummus": "hummus", "sweet potatoe": "sweet potato", "zuchini": "zucchini", "chiken": "chicken", "brest": "breast", "avacado": "avocado", "avo": "avocado", "bananna": "banana", "oatmeal": "oats", "porridge": "porridge"},
+  "numbers": {"a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12, "half": 0.5, "quarter": 0.25, "couple": 2},
+  "units": {
+    "g": "g", "gram": "g", "grams": "g", "gm": "g", "gms": "g", "kg": "kg", "kilo": "kg", "kilos": "kg", "kilogram": "kg", "kilograms": "kg",
+    "ml": "ml", "millilitre": "ml", "millilitres": "ml", "milliliter": "ml", "milliliters": "ml", "l": "l", "litre": "l", "litres": "l", "liter": "l", "liters": "l",
+    "cup": "cup", "cups": "cup", "tbsp": "tbsp", "tbs": "tbsp", "tablespoon": "tbsp", "tablespoons": "tbsp", "tsp": "tsp", "teaspoon": "tsp", "teaspoons": "tsp",
+    "slice": "slice", "slices": "slice", "can": "can", "cans": "can", "tin": "can", "tins": "can", "piece": "piece", "pieces": "piece", "bar": "bar", "bars": "bar",
+    "handful": "handful", "handfuls": "handful", "serve": "serve", "serves": "serve", "serving": "serve", "servings": "serve", "scoop": "scoop", "scoops": "scoop"
+  },
+  "protected": ["mac and cheese", "fish and chips", "salt and vinegar", "salt and pepper", "sweet and sour", "bread and butter", "peanut butter and jelly", "macaroni and cheese"]
+}

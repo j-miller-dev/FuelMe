@@ -1,0 +1,768 @@
+[
+ {
+  "say": "150g chicken breast",
+  "match": [
+   "chicken.*breast"
+  ],
+  "g": 150
+ },
+ {
+  "say": "200 grams cooked chicken breast",
+  "match": [
+   "chicken.*breast.*(baked|grilled|fried|casseroled|roast|cooked)"
+  ],
+  "g": 200
+ },
+ {
+  "say": "250g raw salmon",
+  "match": [
+   "salmon.*raw"
+  ],
+  "g": 250
+ },
+ {
+  "say": "a can of tuna",
+  "match": [
+   "tuna"
+  ]
+ },
+ {
+  "say": "two scrambled eggs",
+  "match": [
+   "egg.*scrambled"
+  ]
+ },
+ {
+  "say": "2 eggs",
+  "match": [
+   "^egg, chicken, whole|^egg,.*whole"
+  ]
+ },
+ {
+  "say": "3 boiled eggs",
+  "match": [
+   "egg.*(boiled|hard)"
+  ]
+ },
+ {
+  "say": "a poached egg",
+  "match": [
+   "egg.*poached"
+  ]
+ },
+ {
+  "say": "fried egg",
+  "match": [
+   "egg.*fried"
+  ]
+ },
+ {
+  "say": "half an avocado",
+  "match": [
+   "avocado"
+  ]
+ },
+ {
+  "say": "a banana",
+  "match": [
+   "banana"
+  ]
+ },
+ {
+  "say": "an apple",
+  "match": [
+   "^apple"
+  ]
+ },
+ {
+  "say": "a medium orange",
+  "match": [
+   "orange"
+  ]
+ },
+ {
+  "say": "100g blueberries",
+  "match": [
+   "blueberr"
+  ],
+  "g": 100
+ },
+ {
+  "say": "strawberries 150g",
+  "match": [
+   "strawberr"
+  ],
+  "g": 150
+ },
+ {
+  "say": "a cup of cooked rice",
+  "match": [
+   "rice.*(boiled|cooked|rice cooker|steamed)"
+  ]
+ },
+ {
+  "say": "200g cooked white rice",
+  "match": [
+   "rice.*white.*(boiled|cooked|rice cooker)"
+  ],
+  "g": 200
+ },
+ {
+  "say": "100 grams raw oats",
+  "match": [
+   "oats|oat"
+  ],
+  "g": 100
+ },
+ {
+  "say": "40g rolled oats",
+  "match": [
+   "oat"
+  ],
+  "g": 40
+ },
+ {
+  "say": "porridge",
+  "match": [
+   "porridge|oats.*(cooked|boiled|porridge)"
+  ]
+ },
+ {
+  "say": "300 ml milk",
+  "match": [
+   "^milk, cow, fluid|milk.*cow|full cream|milk"
+  ],
+  "g": 300
+ },
+ {
+  "say": "250ml skim milk",
+  "match": [
+   "milk.*skim"
+  ],
+  "g": 250
+ },
+ {
+  "say": "a glass of full cream milk",
+  "match": [
+   "milk"
+  ]
+ },
+ {
+  "say": "30g cheddar cheese",
+  "match": [
+   "cheese.*cheddar|cheddar"
+  ],
+  "g": 30
+ },
+ {
+  "say": "two slices of cheese",
+  "match": [
+   "cheese"
+  ]
+ },
+ {
+  "say": "a tablespoon of peanut butter",
+  "match": [
+   "peanut butter|peanut.*spread"
+  ]
+ },
+ {
+  "say": "20g butter",
+  "match": [
+   "^butter"
+  ],
+  "g": 20
+ },
+ {
+  "say": "a teaspoon of olive oil",
+  "match": [
+   "olive.*oil|oil.*olive"
+  ]
+ },
+ {
+  "say": "1 tbsp olive oil",
+  "match": [
+   "olive.*oil|oil.*olive"
+  ]
+ },
+ {
+  "say": "200 grams greek yoghurt",
+  "match": [
+   "yoghurt|yogurt"
+  ],
+  "g": 200
+ },
+ {
+  "say": "250g natural yoghurt",
+  "match": [
+   "yoghurt|yogurt"
+  ],
+  "g": 250
+ },
+ {
+  "say": "a tablespoon of honey",
+  "match": [
+   "honey"
+  ]
+ },
+ {
+  "say": "100g broccoli",
+  "match": [
+   "broccoli"
+  ],
+  "g": 100
+ },
+ {
+  "say": "150 g sweet potato",
+  "match": [
+   "sweet potato"
+  ],
+  "g": 150
+ },
+ {
+  "say": "200g potato",
+  "match": [
+   "potato"
+  ],
+  "g": 200
+ },
+ {
+  "say": "a cup of spinach",
+  "match": [
+   "spinach"
+  ]
+ },
+ {
+  "say": "100g carrots",
+  "match": [
+   "carrot"
+  ],
+  "g": 100
+ },
+ {
+  "say": "a tomato",
+  "match": [
+   "tomato"
+  ]
+ },
+ {
+  "say": "half a cup of peas",
+  "match": [
+   "pea"
+  ]
+ },
+ {
+  "say": "100g green beans",
+  "match": [
+   "bean"
+  ],
+  "g": 100
+ },
+ {
+  "say": "a handful of almonds",
+  "match": [
+   "almond"
+  ]
+ },
+ {
+  "say": "30g almonds",
+  "match": [
+   "almond"
+  ],
+  "g": 30
+ },
+ {
+  "say": "a handful of walnuts",
+  "match": [
+   "walnut"
+  ]
+ },
+ {
+  "say": "30g cashews",
+  "match": [
+   "cashew"
+  ],
+  "g": 30
+ },
+ {
+  "say": "100g beef mince",
+  "match": [
+   "beef.*mince|mince.*beef"
+  ],
+  "g": 100
+ },
+ {
+  "say": "500g lean beef mince",
+  "match": [
+   "mince"
+  ],
+  "g": 500
+ },
+ {
+  "say": "250g porterhouse steak cooked",
+  "match": [
+   "porterhouse|beef.*(steak|grilled|fried)"
+  ],
+  "g": 250
+ },
+ {
+  "say": "200g rump steak",
+  "match": [
+   "rump|beef.*steak"
+  ],
+  "g": 200
+ },
+ {
+  "say": "150g lamb chops",
+  "match": [
+   "lamb"
+  ],
+  "g": 150
+ },
+ {
+  "say": "100g pork loin",
+  "match": [
+   "pork"
+  ],
+  "g": 100
+ },
+ {
+  "say": "2 slices of bacon",
+  "match": [
+   "bacon"
+  ]
+ },
+ {
+  "say": "a sausage",
+  "match": [
+   "sausage"
+  ]
+ },
+ {
+  "say": "150g grilled chicken thigh",
+  "match": [
+   "chicken.*thigh"
+  ],
+  "g": 150
+ },
+ {
+  "say": "a chicken drumstick",
+  "match": [
+   "chicken.*drumstick|drumstick"
+  ]
+ },
+ {
+  "say": "100g tofu",
+  "match": [
+   "tofu"
+  ],
+  "g": 100
+ },
+ {
+  "say": "a can of baked beans",
+  "match": [
+   "baked beans"
+  ]
+ },
+ {
+  "say": "half a can of chickpeas",
+  "match": [
+   "chickpea"
+  ]
+ },
+ {
+  "say": "100g lentils cooked",
+  "match": [
+   "lentil"
+  ],
+  "g": 100
+ },
+ {
+  "say": "two slices of wholemeal bread",
+  "match": [
+   "wholemeal.*bread|bread.*wholemeal"
+  ]
+ },
+ {
+  "say": "2 slices of white bread",
+  "match": [
+   "bread.*white"
+  ]
+ },
+ {
+  "say": "two slices of toast",
+  "match": [
+   "bread|toast"
+  ]
+ },
+ {
+  "say": "a slice of sourdough",
+  "match": [
+   "sourdough|bread"
+  ]
+ },
+ {
+  "say": "a bagel",
+  "match": [
+   "bagel"
+  ]
+ },
+ {
+  "say": "a wrap",
+  "match": [
+   "wrap|tortilla|bread"
+  ]
+ },
+ {
+  "say": "100g cooked pasta",
+  "match": [
+   "pasta.*(cooked|boiled)"
+  ],
+  "g": 100
+ },
+ {
+  "say": "a cup of cooked pasta",
+  "match": [
+   "pasta"
+  ]
+ },
+ {
+  "say": "100g quinoa cooked",
+  "match": [
+   "quinoa"
+  ],
+  "g": 100
+ },
+ {
+  "say": "a cup of coffee",
+  "match": [
+   "coffee"
+  ]
+ },
+ {
+  "say": "a flat white",
+  "match": [
+   "coffee|milk|flat white"
+  ]
+ },
+ {
+  "say": "a latte",
+  "match": [
+   "coffee|latte|milk"
+  ]
+ },
+ {
+  "say": "black coffee",
+  "match": [
+   "coffee"
+  ]
+ },
+ {
+  "say": "a cup of tea",
+  "match": [
+   "tea"
+  ]
+ },
+ {
+  "say": "a glass of orange juice",
+  "match": [
+   "orange juice|juice.*orange|orange.*juice"
+  ]
+ },
+ {
+  "say": "250ml apple juice",
+  "match": [
+   "apple juice|juice.*apple"
+  ],
+  "g": 250
+ },
+ {
+  "say": "a can of coke",
+  "match": [
+   "cola|coca|coke|soft drink"
+  ]
+ },
+ {
+  "say": "100g dark chocolate",
+  "match": [
+   "chocolate.*dark|dark.*chocolate|chocolate"
+  ],
+  "g": 100
+ },
+ {
+  "say": "a tim tam",
+  "match": [
+   "tim tam"
+  ]
+ },
+ {
+  "say": "tim tams x3",
+  "match": [
+   "tim tam"
+  ]
+ },
+ {
+  "say": "weetbix 2",
+  "match": [
+   "weet-?bix|wheat biscuit|wheat.*biscuit"
+  ]
+ },
+ {
+  "say": "2 weetbix",
+  "match": [
+   "weet-?bix|wheat biscuit|wheat.*biscuit"
+  ]
+ },
+ {
+  "say": "vegemite on toast",
+  "match": [
+   "vegemite|yeast"
+  ]
+ },
+ {
+  "say": "a tablespoon of vegemite",
+  "match": [
+   "vegemite|yeast"
+  ]
+ },
+ {
+  "say": "1 up&go",
+  "match": [
+   "up ?& ?go|up and go|liquid breakfast"
+  ]
+ },
+ {
+  "say": "a milo",
+  "match": [
+   "milo"
+  ]
+ },
+ {
+  "say": "a scoop of protein powder",
+  "match": [
+   "protein|whey"
+  ]
+ },
+ {
+  "say": "a protein bar",
+  "match": [
+   "protein|bar"
+  ]
+ },
+ {
+  "say": "a muesli bar",
+  "match": [
+   "muesli bar|bar.*muesli|muesli"
+  ]
+ },
+ {
+  "say": "a cup of muesli",
+  "match": [
+   "muesli"
+  ]
+ },
+ {
+  "say": "a handful of grapes",
+  "match": [
+   "grape"
+  ]
+ },
+ {
+  "say": "100g watermelon",
+  "match": [
+   "watermelon"
+  ],
+  "g": 100
+ },
+ {
+  "say": "a mango",
+  "match": [
+   "mango"
+  ]
+ },
+ {
+  "say": "two kiwi fruit",
+  "match": [
+   "kiwi"
+  ]
+ },
+ {
+  "say": "a cup of strawberries",
+  "match": [
+   "strawberr"
+  ]
+ },
+ {
+  "say": "100g cottage cheese",
+  "match": [
+   "cottage"
+  ],
+  "g": 100
+ },
+ {
+  "say": "a hamburger",
+  "match": [
+   "hamburger|burger"
+  ]
+ },
+ {
+  "say": "a meat pie",
+  "match": [
+   "pie"
+  ]
+ },
+ {
+  "say": "a slice of pizza",
+  "match": [
+   "pizza"
+  ]
+ },
+ {
+  "say": "hot chips",
+  "match": [
+   "chip|potato.*(fried|chips)"
+  ]
+ },
+ {
+  "say": "200g hummus",
+  "match": [
+   "hummus|hommus"
+  ],
+  "g": 200
+ },
+ {
+  "say": "a slice of cake",
+  "match": [
+   "cake"
+  ]
+ },
+ {
+  "say": "a cup of cornflakes",
+  "match": [
+   "cornflakes|corn flakes"
+  ]
+ },
+ {
+  "say": "30g cornflakes",
+  "match": [
+   "corn.*flake"
+  ],
+  "g": 30
+ },
+ {
+  "say": "2 crumpets",
+  "match": [
+   "crumpet"
+  ]
+ },
+ {
+  "say": "a croissant",
+  "match": [
+   "croissant"
+  ]
+ },
+ {
+  "say": "100g feta",
+  "match": [
+   "feta"
+  ],
+  "g": 100
+ },
+ {
+  "say": "a tablespoon of mayonnaise",
+  "match": [
+   "mayonnaise|mayo"
+  ]
+ },
+ {
+  "say": "1 tsp sugar",
+  "match": [
+   "sugar"
+  ]
+ },
+ {
+  "say": "a can of sardines",
+  "match": [
+   "sardine"
+  ]
+ },
+ {
+  "say": "100g prawns",
+  "match": [
+   "prawn"
+  ],
+  "g": 100
+ },
+ {
+  "say": "150g barramundi",
+  "match": [
+   "barramundi|fish"
+  ],
+  "g": 150
+ },
+ {
+  "say": "a slice of ham",
+  "match": [
+   "ham"
+  ]
+ },
+ {
+  "say": "200g cooked salmon",
+  "match": [
+   "salmon"
+  ],
+  "g": 200
+ },
+ {
+  "say": "a bowl of cereal",
+  "match": [
+   "cereal|flake|bran|muesli"
+  ]
+ },
+ {
+  "say": "100g cooked brown rice",
+  "match": [
+   "brown.*rice|rice.*brown"
+  ],
+  "g": 100
+ },
+ {
+  "say": "a kilo of chicken",
+  "match": [
+   "chicken"
+  ],
+  "g": 1000
+ },
+ {
+  "say": "half a cup of oats",
+  "match": [
+   "oat"
+  ]
+ },
+ {
+  "say": "coles beef mince 5% fat",
+  "match": [
+   "mince"
+  ]
+ },
+ {
+  "say": "300ml chocolate milk",
+  "match": [
+   "milk.*(chocolate|flavoured)|chocolate.*milk"
+  ],
+  "g": 300
+ },
+ {
+  "say": "a glass of soy milk",
+  "match": [
+   "soy"
+  ]
+ },
+ {
+  "say": "250 ml almond milk",
+  "match": [
+   "almond"
+  ],
+  "g": 250
+ }
+]

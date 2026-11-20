@@ -8,8 +8,9 @@ import { PortionSheet } from './PortionSheet'
 import { ScanTab } from './ScanTab'
 import { Sheet } from './Sheet'
 import { MealsTab } from './MealsTab'
+import { CaptureTab } from './CaptureTab'
 
-type Tab = 'search' | 'scan' | 'meals' | 'quick' | 'copy'
+type Tab = 'search' | 'scan' | 'say' | 'meals' | 'quick' | 'copy'
 interface Quick { frequent: FoodHit[]; recents: FoodHit[]; favourites: FoodHit[] }
 interface SearchResponse { query: { term: string; qty: number | null; unit: string | null }; results: FoodHit[] }
 
@@ -101,7 +102,7 @@ export function AddSheet({ slot, setSlot, eaten, target, unit, previous, onAdd, 
         ))}
       </div>
       <div className="mt-3 flex border-b border-raised px-4" role="tablist">
-        {([['search', 'Search'], ['scan', 'Scan'], ['meals', 'Meals'], ['quick', 'Quick'], ['copy', 'Copy']] as const).map(([k, l]) => (
+        {([['search', 'Search'], ['scan', 'Scan'], ['say', 'Say'], ['meals', 'Meals'], ['quick', 'Quick'], ['copy', 'Copy']] as const).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
             className={`min-h-11 flex-1 text-sm ${tab === k ? 'border-b-2 border-accent font-medium' : 'text-muted'}`}>{l}</button>
         ))}
@@ -131,6 +132,8 @@ export function AddSheet({ slot, setSlot, eaten, target, unit, previous, onAdd, 
         )}
 
         {tab === 'scan' && <ScanTab slot={slot} injected={injected} onAdd={onAdd} onPick={setPicked} onCreate={setCreating} />}
+
+        {tab === 'say' && <CaptureTab slot={slot} onAdd={onAdd} onClose={onClose} />}
 
         {tab === 'meals' && <MealsTab slot={slot} onAdd={(it) => { void onAdd([it]); onClose() }} />}
 

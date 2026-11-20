@@ -51,4 +51,18 @@ return [
             'sun' => [],
         ],
     ],
+
+    /*
+    | AI meal capture (BLUEPRINT 6). With no key it runs in basic mode (rule-based parser), which always works.
+    | The model only PARSES text into foods and amounts; every number comes from the food database.
+    | Prices are not assumed: the cap is on TOKENS per calendar month.
+    */
+    'capture' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('FUEL_CAPTURE_MODEL', 'claude-haiku-5-5'),
+        'api_url' => env('ANTHROPIC_API_URL', 'https://api.anthropic.com/v1/messages'),
+        'timeout' => (int) env('FUEL_CAPTURE_TIMEOUT', 8),
+        'monthly_token_cap' => (int) env('FUEL_CAPTURE_MONTHLY_TOKENS', 2000000),
+        'max_chars' => 600,
+    ],
 ];

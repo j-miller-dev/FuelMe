@@ -27,7 +27,7 @@ class LogController extends Controller
             'items' => ['required', 'array', 'min:1', 'max:40'],
             'items.*.idempotency_key' => ['required', 'uuid'],
             'items.*.meal_slot' => ['required', Rule::in(FoodLog::SLOTS)],
-            'items.*.source' => ['required', Rule::in(['search', 'quick', 'meal'])],
+            'items.*.source' => ['required', Rule::in(['search', 'quick', 'meal', 'capture'])],
             'items.*.food_id' => ['nullable', 'integer', 'exists:foods,id'],
             'items.*.meal_id' => ['nullable', 'integer', 'exists:meals,id'],
             'items.*.batch_id' => ['nullable', 'integer', 'exists:meal_batches,id'],
