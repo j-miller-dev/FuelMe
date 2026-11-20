@@ -101,6 +101,7 @@ export default function Plan(p: Props) {
         </ol>
       </details>
 
+      <Link href="/targets" className="mb-2 block min-h-11 rounded-2xl bg-surface px-4 py-3 text-center text-sm text-accent">Adjust my targets</Link>
       <Link href="/training" className="mb-2 block min-h-11 rounded-2xl bg-surface px-4 py-3 text-center text-sm text-accent">Edit your training week</Link>
       <p className="text-xs text-muted">Estimates for planning, not medical advice. <Link href="/profile" className="text-accent underline">Edit your details</Link> to recompute.</p>
     </AppLayout>

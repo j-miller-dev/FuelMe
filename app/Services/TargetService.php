@@ -76,6 +76,7 @@ class TargetService
         $plan = MacroPlanner::plan([
             'weightKg' => $trendKg, 'sex' => $in['sex'], 'bodyFatPct' => $in['body_fat_pct'] ?? null, 'phase' => $in['phase'], 'kcalTarget' => $kcalTarget,
             'week' => $week, 'proteinGPerKg' => $in['protein_g_per_kg'] ?? null, 'carbMode' => $in['carb_mode'] ?? 'flexible',
+            'fatMinGPerKg' => $in['fat_min_g_per_kg'] ?? null,
         ]);
 
         return ['days' => $plan['days'], 'weekly' => $plan['weekly'], 'warnings' => $plan['warnings']];

@@ -167,7 +167,7 @@ export function AddSheet({ slot, setSlot, eaten, target, unit, previous, onAdd, 
 
       {picked && (
         <PortionSheet title={hitName(picked)} subtitle={[picked.category, picked.state].filter(Boolean).join(' · ')} per100={picked.per100} unit={unitOf(picked) as 'g' | 'mL'}
-          servings={picked.servings} initialGrams={defaultGrams(picked)} initialSlot={slot} mode="add" favourite={picked.is_favourite} onFavourite={() => toggleFav(picked)}
+          servings={picked.servings} foodId={picked.id} onServingsChange={(sv) => setPicked((p) => (p ? { ...p, servings: sv } : p))} initialGrams={defaultGrams(picked)} initialSlot={slot} mode="add" favourite={picked.is_favourite} onFavourite={() => toggleFav(picked)}
           onClose={() => setPicked(null)}
           onSubmit={(r) => { setAdded((a) => ({ ...a, [picked.id]: (a[picked.id] ?? 0) + 1 })); void onAdd([{ kind: 'food', food: picked, grams: r.grams, slot: r.slot, serving_label: r.serving_label }]); setPicked(null) }} />
       )}

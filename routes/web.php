@@ -4,6 +4,7 @@ use App\Http\Controllers\AboutController;
 use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\CaptureController;
 use App\Http\Controllers\FoodController;
+use App\Http\Controllers\FoodServingController;
 use App\Http\Controllers\FoodSearchController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\MealController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\SecurityController;
+use App\Http\Controllers\TargetsController;
 use App\Http\Controllers\ShoppingController;
 use App\Http\Controllers\TodayController;
 use App\Http\Controllers\TrainingController;
@@ -31,6 +33,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/workouts/{workout}', [TrainingController::class, 'update'])->whereNumber('workout')->name('workouts.update');
     Route::delete('/workouts/{workout}', [TrainingController::class, 'destroy'])->whereNumber('workout')->name('workouts.destroy');
     Route::get('/plan', [PlanController::class, 'show'])->name('plan');
+    Route::get('/targets', [TargetsController::class, 'show'])->name('targets');
+    Route::put('/targets', [TargetsController::class, 'update'])->name('targets.update');
 
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');
     Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
@@ -62,6 +66,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/capture/learn', [CaptureController::class, 'learn'])->middleware('throttle:60,1')->name('capture.learn');
     Route::get('/foods/barcode', [BarcodeController::class, 'show'])->middleware('throttle:60,1')->name('foods.barcode');
     Route::get('/foods/quick', [FoodSearchController::class, 'quick'])->name('foods.quick');
+    Route::post('/foods/{food}/servings', [FoodServingController::class, 'store'])->whereNumber('food')->middleware('throttle:60,1')->name('foods.servings.store');
+    Route::delete('/foods/servings/{serving}', [FoodServingController::class, 'destroy'])->whereNumber('serving')->name('foods.servings.destroy');
     Route::post('/foods/{food}/favourite', [FoodSearchController::class, 'favourite'])->name('foods.favourite');
 
     Route::post('/logs', [LogController::class, 'store'])->middleware('throttle:240,1')->name('logs.store');

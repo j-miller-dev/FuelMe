@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/AppLayout'
 import { AddSheet } from '@/components/today/AddSheet'
 import { PortionSheet } from '@/components/today/PortionSheet'
 import { CalorieRing, MacroRings } from '@/components/today/Rings'
+import { HitStrip, type Strip } from '@/components/today/HitStrip'
 import { TrainingCard } from '@/components/today/TrainingCard'
 import type { TrainingProps } from '@/lib/training'
 import { SLOTS, SLOT_LABEL, slotForHour, totals, type LogRow, type Slot } from '@/lib/food'
@@ -15,6 +16,7 @@ interface Props {
   target: { kcal: number; protein: number; carbs: number; fat: number }
   logs: LogRow[]; previous: { date: string; count: number; kcal: number }
   calibrating: boolean; serverHour: number; weighedToday: boolean; training: TrainingProps
+  strip: Strip
   nudge: { lowDays: number; loggedDays: number; gapKcal: number; gapProtein: number; adds: { name: string; grams: number; unit: string; kcal: number; protein: number }[] } | null
 }
 
@@ -60,6 +62,7 @@ export default function Today(p: Props) {
         </Link>
       ) : null}
       <MacroRings eaten={t} target={p.target} />
+      {p.isToday ? <HitStrip strip={p.strip} energyLabel={u} fmt={(k) => fmtEnergy(k, unit)} /> : null}
       <TrainingCard training={p.training} date={p.date} isToday={p.isToday} unit={unit} hour={p.serverHour} />
 
       {bySlot.length === 0 ? (

@@ -37,11 +37,14 @@ class ProgressService
         $intake = DB::table('food_logs')->where('user_id', $user->id)->where('local_date', '>=', $first)->groupBy('local_date')->selectRaw('local_date, sum(kcal) as kcal')
             ->pluck('kcal', 'local_date')->map(fn ($k) => (float) $k)->all();
 
-        $targetFor = function (string $date) use ($targets): array {
+        // Your own adjustments count here: "did I eat enough" is measured against what you are aiming for, not the bare recommendation.
+        $offset = (int) $profile->kcal_offset;
+        $proteinOverride = $profile->protein_g_override ? (float) $profile->protein_g_override : null;
+        $targetFor = function (string $date) use ($targets, $offset, $proteinOverride): array {
             $t = $targets->last(fn ($x) => $x->effective_from->toDateString() <= $date) ?? $targets->first();
             $d = $t->plan_json['plan']['days'][LocalDay::dayKey($date)] ?? null;
 
-            return ['kcal' => (float) ($d['kcal'] ?? $t->kcal), 'protein' => (float) ($d['protein'] ?? $t->protein)];
+            return ['kcal' => (float) ($d['kcal'] ?? $t->kcal) + $offset, 'protein' => $proteinOverride ?? (float) ($d['protein'] ?? $t->protein)];
         };
 
         // One row per day from the first weigh-in. Today is incomplete, so its intake is not used (the filter only needs yesterday's).
@@ -133,7 +136,7 @@ class ProgressService
         $plan = $this->targets->replan([
             'sex' => $profile->sex, 'body_fat_pct' => $profile->body_fat_pct, 'lifting_style' => $profile->lifting_style, 'phase' => $user->goal->phase,
             'protein_g_per_kg' => $profile->protein_g_per_kg_override, 'carb_mode' => $profile->carb_mode,
-        ], $o['summary']['trendKg'], (float) $c['proposedKcal'], $this->training->templateWeek($user));
+        ], $o['summary']['trendKg'], (float) $c['proposedKcal'], $this->training->templateWeek($user));  // the recommendation: your overrides are layered on at read time
 
         $w = $plan['weekly'];
         TargetHistory::create([

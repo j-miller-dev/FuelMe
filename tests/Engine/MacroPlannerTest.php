@@ -102,3 +102,16 @@ it('keeps the planner invariants over random weights, phases and weeks', functio
         expect(abs($sum - 7 * $plan['weekly']['kcalTargetUsed']))->toBeLessThanOrEqual(40);
     }
 })->with(range(1, 150));
+
+it('says so when a protein request is capped at 35% of calories', function () {
+    $plan = referencePlan(['kcalTarget' => 2450, 'proteinGPerKg' => 3.0]);   // 222 g asked, cap 214 g (35% of 2450 / 4); the safe floor for this week is 2400
+    expect($plan['days']['mon']['protein'])->toBe(214.0)
+        ->and(collect($plan['warnings'])->pluck('code'))->toContain('protein_capped');
+    expect(collect(referencePlan()['warnings'])->pluck('code'))->not->toContain('protein_capped');
+});
+
+it('raises the fat floor when asked but never lowers it', function () {
+    $base = referencePlan()['weekly']['fat'];
+    expect(referencePlan(['fatMinGPerKg' => 1.4])['weekly']['fat'])->toBeGreaterThan($base)
+        ->and(referencePlan(['fatMinGPerKg' => 0.3])['weekly']['fat'])->toBe($base);
+});

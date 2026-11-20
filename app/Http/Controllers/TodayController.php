@@ -6,6 +6,7 @@ use App\Domain\Foods\LocalDay;
 use App\Models\FoodLog;
 use App\Models\TargetHistory;
 use App\Services\FuelService;
+use App\Services\HitStripService;
 use App\Services\PlanService;
 use App\Services\ProgressService;
 use App\Services\TrainingService;
@@ -16,7 +17,7 @@ use Inertia\Response;
 
 class TodayController extends Controller
 {
-    public function show(Request $request, ProgressService $progress, PlanService $plans, TrainingService $training, FuelService $fuel): Response|RedirectResponse
+    public function show(Request $request, ProgressService $progress, PlanService $plans, TrainingService $training, FuelService $fuel, HitStripService $strip): Response|RedirectResponse
     {
         $user = $request->user();
         $profile = $user->profile;
@@ -50,6 +51,7 @@ class TodayController extends Controller
                 'kcal' => (int) round($day['kcal'] ?? $target->kcal), 'protein' => (int) round($day['protein'] ?? $target->protein),
                 'carbs' => (int) round($day['carbs'] ?? $target->carbs), 'fat' => (int) round($day['fat'] ?? $target->fat),
             ],
+            'strip' => $strip->forUser($user, $today),
             'logs' => $logs->map->toPayload()->values(),
             'previous' => ['date' => $prev, 'count' => $prevLogs->count(), 'kcal' => (int) round($prevLogs->sum('kcal'))],
             'calibrating' => $overview['summary']['calibrating'] ?? true,

@@ -5,10 +5,11 @@ import { SessionSheet } from '@/components/training/SessionSheet'
 import { api } from '@/lib/http'
 import { CLASS_LABEL, DAYS, DAY_LABEL, INTENSITY_LABEL, type Catalogue, type Session, type TemplateRow } from '@/lib/training'
 import { longDate } from '@/lib/progress'
+import hitBanner from '@/assets/hit-banner.webp'
 
-interface Props { template: TemplateRow[]; catalogue: Catalogue; recent: (Session & { date: string })[]; today: string; week: Record<string, { class: string; netKcal: number; carbs: number; kcal: number }>; kg: number }
+interface Props { template: TemplateRow[]; catalogue: Catalogue; recent: (Session & { date: string })[]; today: string; week: Record<string, { class: string; netKcal: number; carbs: number; kcal: number }>; kg: number; style: 'hit' | 'volume' }
 
-export default function Training({ template, catalogue, recent, today, week, kg }: Props) {
+export default function Training({ template, catalogue, recent, today, week, kg, style }: Props) {
   const [sheet, setSheet] = useState<{ kind: 'template'; day: string; row?: TemplateRow } | { kind: 'log'; date: string; row?: Session } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const reload = () => router.reload({ only: ['template', 'week', 'recent'] })
@@ -18,6 +19,7 @@ export default function Training({ template, catalogue, recent, today, week, kg 
   return (
     <AppLayout>
       <Head title="Training" />
+      {style === 'hit' ? <img src={hitBanner} alt="HIT training mode" width={900} height={337} className="mb-3 h-24 w-full rounded-2xl object-cover object-center" /> : null}
       <h1 className="text-2xl font-bold">Training</h1>
       <p className="mt-1 text-sm text-muted">Your usual week. It decides which days get more carbohydrate and when to fuel around sessions. Calories stay the same across the week; they just move to the days you train hardest.</p>
       {error ? <p role="alert" className="mt-2 text-sm text-danger">{error}</p> : null}

@@ -36,6 +36,7 @@ class TrainingController extends Controller
         return Inertia::render('Training', [
             'template' => $this->training->template($user), 'catalogue' => $this->training->catalogue(), 'recent' => $recent, 'today' => $today,
             'week' => $this->summary($user), 'kg' => round($this->training->kg($user), 1),
+            'style' => $user->profile->lifting_style,
         ]);
     }
 

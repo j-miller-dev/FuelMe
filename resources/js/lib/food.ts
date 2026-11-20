@@ -11,7 +11,7 @@ export interface Per100 { kcal: number | null; protein: number | null; carbs: nu
 export interface FoodHit {
   id: number; source: string; name: string; brand: string | null; barcode: string | null; stores: string[]; category: string | null; state: string | null
   is_liquid: boolean; needs_check: boolean; per100: Per100
-  servings: { label: string; grams: number }[]
+  servings: { id?: number | null; label: string; grams: number; own?: boolean }[]
   portion: { grams: number | null; label: string }
   last_grams: number | null; is_favourite: boolean
 }

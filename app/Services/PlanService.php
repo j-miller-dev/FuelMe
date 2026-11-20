@@ -16,24 +16,40 @@ class PlanService
 {
     public function __construct(private TargetService $targets, private TrainingService $training) {}
 
-    /** @return array{latest:TargetHistory,in:array<string,mixed>,kcal:float,kg:float} */
-    public function inputs(User $user): array
+    /**
+     * The inputs to plan with. $withOverrides = false gives the app's own RECOMMENDATION (what the weekly check-in works from);
+     * true layers your adjustments on top: fixed protein grams (or g/kg), a fat floor and a kcal offset. Overrides never edit the recommendation.
+     *
+     * @return array{latest:TargetHistory,in:array<string,mixed>,kcal:float,kg:float}
+     */
+    public function inputs(User $user, bool $withOverrides = true): array
     {
         $latest = TargetHistory::where('user_id', $user->id)->latest('effective_from')->latest('id')->firstOrFail();
         $p = $user->profile;
         $plan = $latest->plan_json;
+        $kg = (float) ($plan['inputs']['weightKg'] ?? 75.0);
+        $kcal = (float) ($plan['plan']['weekly']['kcalTargetUsed'] ?? $latest->kcal);
+        $perKg = $p->protein_g_per_kg_override;
+        $fatMin = null;
+
+        if ($withOverrides) {
+            $kcal += (int) $p->kcal_offset;
+            // Fixed grams win over g/kg. The planner works in g/kg, so convert with the same weight it will use.
+            $perKg = $p->protein_g_override ? $p->protein_g_override / max($kg, 1.0) : $perKg;
+            $fatMin = $p->fat_min_g_per_kg;
+        }
 
         return [
-            'latest' => $latest, 'kg' => (float) ($plan['inputs']['weightKg'] ?? 75.0), 'kcal' => (float) ($plan['plan']['weekly']['kcalTargetUsed'] ?? $latest->kcal),
+            'latest' => $latest, 'kg' => $kg, 'kcal' => $kcal,
             'in' => ['sex' => $p->sex, 'body_fat_pct' => $p->body_fat_pct, 'lifting_style' => $p->lifting_style, 'phase' => $user->goal->phase,
-                'protein_g_per_kg' => $p->protein_g_per_kg_override, 'carb_mode' => $p->carb_mode],
+                'protein_g_per_kg' => $perKg, 'fat_min_g_per_kg' => $fatMin, 'carb_mode' => $p->carb_mode],
         ];
     }
 
     /** @return array{days:array,weekly:array,warnings:array} the plan over the template week */
-    public function base(User $user): array
+    public function base(User $user, bool $withOverrides = true): array
     {
-        $i = $this->inputs($user);
+        $i = $this->inputs($user, $withOverrides);
 
         return $this->targets->replan($i['in'], $i['kg'], $i['kcal'], $this->training->templateWeek($user));
     }
