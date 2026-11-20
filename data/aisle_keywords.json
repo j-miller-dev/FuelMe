@@ -1,0 +1,13 @@
+{
+  "note": "First match wins, tested against the food's category text, then its name. Order matters: specific before general.",
+  "rules": [
+    ["Pantry", ["peanut butter", "nut butter", "almond butter", "coconut milk", "coconut cream", "canned", "tinned"]],
+    ["Frozen", ["frozen", "ice cream", "gelato"]],
+    ["Drinks", ["beverage", "juice", "soft drink", "cordial", "coffee", "tea,", "water,", "energy drink", "beer", "wine", "milk, soy", "almond milk", "oat milk"]],
+    ["Meat & seafood", ["beef", "lamb", "pork", "veal", "chicken", "turkey", "duck", "mince", "bacon", "ham", "sausage", "steak", "meat", "poultry", "fish", "salmon", "tuna", "prawn", "shrimp", "seafood", "barramundi", "cod", "crab", "squid"]],
+    ["Dairy & eggs", ["milk", "cheese", "yoghurt", "yogurt", "cream", "butter", "egg", "dairy", "custard", "kefir"]],
+    ["Bakery", ["bread", "bun", "roll", "wrap", "tortilla", "pita", "bagel", "croissant", "muffin", "crumpet", "sourdough", "naan"]],
+    ["Produce", ["vegetable", "fruit", "onion", "garlic", "potato", "carrot", "capsicum", "pepper", "tomato", "lettuce", "spinach", "broccoli", "cauliflower", "zucchini", "cucumber", "mushroom", "pumpkin", "cabbage", "celery", "avocado", "apple", "banana", "orange", "berry", "berries", "lemon", "lime", "mango", "grape", "herb", "basil", "parsley", "coriander", "ginger", "corn", "pea,", "beans, green", "kale", "salad", "sweet potato", "beetroot", "eggplant", "melon"]],
+    ["Pantry", ["rice", "pasta", "noodle", "flour", "oat", "cereal", "oil", "vinegar", "sauce", "spice", "salt", "sugar", "honey", "nut", "peanut", "almond", "seed", "legume", "lentil", "chickpea", "beans", "canned", "tinned", "stock", "spread", "jam", "biscuit", "cracker", "chocolate", "protein powder", "quinoa", "couscous", "muesli", "grain", "syrup"]]
+  ]
+}

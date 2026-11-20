@@ -17,9 +17,10 @@ final class ShoppingListBuilder
      * @param list<array{recipe:array,servings:float}> $selection
      * @param array<string,string> $state existing ingredient_key => need|have|bought (preserved on regeneration)
      * @param list<string> $alwaysHave keys auto-moved to Have
+     * @param array<string,array{qty:?float,unit:?string}> $pantry quantities already at home, subtracted from what is needed (never below zero)
      * @return array{items:list<array>, byAisle:array<string,list<array>>}
      */
-    public function build(array $selection, array $state = [], array $alwaysHave = []): array
+    public function build(array $selection, array $state = [], array $alwaysHave = [], array $pantry = []): array
     {
         $acc = [];
         foreach ($selection as $sel) {
@@ -56,8 +57,16 @@ final class ShoppingListBuilder
                 $a['count'] > 0 => [round($a['count'], 2), 'count'],
                 default => [null, null],
             };
-            $status = $state[$key] ?? (in_array($key, $alwaysHave, true) ? 'have' : 'need');
-            $items[] = ['key' => $key, 'name' => $a['name'], 'qty' => $qty, 'unit' => $unit, 'staple' => $a['staple'],
+            // Pantry stock in the same unit comes off the amount to buy; if it covers everything the item starts in Have.
+            $haveQty = null;
+            $p = $pantry[$key] ?? null;
+            if ($p !== null && ($p['qty'] ?? null) !== null && $qty !== null && ($p['unit'] ?? $unit) === $unit) {
+                $haveQty = round(min((float) $p['qty'], $qty), 2);
+            }
+            $needQty = $qty === null ? null : round(max(0.0, $qty - ($haveQty ?? 0.0)), 2);
+            $covered = $haveQty !== null && $needQty === 0.0;
+            $status = $state[$key] ?? ((in_array($key, $alwaysHave, true) || $covered) ? 'have' : 'need');
+            $items[] = ['key' => $key, 'name' => $a['name'], 'qty' => $qty, 'need_qty' => $needQty, 'have_qty' => $haveQty, 'unit' => $unit, 'staple' => $a['staple'],
                 'aisle' => $this->aisle($a['category']), 'status' => $status, 'recipes' => array_values($a['recipes'])];
         }
         usort($items, fn ($x, $y) => [array_search($x['aisle'], $this->aisleOrder), $x['name']]

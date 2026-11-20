@@ -10,6 +10,22 @@ export default function Meals({ meals }: { meals: Meal[] }) {
   const [confirm, setConfirm] = useState<number | null>(null)
   const [prep, setPrep] = useState<{ id: number; text: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Select mode (BLUEPRINT 5.6): tick recipes, set servings, make one shopping list.
+  const [select, setSelect] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('select'))
+  const [picks, setPicks] = useState<Record<number, number>>({})
+  const [trayOpen, setTrayOpen] = useState(false)
+  const [making, setMaking] = useState(false)
+  const chosen = meals.filter((m) => picks[m.id] !== undefined)
+  const sum = (f: (m: Meal) => number) => chosen.reduce((a, m) => a + f(m) * (picks[m.id] ?? 0), 0)
+  const toggle = (m: Meal) => setPicks((p) => { const n = { ...p }; if (n[m.id] !== undefined) delete n[m.id]; else n[m.id] = m.yield_portions; return n })
+  const bumpServes = (m: Meal, d: number) => setPicks((p) => ({ ...p, [m.id]: Math.max(0.5, Math.round(((p[m.id] ?? m.yield_portions) + d) * 2) / 2) }))
+  async function makeList() {
+    setMaking(true); setError(null)
+    try {
+      const r = await api<{ id: number }>('/shopping', { method: 'POST', body: { recipes: chosen.map((m) => ({ meal_id: m.id, servings: picks[m.id] })) } })
+      router.visit(`/shopping/${r.id}`)
+    } catch (e) { setError(e instanceof Error ? e.message : 'Could not make the list.'); setMaking(false) }
+  }
   const refresh = () => router.reload({ only: ['meals'] })
   const run = async (fn: () => Promise<unknown>) => { setError(null); try { await fn(); refresh() } catch (e) { setError(e instanceof Error ? e.message : 'Something went wrong.') } }
 
@@ -18,7 +34,10 @@ export default function Meals({ meals }: { meals: Meal[] }) {
       <Head title="Meals" />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Meals</h1>
-        <button onClick={() => setEditing('new')} className="min-h-11 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent">New meal</button>
+        <div className="flex gap-2">
+          <button onClick={() => { setSelect((v) => !v); setPicks({}) }} aria-pressed={select} className={`min-h-11 rounded-full px-4 text-sm ${select ? 'bg-accent/20 text-accent ring-1 ring-accent' : 'bg-surface'}`}>{select ? 'Cancel' : 'Select'}</button>
+          <button onClick={() => setEditing('new')} className="min-h-11 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent">New meal</button>
+        </div>
       </div>
       <p className="mt-1 text-sm text-muted">Recipes you cook. Log one portion in two taps from the Add sheet. For meal prep, record a batch and your portions count down as you log them.</p>
       {error ? <p role="alert" className="mt-3 text-sm text-danger">{error}</p> : null}
@@ -26,8 +45,12 @@ export default function Meals({ meals }: { meals: Meal[] }) {
       {meals.length === 0 ? <p className="mt-6 rounded-2xl bg-surface p-5 text-sm text-muted">No meals yet. Tap New meal and add the ingredients with their raw weights.</p> : (
         <ul className="mt-4 space-y-2">
           {meals.map((m) => (
-            <li key={m.id} className="rounded-2xl bg-surface p-3">
+            <li key={m.id} className={`rounded-2xl bg-surface p-3 ${picks[m.id] !== undefined ? 'ring-2 ring-accent' : ''}`}>
               <div className="flex items-start gap-2">
+                {select ? (
+                  <button role="checkbox" aria-checked={picks[m.id] !== undefined} aria-label={`Select ${m.name}`} onClick={() => toggle(m)}
+                    className={`mt-1 flex size-8 shrink-0 items-center justify-center rounded-full border-2 ${picks[m.id] !== undefined ? 'border-accent bg-accent text-on-accent' : 'border-muted'}`}>{picks[m.id] !== undefined ? '✓' : ''}</button>
+                ) : null}
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{m.name}</div>
                   <div className="text-xs text-muted tabular-nums">{Math.round(m.computed.portion.kcal)} kcal · {Math.round(m.computed.portion.protein)}P {Math.round(m.computed.portion.carbs)}C {Math.round(m.computed.portion.fat)}F per portion · makes {fmtPortions(m.yield_portions)}</div>
@@ -72,7 +95,31 @@ export default function Meals({ meals }: { meals: Meal[] }) {
           ))}
         </ul>
       )}
-      <Link href="/settings/security" className="mt-6 block text-center text-sm text-muted underline">Back to Security</Link>
+      <Link href="/shopping" className="mt-6 block text-center text-sm text-accent">Shopping lists</Link>
+      <Link href="/settings/security" className="mt-2 block text-center text-sm text-muted underline">Back to Security</Link>
+      {select ? <div className="h-44" aria-hidden /> : null}
+      {select && chosen.length > 0 ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md rounded-t-3xl bg-raised p-4 shadow-2xl" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+          <button onClick={() => setTrayOpen((v) => !v)} aria-expanded={trayOpen} className="flex min-h-11 w-full items-center justify-between text-left">
+            <span className="font-semibold">{chosen.length} recipe{chosen.length === 1 ? '' : 's'} · {fmtPortions(chosen.reduce((a, m) => a + (picks[m.id] ?? 0), 0))} serves</span>
+            <span className="text-muted" aria-hidden>{trayOpen ? '▾' : '▴'}</span>
+          </button>
+          <div className="text-xs text-muted tabular-nums">≈ {Math.round(sum((m) => m.computed.portion.kcal)).toLocaleString()} kcal · {Math.round(sum((m) => m.computed.portion.protein))} g protein in total</div>
+          {trayOpen ? (
+            <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+              {chosen.map((m) => (
+                <li key={m.id} className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate text-sm">{m.name}</span>
+                  <button aria-label={`Fewer servings of ${m.name}`} onClick={() => bumpServes(m, -1)} className="size-11 rounded-full bg-surface">−</button>
+                  <span className="w-10 text-center tabular-nums">{fmtPortions(picks[m.id] ?? 0)}</span>
+                  <button aria-label={`More servings of ${m.name}`} onClick={() => bumpServes(m, 1)} className="size-11 rounded-full bg-surface">+</button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <button disabled={making} onClick={() => void makeList()} className="mt-3 min-h-12 w-full rounded-2xl bg-accent font-semibold text-on-accent disabled:opacity-40">{making ? 'Making…' : 'Make list'}</button>
+        </div>
+      ) : null}
       {editing ? <MealEditor meal={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); refresh() }} /> : null}
     </AppLayout>
   )

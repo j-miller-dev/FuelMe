@@ -9,6 +9,7 @@ use App\Http\Controllers\MealController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\SecurityController;
+use App\Http\Controllers\ShoppingController;
 use App\Http\Controllers\TodayController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +33,16 @@ Route::middleware('auth')->group(function () {
     Route::delete('/meals/{meal}', [MealController::class, 'destroy'])->whereNumber('meal')->name('meals.destroy');
     Route::post('/meals/{meal}/batches', [MealController::class, 'storeBatch'])->whereNumber('meal')->name('meals.batches.store');
     Route::delete('/meals/batches/{batch}', [MealController::class, 'destroyBatch'])->whereNumber('batch')->name('meals.batches.destroy');
+    Route::get('/shopping', [ShoppingController::class, 'index'])->name('shopping.index');
+    Route::post('/shopping', [ShoppingController::class, 'store'])->name('shopping.store');
+    Route::get('/shopping/{list}', [ShoppingController::class, 'show'])->whereNumber('list')->name('shopping.show');
+    Route::put('/shopping/{list}/recipes', [ShoppingController::class, 'recipes'])->whereNumber('list')->name('shopping.recipes');
+    Route::post('/shopping/{list}/refresh', [ShoppingController::class, 'refresh'])->whereNumber('list')->name('shopping.refresh');
+    Route::post('/shopping/{list}/items', [ShoppingController::class, 'addItem'])->whereNumber('list')->name('shopping.items.store');
+    Route::post('/shopping/{list}/sync', [ShoppingController::class, 'sync'])->whereNumber('list')->middleware('throttle:120,1')->name('shopping.sync');
+    Route::post('/shopping/{list}/done', [ShoppingController::class, 'done'])->whereNumber('list')->name('shopping.done');
+    Route::patch('/shopping/items/{item}', [ShoppingController::class, 'updateItem'])->whereNumber('item')->name('shopping.items.update');
+    Route::delete('/shopping/items/{item}', [ShoppingController::class, 'destroyItem'])->whereNumber('item')->name('shopping.items.destroy');
     Route::get('/foods/barcode', [BarcodeController::class, 'show'])->middleware('throttle:60,1')->name('foods.barcode');
     Route::get('/foods/quick', [FoodSearchController::class, 'quick'])->name('foods.quick');
     Route::post('/foods/{food}/favourite', [FoodSearchController::class, 'favourite'])->name('foods.favourite');
