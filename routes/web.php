@@ -24,6 +24,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/progress', [ProgressController::class, 'show'])->name('progress');
     Route::post('/weights', [ProgressController::class, 'weigh'])->middleware('throttle:60,1')->name('weights.store');
     Route::delete('/weights/{weight}', [ProgressController::class, 'destroyWeight'])->whereNumber('weight')->name('weights.destroy');
+    Route::get('/review', [\App\Http\Controllers\ReviewController::class, 'show'])->name('review');
+    Route::post('/review/generate', [\App\Http\Controllers\ReviewController::class, 'generate'])->middleware('throttle:10,1')->name('review.generate');
+    Route::put('/event', [\App\Http\Controllers\ReviewController::class, 'saveEvent'])->name('event.save');
+    Route::delete('/event', [\App\Http\Controllers\ReviewController::class, 'deleteEvent'])->name('event.delete');
     Route::post('/progress/checkin', [ProgressController::class, 'applyCheckin'])->name('progress.checkin');
     Route::get('/training', [TrainingController::class, 'show'])->name('training');
     Route::post('/training/template', [TrainingController::class, 'storeTemplate'])->name('training.template.store');

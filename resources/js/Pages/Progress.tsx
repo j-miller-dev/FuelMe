@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react'
+import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useMemo, useState } from 'react'
 import AppLayout from '@/layouts/AppLayout'
 import { TrendChart } from '@/components/progress/TrendChart'
@@ -43,6 +43,7 @@ export default function Progress({ data, today }: { data: ProgressData | null; t
     <AppLayout>
       <Head title="Progress" />
       <h1 className="text-2xl font-bold">Progress</h1>
+      <Link href="/review" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>Weekly review and event mode</span><span className="text-accent" aria-hidden>›</span></Link>
 
       <section className="mt-3 rounded-2xl bg-surface p-4" aria-label="Weigh in">
         <form className="flex items-end gap-2" onSubmit={(e) => { e.preventDefault(); if (valid && !busy) void weigh() }}>

@@ -65,4 +65,11 @@ return [
         'monthly_token_cap' => (int) env('FUEL_CAPTURE_MONTHLY_TOKENS', 2000000),
         'max_chars' => 600,
     ],
+
+    /*
+    | Weekly review (BLUEPRINT 9A.3). The template note always works. With an API key the model may reword it, but only if it adds no number.
+    */
+    'review' => [
+        'use_model' => (bool) env('FUEL_REVIEW_USE_MODEL', true),
+    ],
 ];
