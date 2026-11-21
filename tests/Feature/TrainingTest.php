@@ -174,15 +174,16 @@ it('shows what is next, how long until it, and pre/during/post targets sized fro
         ->and($f['next']['gapToNextHours'])->toBe(4.5);
 });
 
-it('moves on to the next session as the day goes, and has no card once everything is done', function () {
+it('moves on to the next session as the day goes, then shows tomorrow\'s once today is done', function () {
     $u = loggedInUser();
     mondayAt('11:00');
     expect(todayProps($this, $u)['training']['fuel']['next']['type'])->toBe('lifting');
     mondayAt('13:00');
-    expect(todayProps($this, $u)['training']['fuel'])->toBeNull();
-    // a day with no training has none either
+    $f = todayProps($this, $u)['training']['fuel'];
+    expect($f['when'])->toBe('tomorrow')->and($f['next']['minutesUntil'])->toBeGreaterThan(60)->and($f['timeline'])->not->toBeNull();
+    // Sunday has no training, so what is next is Monday's first session, shown as tomorrow's
     Carbon::setTestNow(Carbon::parse('2026-11-22 08:00', 'Australia/Melbourne'));   // Sunday
-    expect(todayProps($this, $u)['training']['fuel'])->toBeNull();
+    expect(todayProps($this, $u)['training']['fuel']['when'])->toBe('tomorrow');
 });
 
 it('does not plan fuel for a session you already did', function () {

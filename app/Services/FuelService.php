@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Domain\Foods\QuickFoods;
 use App\Domain\Training\DayFuel;
 use App\Domain\Training\MealComposer;
+use App\Domain\Training\PreSessionTimeline;
 use App\Http\Controllers\MealController;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -61,10 +62,18 @@ class FuelService
         $plan2 = collect(DayFuel::plan($kg, $feed, 2.0))->firstWhere('key', $next['key']);
         $s = $byKey[$next['key']];
 
+        // A clock-time plan (needs a start time): the ~3 h meal, a small quick-carb top-up, fluids and the after meal.
+        $timeline = null;
+        if ($next['startMin'] !== null) {
+            $main = $leads[3]['pre'];
+            $top = collect(DayFuel::plan($kg, $feed, 0.5))->firstWhere('key', $next['key'])['pre'];
+            $timeline = PreSessionTimeline::build((int) $next['startMin'], (int) $s['minutes'], $kg, $nowMinutes, isset($main['carbsG']) ? $main : null, isset($top['carbsG']) ? $top : null, $plan2['post']);
+        }
+
         return [
             'next' => ['key' => $s['key'], 'label' => $s['label'], 'type' => $s['type'], 'intensity' => $s['intensity'], 'minutes' => $s['minutes'], 'start' => $s['start'], 'netKcal' => $s['netKcal'],
                 'minutesUntil' => $next['startMin'] !== null ? $next['startMin'] - $nowMinutes : null, 'sharedMealNote' => $plan2['sharedMealNote'], 'gapToNextHours' => $plan2['gapToNextHours']],
-            'during' => $plan2['during'], 'post' => $plan2['post'], 'postMeal' => $postMeal ?? null, 'leads' => $leads, 'hasTags' => $hasTags,
+            'during' => $plan2['during'], 'post' => $plan2['post'], 'postMeal' => $postMeal ?? null, 'leads' => $leads, 'timeline' => $timeline, 'hasTags' => $hasTags,
             'later' => count(array_filter($sessions, fn ($x) => $x['status'] !== 'done' && $x['key'] !== $next['key'])),
         ];
     }

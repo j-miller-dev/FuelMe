@@ -8,11 +8,12 @@ export interface ComposerItem { kind: 'meal' | 'food'; ref: number; name: string
 export interface ComposerOption { items: ComposerItem[]; carbs: number; protein: number; fat: number; fibre: number; kcal: number; after: { kcal: number; protein: number; carbs: number; fat: number } }
 export interface Composer { options: ComposerOption[]; shortfall: string | null; shift: { carbsG: number; note: string } | null }
 export interface Pre { skip?: boolean; carbsG?: number; proteinG?: number; fatMaxG?: number; fibreMaxG?: number; note: string }
+export interface TimelineStep { atMin: number; at: string; inMin: number; kind: 'fluid' | 'meal' | 'snack' | 'session' | 'after'; title: string; text: string }
 export interface Fuel {
   next: { key: string; label: string; type: string; intensity: string; minutes: number; start: string | null; netKcal: number; minutesUntil: number | null; sharedMealNote: string | null; gapToNextHours: number | null }
   during: { carbsGPerHour: [number, number]; note: string }
   post: { proteinG: number; withinHours: number; carbsG?: number; carbsGPerHour?: [number, number]; forHours?: number; note: string }
-  postMeal: Composer | null; leads: Record<string, { pre: Pre; composer: Composer | null }>; hasTags: boolean; later: number
+  postMeal: Composer | null; timeline: TimelineStep[] | null; when: 'today' | 'tomorrow'; leads: Record<string, { pre: Pre; composer: Composer | null }>; hasTags: boolean; later: number
 }
 export interface TrainingProps { sessions: Session[]; explain: string | null; fuel: Fuel | null; catalogue: Catalogue; kg: number }
 

@@ -74,11 +74,26 @@ export function TrainingCard({ training, date, isToday, unit, hour }: { training
 
       {f && lp ? (
         <div className="mt-3 rounded-2xl bg-raised p-3" aria-label="Next up">
-          <div className="flex items-center justify-between"><h3 className="font-semibold">Next up: {f.next.label}</h3><span className="text-sm text-muted tabular-nums">{f.next.start ?? 'time not set'}{f.next.minutesUntil !== null ? ` · in ${inMinutes(f.next.minutesUntil)}` : ''}</span></div>
+          <div className="flex items-center justify-between"><h3 className="font-semibold">{f.when === 'tomorrow' ? 'Tomorrow' : 'Next up'}: {f.next.label}</h3><span className="text-sm text-muted tabular-nums">{f.next.start ?? 'time not set'}{f.next.minutesUntil !== null ? ` · in ${inMinutes(f.next.minutesUntil)}` : ''}</span></div>
           {f.later > 0 ? <p className="text-xs text-muted">{f.later} more session{f.later === 1 ? '' : 's'} after this one today.</p> : null}
           {f.next.sharedMealNote ? <p className="mt-1 text-xs text-carbs">{f.next.sharedMealNote}</p> : null}
 
-          <h4 className="mt-3 text-sm font-semibold">Before</h4>
+          {f.timeline ? (
+            <>
+              <h4 className="mt-3 text-sm font-semibold">Your plan for {f.next.start}</h4>
+              <ol className="mt-1" aria-label="Timeline">
+                {f.timeline.map((t) => (
+                  <li key={t.atMin + t.kind} className={`flex gap-3 border-t border-surface py-2 first:border-0 ${t.inMin < 0 ? 'opacity-50' : ''}`}>
+                    <span className="w-16 shrink-0 text-sm font-semibold tabular-nums">{t.at}</span>
+                    <span className="min-w-0 text-sm"><span className="font-medium">{t.title}</span>{t.inMin < 0 ? <span className="text-xs text-muted"> · passed</span> : t.inMin <= 90 ? <span className="text-xs text-accent"> · soon</span> : null}<span className="block text-xs text-muted">{t.text}</span></span>
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-1 text-xs text-muted">Fluid amounts are guidelines (ACSM), not prescriptions. Not medical advice.</p>
+            </>
+          ) : null}
+
+          <h4 className="mt-3 text-sm font-semibold">{f.timeline ? 'Running late? Pick how long before you eat' : 'Before'}</h4>
           <div className="mt-1 flex gap-2" role="group" aria-label="How long before the session you eat">
             {(['1', '2', '3'] as const).map((h) => <button key={h} aria-pressed={lead === h} onClick={() => setLead(h)} className={`min-h-10 flex-1 rounded-full text-xs ${lead === h ? 'bg-accent/20 text-accent ring-1 ring-accent' : 'bg-surface text-muted'}`}>{h} h before</button>)}
           </div>

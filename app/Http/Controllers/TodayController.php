@@ -46,13 +46,14 @@ class TodayController extends Controller
             'date' => $date,
             'isToday' => $date === $today,
             'dayClass' => $day['class'] ?? null,
-            'training' => ['catalogue' => $training->catalogue(), 'kg' => round($training->kg($user), 1), 'sessions' => $training->sessions($user, $date, true), 'explain' => $dp['explain'], 'fuel' => $date === $today ? $fuel->forToday($user, $date, (int) $local->format('G') * 60 + (int) $local->format('i'), $remaining) : null],
+            'training' => ['catalogue' => $training->catalogue(), 'kg' => round($training->kg($user), 1), 'sessions' => $training->sessions($user, $date, true), 'explain' => $dp['explain'], 'fuel' => $date === $today ? $this->fuelPlan($fuel, $plans, $user, $today, (int) $local->format('G') * 60 + (int) $local->format('i'), $remaining) : null],
             'target' => [
                 'kcal' => (int) round($day['kcal'] ?? $target->kcal), 'protein' => (int) round($day['protein'] ?? $target->protein),
                 'carbs' => (int) round($day['carbs'] ?? $target->carbs), 'fat' => (int) round($day['fat'] ?? $target->fat),
             ],
             'estimate' => ($e = \Illuminate\Support\Facades\DB::table('day_estimates')->where('user_id', $user->id)->where('local_date', $date)->first()) ? ['kind' => $e->kind, 'kcal' => (int) round((float) $e->kcal)] : null,
             'consistency' => $overview['consistency'] ?? null,
+            'water' => $this->water($user, $date, $profile->sex),
             'strip' => $strip->forUser($user, $today),
             'logs' => $logs->map->toPayload()->values(),
             'previous' => ['date' => $prev, 'count' => $prevLogs->count(), 'kcal' => (int) round($prevLogs->sum('kcal'))],
@@ -62,5 +63,27 @@ class TodayController extends Controller
             'weighedToday' => (bool) \Illuminate\Support\Facades\DB::table('weight_logs')->where('user_id', $user->id)->where('local_date', $today)->exists(),
             'serverHour' => (int) now($profile->tz)->format('G'),
         ]);
+    }
+
+    /** Today's next session; when none is left today, tomorrow's first one (so the night before shows the plan). */
+    private function fuelPlan(FuelService $fuel, PlanService $plans, $user, string $today, int $nowMin, array $remaining): ?array
+    {
+        $f = $fuel->forToday($user, $today, $nowMin, $remaining);
+        if ($f !== null) {
+            return $f + ['when' => 'today'];
+        }
+        $tomorrow = date('Y-m-d', strtotime($today . ' +1 day'));
+        $day = $plans->forDay($user, $tomorrow)['day'];
+        $f = $fuel->forToday($user, $tomorrow, $nowMin - 1440, ['kcal' => (float) $day['kcal'], 'protein' => (float) $day['protein'], 'carbs' => (float) $day['carbs'], 'fat' => (float) $day['fat']]);
+
+        return $f === null ? null : $f + ['when' => 'tomorrow'];
+    }
+
+    /** @return array{ml:int,targetMl:int,lastId:?int} */
+    private function water($user, string $date, string $sex): array
+    {
+        $rows = \Illuminate\Support\Facades\DB::table('water_logs')->where('user_id', $user->id)->where('local_date', $date);
+
+        return ['ml' => (int) (clone $rows)->sum('ml'), 'targetMl' => \App\Domain\Training\Hydration::dailyFluidMl($sex), 'lastId' => (clone $rows)->orderByDesc('id')->value('id')];
     }
 }

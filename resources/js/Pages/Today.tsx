@@ -5,6 +5,7 @@ import { AddSheet } from '@/components/today/AddSheet'
 import { PortionSheet } from '@/components/today/PortionSheet'
 import { CalorieRing, MacroRings } from '@/components/today/Rings'
 import { HitStrip, type Strip } from '@/components/today/HitStrip'
+import { WaterCard, type Water } from '@/components/today/WaterCard'
 import { TrainingCard } from '@/components/today/TrainingCard'
 import type { TrainingProps } from '@/lib/training'
 import { SLOTS, SLOT_LABEL, slotForHour, totals, type LogRow, type Slot } from '@/lib/food'
@@ -18,7 +19,7 @@ interface Props {
   target: { kcal: number; protein: number; carbs: number; fat: number }
   logs: LogRow[]; previous: { date: string; count: number; kcal: number }
   calibrating: boolean; serverHour: number; weighedToday: boolean; training: TrainingProps
-  strip: Strip
+  strip: Strip; water: Water
   estimate: { kind: 'on_target' | 'under' | 'over'; kcal: number } | null
   consistency: { counted: number; total: number; exact: number; within15: number } | null
   nudge: { lowDays: number; loggedDays: number; gapKcal: number; gapProtein: number; adds: { name: string; grams: number; unit: string; kcal: number; protein: number }[] } | null
@@ -93,6 +94,7 @@ export default function Today(p: Props) {
       <MacroRings eaten={t} target={p.target} />
       {p.isToday ? <HitStrip strip={p.strip} energyLabel={u} fmt={(k) => fmtEnergy(k, unit)} /> : null}
       {p.isToday && p.consistency && p.consistency.total > 0 ? <p className="mt-2 text-xs text-muted">{p.consistency.counted} of the last {p.consistency.total} days counted, {p.consistency.within15} within 15% of target. A rough day still counts.</p> : null}
+      <WaterCard water={p.water} date={p.date} />
       <TrainingCard training={p.training} date={p.date} isToday={p.isToday} unit={unit} hour={p.serverHour} />
 
       {bySlot.length === 0 ? (
