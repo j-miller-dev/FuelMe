@@ -234,3 +234,23 @@ it('logs a suggested pre meal through the normal log path', function () {
     $f = todayProps($this, $u)['training']['fuel'];
     expect($f['leads'][2]['composer'])->not->toBeNull();
 });
+
+it('parses a sentence into session cards without saving anything', function () {
+    $u = loggedInUser();
+    $before = DB::table('workout_logs')->count();
+    $r = $this->actingAs($u)->postJson('/workouts/parse', ['text' => 'rolled five rounds, hard, about an hour with drilling, then 40 minutes heavy lifting'])->assertOk();
+    expect($r->json('items'))->toHaveCount(2)->and($r->json('items.0.type'))->toBe('bjj')->and($r->json('items.0.minutes'))->toBe(60)->and($r->json('items.1.intensity'))->toBe('heavy')
+        ->and($r->json('mode'))->toBe('basic')->and(DB::table('workout_logs')->count())->toBe($before);
+});
+
+it('maps "yesterday" to yesterday\'s date and defaults plain lifting to your style', function () {
+    $u = loggedInUser();
+    $i = $this->actingAs($u)->postJson('/workouts/parse', ['text' => 'yesterday lifting 40 minutes'])->json('items.0');
+    expect($i['local_date'])->toBe(date('Y-m-d', strtotime(now($u->profile->tz)->format('Y-m-d') . ' -1 day')))->and($i['intensity'])->toBe($u->profile->lifting_style === 'volume' ? 'standard' : 'hit');
+});
+
+it('rejects empty and over-long text', function () {
+    $u = loggedInUser();
+    $this->actingAs($u)->postJson('/workouts/parse', ['text' => ''])->assertStatus(422);
+    $this->actingAs($u)->postJson('/workouts/parse', ['text' => str_repeat('a', 601)])->assertStatus(422);
+});

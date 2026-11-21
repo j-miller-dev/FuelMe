@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { api, uuid } from '@/lib/http'
 import { slotForHour } from '@/lib/food'
 import { INTENSITY_LABEL, inMinutes, type Composer, type ComposerOption, type Session, type TrainingProps } from '@/lib/training'
+import { WorkoutSay } from '@/components/training/WorkoutSay'
 import { SessionSheet } from '@/components/training/SessionSheet'
 import { energyLabel, fmtEnergy, type EnergyUnit } from '@/lib/units'
 
@@ -11,6 +12,7 @@ const STATUS: Record<string, string> = { virtual: 'Planned', planned: 'Planned',
 /** Today's training and the "next up" fuelling card. Sessions are estimates; nothing here changes your food target except what the day is. */
 export function TrainingCard({ training, date, isToday, unit, hour }: { training: TrainingProps; date: string; isToday: boolean; unit: EnergyUnit; hour: number }) {
   const [sheet, setSheet] = useState<{ row?: Session } | null>(null)
+  const [say, setSay] = useState(false)
   const [lead, setLead] = useState<'1' | '2' | '3'>('2')
   const [msg, setMsg] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -50,6 +52,7 @@ export function TrainingCard({ training, date, isToday, unit, hour }: { training
     <section className="mt-3 rounded-2xl bg-surface p-4" aria-label="Training">
       <div className="flex items-center gap-2">
         <h2 className="flex-1 font-semibold">{isToday ? 'Training today' : 'Training'}</h2>
+        {isToday ? <button onClick={() => setSay(true)} className="min-h-11 rounded-full bg-raised px-3 text-sm text-accent">Say it</button> : null}
         <button onClick={() => setSheet({})} className="min-h-11 rounded-full bg-raised px-3 text-sm text-accent">Log a session</button>
       </div>
       {training.explain ? <p className="mt-1 text-xs text-accent">{training.explain}</p> : null}
@@ -118,6 +121,7 @@ export function TrainingCard({ training, date, isToday, unit, hour }: { training
       ) : null}
 
       <Link href="/training" className="mt-3 block text-center text-sm text-muted underline">Edit your training week</Link>
+      {say ? <WorkoutSay catalogue={training.catalogue} kg={training.kg} onClose={() => setSay(false)} onSaved={() => { setSay(false); reload() }} /> : null}
       {sheet ? <SessionSheet mode={{ kind: 'log', date, row: sheet.row }} catalogue={training.catalogue} kg={training.kg} onClose={() => setSheet(null)} onSaved={() => { setSheet(null); reload() }} /> : null}
     </section>
   )

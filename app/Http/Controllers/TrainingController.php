@@ -74,6 +74,18 @@ class TrainingController extends Controller
         return response()->json(['template' => $this->training->template($request->user()), 'week' => $this->summary($request->user())]);
     }
 
+    /** POST /workouts/parse: words in, session cards out. Nothing is saved; each card goes through the normal POST /workouts. */
+    public function parse(Request $request): JsonResponse
+    {
+        $d = $request->validate(['text' => ['required', 'string', 'max:600']]);
+        $user = $request->user();
+        $r = \App\Domain\Training\WorkoutTextParser::parse($d['text'], $user->profile->lifting_style === 'volume' ? 'standard' : 'hit');
+        $today = \App\Domain\Foods\LocalDay::of(now(), $user->profile->tz, $user->profile->rollover_hour);
+        $items = array_map(fn ($i) => $i + ['local_date' => $i['day'] === 'yesterday' ? date('Y-m-d', strtotime($today . ' -1 day')) : $today], $r['items']);
+
+        return response()->json(['items' => $items, 'unparsed' => $r['unparsed'], 'mode' => 'basic']);
+    }
+
     /** POST /workouts: a session that happened (or one you add for today). */
     public function store(Request $request): JsonResponse
     {

@@ -33,6 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/training/template', [TrainingController::class, 'storeTemplate'])->name('training.template.store');
     Route::put('/training/template/{id}', [TrainingController::class, 'updateTemplate'])->whereNumber('id')->name('training.template.update');
     Route::delete('/training/template/{id}', [TrainingController::class, 'destroyTemplate'])->whereNumber('id')->name('training.template.destroy');
+    Route::post('/workouts/parse', [TrainingController::class, 'parse'])->middleware('throttle:60,1')->name('workouts.parse');
     Route::post('/workouts', [TrainingController::class, 'store'])->middleware('throttle:60,1')->name('workouts.store');
     Route::post('/workouts/template-session', [TrainingController::class, 'mark'])->name('workouts.mark');
     Route::patch('/workouts/{workout}', [TrainingController::class, 'update'])->whereNumber('workout')->name('workouts.update');
