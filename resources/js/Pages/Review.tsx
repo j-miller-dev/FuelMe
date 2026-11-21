@@ -7,7 +7,8 @@ interface Assessment { verdict: 'on_track' | 'needs_rate_change' | 'not_achievab
 interface Phase { until: string; target_kg: number }
 interface EventData { name: string | null; event_date: string; target_kg: number; days: number; phases: Phase[]; assessment: Assessment | null; timeline: (Partial<Assessment> & Phase)[]; trend_kg: number; calibrating: boolean }
 interface ReviewRow { week_start: string; note: string; generated_by: 'template' | 'model'; review: { week_end: string } }
-interface Props { reviews: ReviewRow[]; event: EventData | null; today: string }
+interface Insight { key: string; title: string; n: number; rho: number; strength: 'none' | 'weak' | 'moderate' | 'strong'; text: string; caveats: string[] }
+interface Props { reviews: ReviewRow[]; event: EventData | null; today: string; insights: Insight[] }
 
 const VERDICT: Record<Assessment['verdict'], { label: string; cls: string }> = {
   on_track: { label: 'On track', cls: 'text-accent' },
@@ -67,7 +68,7 @@ function EventForm({ event }: { event: EventData | null }) {
   )
 }
 
-export default function Review({ reviews, event }: Props) {
+export default function Review({ reviews, event, insights }: Props) {
   const latest = reviews[0]
   return (
     <AppLayout>
@@ -86,6 +87,19 @@ export default function Review({ reviews, event }: Props) {
         <section className="mt-3 rounded-2xl bg-surface p-4 text-sm text-muted">No review yet. One is written each Sunday evening, or you can write this week's now.</section>
       )}
       <Button className="mt-3 w-full" variant="secondary" onClick={() => router.post('/review/generate', {}, { preserveScroll: true })}>{latest ? 'Rewrite this week\'s review' : 'Write this week\'s review'}</Button>
+
+      <section className="mt-3 rounded-2xl bg-surface p-4" aria-label="Patterns">
+        <h2 className="font-semibold">Patterns in your check-ins</h2>
+        {insights.length === 0 ? <p className="mt-1 text-sm text-muted">Patterns appear once you have at least 8 days of check-ins to compare. Until then there is nothing honest to say.</p> : (
+          <ul className="mt-2 space-y-3">{insights.map((i) => (
+            <li key={i.key} className="border-t border-raised pt-2 first:border-0 first:pt-0">
+              <div className="flex items-baseline justify-between"><span className="text-sm font-medium">{i.title}</span><span className="text-xs text-muted tabular-nums">{i.n} days · strength {i.rho.toFixed(2)}</span></div>
+              <p className="mt-1 text-sm">{i.text}</p>
+              {i.caveats.map((c) => <p key={c} className="text-xs text-muted">{c}</p>)}
+            </li>))}
+          </ul>
+        )}
+      </section>
 
       {event ? <EventCard event={event} /> : null}
       <EventForm key={event?.event_date ?? 'new'} event={event} />

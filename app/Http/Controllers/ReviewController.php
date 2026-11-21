@@ -14,14 +14,14 @@ use Inertia\Response;
 /** /review: the weekly written review and event mode. */
 class ReviewController extends Controller
 {
-    public function show(Request $request, WeeklyReviewService $reviews, EventService $events): Response|RedirectResponse
+    public function show(Request $request, WeeklyReviewService $reviews, EventService $events, \App\Services\ReadinessService $readiness): Response|RedirectResponse
     {
         $user = $request->user();
         if (! $user->profile) {
             return redirect()->route('onboarding');
         }
 
-        return Inertia::render('Review', ['reviews' => $reviews->recent($user), 'event' => $events->current($user),
+        return Inertia::render('Review', ['reviews' => $reviews->recent($user), 'event' => $events->current($user), 'insights' => $readiness->insights($user),
             'today' => LocalDay::of(now(), $user->profile->tz, $user->profile->rollover_hour)]);
     }
 
