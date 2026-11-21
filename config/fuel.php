@@ -72,4 +72,17 @@ return [
     'review' => [
         'use_model' => (bool) env('FUEL_REVIEW_USE_MODEL', true),
     ],
+
+    /*
+    | Coach chat (BLUEPRINT 9A.2). Needs ANTHROPIC_API_KEY. Read-only tools only; every number in an answer is checked against the
+    | tool results, and an answer that fails the check is replaced. Set FUEL_COACH_ENABLED=false to switch the coach off entirely.
+    */
+    'coach' => [
+        'enabled' => (bool) env('FUEL_COACH_ENABLED', true),
+        'model' => env('FUEL_COACH_MODEL', 'claude-sonnet-5-5'),
+        'timeout' => (int) env('FUEL_COACH_TIMEOUT', 40),
+        'monthly_token_cap' => (int) env('FUEL_COACH_MONTHLY_TOKENS', 1000000),
+        'max_chars' => 500,
+        'max_rounds' => 6,
+    ],
 ];

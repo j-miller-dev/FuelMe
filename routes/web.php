@@ -85,6 +85,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/water/{id}', [\App\Http\Controllers\WaterController::class, 'destroy'])->whereNumber('id')->name('water.destroy');
     Route::post('/readiness', [\App\Http\Controllers\ReadinessController::class, 'store'])->middleware('throttle:60,1')->name('readiness.store');
     Route::delete('/readiness/{date}', [\App\Http\Controllers\ReadinessController::class, 'destroy'])->name('readiness.destroy');
+    Route::get('/coach', [\App\Http\Controllers\CoachController::class, 'show'])->name('coach');
+    Route::post('/coach/messages', [\App\Http\Controllers\CoachController::class, 'ask'])->middleware('throttle:20,1')->name('coach.ask');
+    Route::delete('/coach/threads/{thread}', [\App\Http\Controllers\CoachController::class, 'destroyThread'])->whereNumber('thread')->name('coach.destroy');
     Route::post('/logs/copy', [LogController::class, 'copy'])->name('logs.copy');
     Route::patch('/logs/{log}', [LogController::class, 'update'])->name('logs.update');
     Route::delete('/logs/{log}', [LogController::class, 'destroy'])->name('logs.destroy');
