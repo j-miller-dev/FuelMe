@@ -39,6 +39,7 @@ class LogController extends Controller
             'items.*.protein' => ['nullable', 'numeric', 'min:0', 'max:1000'],
             'items.*.carbs' => ['nullable', 'numeric', 'min:0', 'max:1000'],
             'items.*.fat' => ['nullable', 'numeric', 'min:0', 'max:1000'],
+            'items.*.rough' => ['nullable', 'boolean'],
         ]);
 
         $tz = $user->profile?->tz ?? config('fuel.default_timezone');
@@ -57,6 +58,7 @@ class LogController extends Controller
                 $out[] = FoodLog::create($snap + [
                     'user_id' => $user->id, 'local_date' => $date, 'logged_at' => now(), 'meal_slot' => $it['meal_slot'],
                     'source' => $it['source'], 'idempotency_key' => $it['idempotency_key'],
+                    'is_rough' => $it['source'] === 'quick' && ! empty($it['rough']),   // only a typed-in estimate can be "rough"
                 ]);
                 if (! empty($it['food_id'])) {
                     Food::whereKey($it['food_id'])->update(['use_count' => DB::raw('use_count + 1'), 'last_used_at' => now()]);

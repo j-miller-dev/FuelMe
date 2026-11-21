@@ -6,7 +6,7 @@ import { hitName, macrosFor, type FoodHit, type LogRow, type Slot } from '@/lib/
 export type NewLog =
   | { kind: 'food'; food: FoodHit; grams: number; slot: Slot; serving_label: string | null }
   | { kind: 'meal'; meal: Meal; portions: number; batch_id: number | null; slot: Slot }
-  | { kind: 'quick'; name: string; kcal: number | null; protein: number; carbs: number; fat: number; slot: Slot }
+  | { kind: 'quick'; name: string; kcal: number | null; protein: number; carbs: number; fat: number; slot: Slot; rough?: boolean }
 
 export interface Toast { msg: string; undo?: () => void; error?: boolean }
 
@@ -39,7 +39,7 @@ export function useLogging(initial: LogRow[], date: string) {
     const temps: LogRow[] = items.map((it) => {
       if (it.kind === 'quick') {
         const kcal = it.kcal && it.kcal > 0 ? it.kcal : Math.round(4 * it.protein + 4 * it.carbs + 9 * it.fat)
-        return { id: tempId--, local_date: date, meal_slot: it.slot, food_id: null, name: it.name || 'Quick add', grams: null, serving_label: null, kcal, protein: it.protein, carbs: it.carbs, fat: it.fat, fibre: null, source: 'quick' }
+        return { id: tempId--, local_date: date, meal_slot: it.slot, food_id: null, name: it.name || 'Quick add', grams: null, serving_label: null, kcal, protein: it.protein, carbs: it.carbs, fat: it.fat, fibre: null, source: 'quick', is_rough: !!it.rough }
       }
       if (it.kind === 'meal') {
         const p = it.meal.computed.portion
@@ -55,7 +55,7 @@ export function useLogging(initial: LogRow[], date: string) {
       items: items.map((it) => it.kind === 'meal'
         ? { idempotency_key: uuid(), meal_slot: it.slot, source: 'meal', meal_id: it.meal.id, portions: it.portions, batch_id: it.batch_id }
         : it.kind === 'quick'
-        ? { idempotency_key: uuid(), meal_slot: it.slot, source: 'quick', name: it.name, kcal: it.kcal, protein: it.protein, carbs: it.carbs, fat: it.fat }
+        ? { idempotency_key: uuid(), meal_slot: it.slot, source: 'quick', name: it.name, kcal: it.kcal, protein: it.protein, carbs: it.carbs, fat: it.fat, rough: !!it.rough }
         : { idempotency_key: uuid(), meal_slot: it.slot, source: 'search', food_id: it.food.id, grams: it.grams, serving_label: it.serving_label }),
     }
     try {

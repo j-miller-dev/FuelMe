@@ -51,6 +51,8 @@ class TodayController extends Controller
                 'kcal' => (int) round($day['kcal'] ?? $target->kcal), 'protein' => (int) round($day['protein'] ?? $target->protein),
                 'carbs' => (int) round($day['carbs'] ?? $target->carbs), 'fat' => (int) round($day['fat'] ?? $target->fat),
             ],
+            'estimate' => ($e = \Illuminate\Support\Facades\DB::table('day_estimates')->where('user_id', $user->id)->where('local_date', $date)->first()) ? ['kind' => $e->kind, 'kcal' => (int) round((float) $e->kcal)] : null,
+            'consistency' => $overview['consistency'] ?? null,
             'strip' => $strip->forUser($user, $today),
             'logs' => $logs->map->toPayload()->values(),
             'previous' => ['date' => $prev, 'count' => $prevLogs->count(), 'kcal' => (int) round($prevLogs->sum('kcal'))],
