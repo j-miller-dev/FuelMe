@@ -6,19 +6,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
-/** A signed-in user who has finished onboarding (so a plan exists). */
-function loggedInUser(): User
-{
-    $u = User::factory()->create();
-    test()->actingAs($u)->post('/onboarding', [
-        'sex' => 'male', 'dob' => now()->subYears(30)->subDays(10)->toDateString(), 'height_cm' => 180, 'weight_kg' => 74, 'body_fat_pct' => 14,
-        'job' => 'on_feet', 'shift' => 'afternoon', 'training_age' => '1to3', 'lifting_style' => 'hit', 'energy_unit' => 'kcal',
-        'phase' => 'bulk', 'rate_pct_per_week' => null, 'protein_g_per_kg' => 2.2, 'acknowledged' => true,
-    ])->assertRedirect('/');
-
-    return $u->fresh();
-}
-
 function egg(array $o = []): int
 {
     return DB::table('foods')->insertGetId($o + ['source' => 'afcd', 'source_id' => 'E' . Str::random(6), 'name' => 'Egg, chicken, whole, raw', 'quality' => 90,

@@ -11,6 +11,7 @@ use App\Http\Controllers\MealController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ProgressController;
+use App\Http\Controllers\RecipeImportController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\TargetsController;
 use App\Http\Controllers\ShoppingController;
@@ -47,6 +48,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/foods/{food}', [FoodController::class, 'destroy'])->name('foods.destroy');
     Route::get('/meals', [MealController::class, 'index'])->name('meals.index');
     Route::get('/meals/list', [MealController::class, 'list'])->name('meals.list');
+    Route::get('/meals/import', [RecipeImportController::class, 'show'])->name('meals.import');
+    Route::post('/meals/import/preview', [RecipeImportController::class, 'preview'])->middleware('throttle:20,1')->name('meals.import.preview');
     Route::post('/meals', [MealController::class, 'store'])->name('meals.store');
     Route::put('/meals/{meal}', [MealController::class, 'update'])->whereNumber('meal')->name('meals.update');
     Route::delete('/meals/{meal}', [MealController::class, 'destroy'])->whereNumber('meal')->name('meals.destroy');

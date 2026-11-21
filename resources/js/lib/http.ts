@@ -23,6 +23,20 @@ export async function api<T>(url: string, init: { method?: string; body?: unknow
   return (await res.json()) as T
 }
 
+/** Same as api() but sends multipart form data (file uploads); the browser sets the content type. */
+export async function apiForm<T>(url: string, form: FormData): Promise<T> {
+  const res = await fetch(url, { method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': xsrf() }, body: form })
+  if (!res.ok) {
+    let msg = res.status === 419 ? 'Your session expired. Reload the page.' : `Request failed (${res.status})`
+    try {
+      const b = (await res.json()) as { message?: string; errors?: Record<string, string[]> }
+      msg = (b.errors ? Object.values(b.errors)[0]?.[0] : undefined) ?? b.message ?? msg
+    } catch { /* keep the generic message */ }
+    throw new Error(msg)
+  }
+  return (await res.json()) as T
+}
+
 export const uuid = (): string =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()

@@ -131,7 +131,12 @@ it('proposes a target from the data, and applying it creates a new target with t
         ->and($after->protein)->toBe($before->protein);   // protein is set per kg first and does not move with calories
 
     // Today now uses the new target, and a second apply (double tap, stale screen) is refused: the next check-in is a week away.
-    $this->actingAs($u)->get('/')->assertOk()->assertInertia(fn (Assert $p) => $p->where('target.kcal', fn ($k) => abs($k - $after->kcal) < 400));
+    // (Today shows THIS WEEKDAY's share of the weekly target, which can differ a lot from the average on a hard or a rest day, so compare with the
+    // plan for today and check that the week still averages to the applied target. This used to compare today with the average and failed on Saturdays.)
+    $plan = app(\App\Services\PlanService::class)->base($u->fresh());
+    $todayKcal = (int) round($plan['days'][LocalDay::dayKey(todayOf($u))]['kcal']);
+    expect(abs(array_sum(array_column($plan['days'], 'kcal')) / 7 - $after->kcal))->toBeLessThan(10);
+    $this->actingAs($u)->get('/')->assertOk()->assertInertia(fn (Assert $p) => $p->where('target.kcal', $todayKcal));
     $this->actingAs($u)->postJson('/progress/checkin', ['kcal' => $c['proposedKcal']])->assertStatus(422);
     expect(TargetHistory::where('user_id', $u->id)->count())->toBe(2);
 });

@@ -36,6 +36,7 @@ export default function Meals({ meals }: { meals: Meal[] }) {
         <h1 className="text-2xl font-bold">Meals</h1>
         <div className="flex gap-2">
           <button onClick={() => { setSelect((v) => !v); setPicks({}) }} aria-pressed={select} className={`min-h-11 rounded-full px-4 text-sm ${select ? 'bg-accent/20 text-accent ring-1 ring-accent' : 'bg-surface'}`}>{select ? 'Cancel' : 'Select'}</button>
+          <Link href="/meals/import" className="grid min-h-11 place-items-center rounded-full bg-surface px-4 text-sm">Import</Link>
           <button onClick={() => setEditing('new')} className="min-h-11 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent">New meal</button>
         </div>
       </div>
