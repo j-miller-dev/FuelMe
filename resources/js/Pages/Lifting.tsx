@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button'
 
 interface Beat { kg: number; reps: number; label: string }
 interface Ex { id: string; title: string; muscle: string | null; status: 'not_enough_data' | 'progressing' | 'holding' | 'stalled' | 'down'; sessions: number; best_e1rm: number | null; latest_e1rm: number | null; last_date: string; last_set: { kg: number; reps: number }; trend: number[]; beat_the_log: Beat[] }
-interface Recent { date: string; title: string; minutes: number | null; exercises: number; working_sets: number; vs_your_best: { index: number | null; beat: number; matched: number; down: number; compared: number } }
+interface Effort { working: number; failure: number; rpe_logged: number; unlabelled: number; avg_rpe: number | null }
+interface Recent { date: string; title: string; minutes: number | null; exercises: number; working_sets: number; effort: Effort; vs_your_best: { index: number | null; beat: number; matched: number; down: number; compared: number } }
 interface Data { sessions_in_window: number; exercises: Ex[]; recent: Recent[]; weekly_sets: { this_week: Record<string, number>; last_week: Record<string, number> }; strength_vs_bodyweight: { strength_change_pct: number | null; weight_change_kg: number | null; exercises: number; note: string }; assumptions: string[] }
 interface Insight { key: string; title: string; n: number; strength: string; text: string; caveats: string[] }
 interface Props { connection: { last_synced_at: string | null; last_error: string | null } | null; data: Data | null; insights: Insight[] }
@@ -89,7 +90,7 @@ export default function Lifting({ connection, data, insights }: Props) {
                 {data.recent.map((r) => (
                   <li key={r.date + r.title}>
                     <span className="font-medium">{pretty(r.date)}: {r.title}</span>
-                    <span className="block text-muted">{r.exercises} exercises, {r.working_sets} working sets{r.minutes ? `, ${r.minutes} min` : ''}{r.vs_your_best.compared ? `. Against your own best: ${r.vs_your_best.beat} beat, ${r.vs_your_best.matched} matched, ${r.vs_your_best.down} below.` : ''}</span>
+                    <span className="block text-muted">{r.exercises} exercises, {r.working_sets} working sets{r.minutes ? `, ${r.minutes} min` : ''}. {r.effort.failure ? `${r.effort.failure} to failure` : 'None tagged failure'}{r.effort.avg_rpe !== null ? `, average RPE ${r.effort.avg_rpe}` : ''}{r.effort.unlabelled ? `, ${r.effort.unlabelled} without effort info` : ''}{r.vs_your_best.compared ? `. Against your own best: ${r.vs_your_best.beat} beat, ${r.vs_your_best.matched} matched, ${r.vs_your_best.down} below.` : ''}</span>
                   </li>
                 ))}
               </ul>

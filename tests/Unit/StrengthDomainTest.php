@@ -15,7 +15,7 @@ it('estimates 1RM with Epley for 1-12 reps only', function () {
 
 it('picks the best working set and ignores warm-ups', function () {
     $b = Strength::bestSet([['type' => 'warmup', 'kg' => 200, 'reps' => 5], ['type' => 'normal', 'kg' => 100, 'reps' => 5], ['type' => 'failure', 'kg' => 90, 'reps' => 9]]);
-    expect($b)->toBe(['kg' => 90.0, 'reps' => 9, 'e1rm' => 117.0])->and(Strength::bestSet([['type' => 'warmup', 'kg' => 50, 'reps' => 5]]))->toBeNull();
+    expect($b)->toBe(['kg' => 90.0, 'reps' => 9, 'e1rm' => 117.0, 'rir' => 0])->and(Strength::bestSet([['type' => 'warmup', 'kg' => 50, 'reps' => 5]]))->toBeNull();
 });
 
 it('classifies progress honestly and refuses to guess with little data', function () {
@@ -69,4 +69,23 @@ it('maps a Hevy workout, tolerating gaps, and puts it on the right local day', f
     expect(HevyMapper::workout(['id' => 'w2', 'start_time' => '2026-11-22T14:30:00Z'], 'Australia/Melbourne')['local_date'])->toBe('2026-11-22');
     expect(HevyMapper::workout(['title' => 'x'], 'UTC'))->toBeNull()->and(HevyMapper::workout(['id' => 'z', 'start_time' => 'nonsense'], 'UTC'))->toBeNull();
     expect(HevyMapper::template(['id' => 'T1', 'title' => 'Bench', 'primary_muscle_group' => 'chest', 'secondary_muscle_groups' => ['triceps']]))->toBe(['template_id' => 'T1', 'title' => 'Bench', 'muscle' => 'chest', 'secondary' => ['triceps']]);
+});
+
+it('adds reps in reserve to the estimate only when effort was logged', function () {
+    // 100 kg x 8: Epley with 0 reserve = 126.7; with 2 reps in reserve it is as if 10 reps = 133.3
+    expect(Strength::e1rm(100, 8))->toBe(126.7)->and(Strength::e1rm(100, 8, 2))->toBe(133.3)->and(Strength::e1rm(100, 11, 2))->toBeNull();   // 13 > the 12-rep cap
+    expect(Strength::rir(['type' => 'failure']))->toBe(0)->and(Strength::rir(['type' => 'normal', 'rpe' => 10.0]))->toBe(0)->and(Strength::rir(['type' => 'normal', 'rpe' => 8.0]))->toBe(2)
+        ->and(Strength::rir(['type' => 'normal', 'rpe' => 3.0]))->toBeNull()->and(Strength::rir(['type' => 'normal']))->toBeNull();
+});
+
+it('lets an RPE-8 set count for more than the same set unlabelled, and never inflates unlabelled sets', function () {
+    $plain = Strength::bestSet([['type' => 'normal', 'kg' => 100, 'reps' => 8]]);
+    $rpe8 = Strength::bestSet([['type' => 'normal', 'kg' => 100, 'reps' => 8, 'rpe' => 8]]);
+    $fail = Strength::bestSet([['type' => 'failure', 'kg' => 100, 'reps' => 8]]);
+    expect($plain['e1rm'])->toBe(126.7)->and($plain['rir'])->toBeNull()->and($rpe8['e1rm'])->toBe(133.3)->and($rpe8['rir'])->toBe(2)->and($fail['e1rm'])->toBe(126.7)->and($fail['rir'])->toBe(0);
+});
+
+it('summarises effort without guessing at unlabelled sets', function () {
+    $e = Strength::effort([['type' => 'warmup', 'kg' => 40, 'reps' => 10], ['type' => 'normal', 'kg' => 100, 'reps' => 8, 'rpe' => 7.0], ['type' => 'normal', 'kg' => 100, 'reps' => 8, 'rpe' => 8.0], ['type' => 'failure', 'kg' => 100, 'reps' => 9], ['type' => 'normal', 'kg' => 100, 'reps' => 5]]);
+    expect($e)->toBe(['working' => 4, 'failure' => 1, 'rpe_logged' => 2, 'unlabelled' => 1, 'avg_rpe' => 7.5]);
 });

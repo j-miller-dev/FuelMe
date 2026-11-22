@@ -131,7 +131,7 @@ it('shows progress per lift, and the coach tool reads it, only for the owner', f
     $o = app(CoachTools::class)->run('get_lifting', ['days' => 90], $u->fresh());
     expect($o['connected'])->toBeTrue()->and($o['exercises'][0]['title'])->toBe('Leg Press')->and($o['exercises'][0]['status'])->toBe('progressing')
         ->and($o['exercises'][0]['beat_the_log'][0])->toMatchArray(['kg' => 105.0, 'reps' => 10])->and($o['strength_vs_bodyweight']['exercises'])->toBe(1);
-    $this->actingAs($u)->get('/lifting')->assertInertia(fn ($p) => $p->where('data.exercises.0.status', 'progressing')->has('data.recent', 4));
+    $this->actingAs($u)->get('/lifting')->assertInertia(fn ($p) => $p->where('data.exercises.0.status', 'progressing')->has('data.recent', 4)->where('data.recent.0.effort.unlabelled', 1));
 
     $other = loggedInUser();
     expect(app(CoachTools::class)->run('get_lifting', [], $other)['connected'])->toBeFalse();

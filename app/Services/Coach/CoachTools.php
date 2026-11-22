@@ -161,8 +161,8 @@ class CoachTools
         $rows = DB::table('workout_logs')->where('user_id', $u->id)->whereBetween('local_date', [date('Y-m-d', strtotime($today . " -{$days} days")), $today])->orderBy('local_date')->get();
 
         return ['days' => $days, 'done' => $rows->where('status', 'done')->count(), 'skipped' => $rows->where('status', 'skipped')->count(),
-            'sessions' => $rows->map(fn ($r) => ['date' => (string) $r->local_date, 'type' => $r->type, 'intensity' => $r->intensity, 'minutes' => (int) $r->minutes, 'status' => $r->status, 'energy_estimate_kcal' => (int) round((float) ($r->kcal_override ?? $r->net_kcal))])->values()->all(),
-            'note' => 'Energy is an estimate (about 25% either way) and is not added to the food target.'];
+            'sessions' => $rows->map(fn ($r) => ['date' => (string) $r->local_date, 'type' => $r->type, 'intensity' => $r->intensity, 'minutes' => (int) $r->minutes, 'status' => $r->status, 'energy_estimate_kcal' => (int) round((float) ($r->kcal_override ?? $r->net_kcal))] + ($r->rpe !== null ? ['session_rpe' => (float) $r->rpe, 'load_rpe_x_minutes' => (int) round((float) $r->rpe * (int) $r->minutes)] : []))->values()->all(),
+            'note' => 'Energy is an estimate (about 25% either way) and is not added to the food target. session_rpe and load (RPE x minutes) appear only for sessions where the person rated effort.'];
     }
 
     private function adherence(User $u): array

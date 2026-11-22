@@ -19,16 +19,35 @@ final class Strength
 
     public const DOWN_BELOW = 0.95;
 
-    public static function e1rm(?float $kg, ?int $reps): ?float
+    public static function e1rm(?float $kg, ?int $reps, ?int $rir = null): ?float
     {
-        if ($kg === null || $reps === null || $kg <= 0 || $reps < 1 || $reps > self::MAX_REPS) {
+        $r = $reps === null ? null : $reps + max(0, (int) $rir);
+        if ($kg === null || $r === null || $kg <= 0 || $reps < 1 || $r > self::MAX_REPS) {
             return null;
         }
 
-        return round($reps === 1 ? $kg : $kg * (1 + $reps / 30), 1);
+        return round($r === 1 ? $kg : $kg * (1 + $r / 30), 1);
     }
 
-    /** @param list<array<string,mixed>> $sets @return array{kg:float,reps:int,e1rm:float}|null the working set with the highest e1RM */
+    /**
+     * Reps in reserve for a set, from what you logged: a "failure" set is 0; otherwise RPE 10 = 0, 9 = 1 ... (RPE below 5 is ignored as unreliable);
+     * a set with neither is unknown (null) and gets NO adjustment, so unlabelled sets are never inflated.
+     * @param array<string,mixed> $set
+     */
+    public static function rir(array $set): ?int
+    {
+        if (($set['type'] ?? 'normal') === 'failure') {
+            return 0;
+        }
+        $rpe = $set['rpe'] ?? null;
+        if (is_numeric($rpe) && (float) $rpe >= 5 && (float) $rpe <= 10) {
+            return (int) round(10 - (float) $rpe);
+        }
+
+        return null;
+    }
+
+    /** @param list<array<string,mixed>> $sets @return array{kg:float,reps:int,e1rm:float,rir:?int}|null the working set with the highest effort-aware e1RM */
     public static function bestSet(array $sets): ?array
     {
         $best = null;
@@ -36,13 +55,29 @@ final class Strength
             if (($s['type'] ?? 'normal') === 'warmup') {
                 continue;
             }
-            $e = self::e1rm(isset($s['kg']) ? (float) $s['kg'] : null, isset($s['reps']) ? (int) $s['reps'] : null);
+            $rir = self::rir($s);
+            $e = self::e1rm(isset($s['kg']) ? (float) $s['kg'] : null, isset($s['reps']) ? (int) $s['reps'] : null, $rir);
             if ($e !== null && ($best === null || $e > $best['e1rm'])) {
-                $best = ['kg' => (float) $s['kg'], 'reps' => (int) $s['reps'], 'e1rm' => $e];
+                $best = ['kg' => (float) $s['kg'], 'reps' => (int) $s['reps'], 'e1rm' => $e, 'rir' => $rir];
             }
         }
 
         return $best;
+    }
+
+    /**
+     * How hard the working sets were, as far as you logged it. Unlabelled sets are counted as unlabelled, never guessed.
+     * @param list<array<string,mixed>> $sets
+     * @return array{working:int,failure:int,rpe_logged:int,unlabelled:int,avg_rpe:?float}
+     */
+    public static function effort(array $sets): array
+    {
+        $w = array_values(array_filter($sets, fn ($s) => ($s['type'] ?? 'normal') !== 'warmup'));
+        $fail = count(array_filter($w, fn ($s) => ($s['type'] ?? '') === 'failure'));
+        $rpes = array_values(array_filter(array_map(fn ($s) => is_numeric($s['rpe'] ?? null) ? (float) $s['rpe'] : null, $w), fn ($x) => $x !== null));
+        $unl = count(array_filter($w, fn ($s) => self::rir($s) === null));
+
+        return ['working' => count($w), 'failure' => $fail, 'rpe_logged' => count($rpes), 'unlabelled' => $unl, 'avg_rpe' => $rpes ? round(array_sum($rpes) / count($rpes), 1) : null];
     }
 
     /**

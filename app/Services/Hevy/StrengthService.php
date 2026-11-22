@@ -77,18 +77,19 @@ class StrengthService
         $recent = [];
         foreach (array_slice(array_reverse($all), 0, 8) as $s) {
             $idx = Strength::sessionIndex($all, $s['date']);
-            $sets = 0;
+            $all_sets = [];
             foreach ($s['exercises'] as $ex) {
-                $sets += count(array_filter($ex['sets'], fn ($x) => $x['type'] !== 'warmup'));
+                array_push($all_sets, ...$ex['sets']);
             }
-            $recent[] = ['date' => $s['date'], 'title' => $s['title'], 'minutes' => $s['minutes'], 'exercises' => count($s['exercises']), 'working_sets' => $sets, 'vs_your_best' => $idx];
+            $eff = Strength::effort($all_sets);
+            $recent[] = ['date' => $s['date'], 'title' => $s['title'], 'minutes' => $s['minutes'], 'exercises' => count($s['exercises']), 'working_sets' => $eff['working'], 'effort' => $eff, 'vs_your_best' => $idx];
         }
 
         return [
             'sessions_in_window' => count($window), 'exercises' => $exercises, 'recent' => $recent,
             'weekly_sets' => ['this_week' => Strength::weeklySets($all, $monday, $today), 'last_week' => Strength::weeklySets($all, $lastMonday, date('Y-m-d', strtotime($monday . ' -1 day')))],
             'strength_vs_bodyweight' => $this->vsBodyweight($user, $window),
-            'assumptions' => ['e1RM is an estimate (Epley, 1-12 reps only)', 'weekly sets: a secondary muscle counts half (rule of thumb)', 'status needs at least 3 sessions, a stall at least 5 over 2+ weeks', 'load step for "beat the log" is ' . $step . ' kg (an assumption)'],
+            'assumptions' => ['e1RM is an estimate (Epley, 1-12 reps only); a set tagged failure counts as 0 reps in reserve, and with an RPE logged the reps in reserve are added (RPE 9 = 1). Sets with neither are not adjusted', 'weekly sets: a secondary muscle counts half (rule of thumb)', 'status needs at least 3 sessions, a stall at least 5 over 2+ weeks', 'load step for "beat the log" is ' . $step . ' kg (an assumption)'],
         ];
     }
 
