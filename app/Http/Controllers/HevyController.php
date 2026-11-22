@@ -26,7 +26,7 @@ class HevyController extends Controller
         $conn = DB::table('hevy_connections')->where('user_id', $user->id)->first();
 
         return Inertia::render('Lifting', [
-            'connection' => $conn ? ['last_synced_at' => $conn->last_synced_at, 'last_error' => $conn->last_error] : null,
+            'connection' => $conn ? ['last_synced_at' => $conn->last_synced_at ? \Illuminate\Support\Carbon::parse($conn->last_synced_at, 'UTC')->toIso8601String() : null, 'last_error' => $conn->last_error] : null,
             'data' => $conn ? $strength->overview($user) : null,
             'insights' => $conn ? $strength->insights($user) : [],
             'ramp' => $user->profile->effort_ramp ?: null,
