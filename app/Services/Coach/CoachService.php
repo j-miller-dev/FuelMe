@@ -57,7 +57,7 @@ class CoachService
                 $uses = array_values(array_filter($r['content'], fn ($b) => ($b['type'] ?? '') === 'tool_use'));
 
                 if ($uses) {
-                    $messages[] = ['role' => 'assistant', 'content' => $r['content']];
+                    $messages[] = ['role' => 'assistant', 'content' => self::echoBlocks($r['content'])];
                     $blocks = [];
                     foreach ($uses as $u) {
                         $out = $this->tools->run((string) $u['name'], (array) ($u['input'] ?? []), $user);
@@ -98,6 +98,24 @@ class CoachService
         DB::table('coach_threads')->where('id', $threadId)->update(['updated_at' => now()]);
 
         return ['thread_id' => (int) $threadId, 'message' => ['id' => $id, 'role' => 'assistant', 'content' => $answer, 'tools' => array_values(array_unique(array_column($trace, 'tool'))), 'grounded' => $grounded]];
+    }
+
+    /**
+     * The model's own content blocks go back to the API on the next round. A tool call with no arguments arrives as `"input": {}`, which
+     * PHP decodes to an empty array and would send back as `[]` (a 400: input must be an object), so empty inputs are turned back into objects.
+     *
+     * @param list<array<string,mixed>> $blocks
+     * @return list<array<string,mixed>>
+     */
+    public static function echoBlocks(array $blocks): array
+    {
+        return array_map(function ($b) {
+            if (($b['type'] ?? '') === 'tool_use' && empty($b['input'])) {
+                $b['input'] = new \stdClass();
+            }
+
+            return $b;
+        }, $blocks);
     }
 
     private function system(User $user): string

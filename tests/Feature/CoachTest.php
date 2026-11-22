@@ -136,3 +136,11 @@ it('blocks a message over the monthly token cap, and keeps threads private', fun
     $this->actingAs($u)->delete("/coach/threads/{$r['thread_id']}")->assertRedirect('/coach');
     expect(DB::table('coach_threads')->where('id', $r['thread_id'])->exists())->toBeFalse()->and(DB::table('coach_messages')->where('thread_id', $r['thread_id'])->count())->toBe(0);
 });
+
+it('sends a no-argument tool call back to the API as an object, not an empty list', function () {
+    // The API answers a no-argument call with "input": {} which json_decode(..., true) turns into []. Echoed back as [] it is a 400.
+    $blocks = json_decode('[{"type":"tool_use","id":"t1","name":"get_today","input":{}},{"type":"text","text":"ok"}]', true);
+    $out = json_encode(\App\Services\Coach\CoachService::echoBlocks($blocks));
+
+    expect($out)->toContain('"input":{}')->and($out)->not->toContain('"input":[]');
+});
