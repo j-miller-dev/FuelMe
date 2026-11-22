@@ -6,6 +6,7 @@ use App\Domain\Foods\LocalDay;
 use App\Domain\Foods\QuickFoods;
 use App\Domain\Nutrition\ExpenditureFilter;
 use App\Domain\Progress\Adherence;
+use App\Domain\Progress\Insights;
 use App\Domain\Progress\NudgePicker;
 use App\Domain\Progress\TrendStats;
 use App\Domain\Progress\UndereatingDetector;
@@ -84,6 +85,7 @@ class ProgressService
         $goal = $user->goal;
 
         $under = UndereatingDetector::detect($done);
+        $insights = $this->insights($user, $last7, (float) ($latest->plan_json['plan']['weekly']['proteinPerMealG'] ?? 30), $done, $weighIns14);
         $checkin = $slope14 !== null || count($series) < WeeklyCheckin::MIN_DAYS_OF_DATA ? WeeklyCheckin::evaluate([
             'trendKg' => $last['trend'], 'tdee' => (float) $last['tdee'], 'tdeeSd' => (float) $last['tdeeSd'], 'phase' => $goal->phase, 'goalPctPerWeek' => (float) $goal->rate_pct_per_week,
             'previousTarget' => (float) $latest->kcal, 'tdeeAtLastTarget' => $atTarget ? (float) $atTarget['tdee'] : null, 'slope14' => $slope14, 'slopePrev14' => $slopePrev,
@@ -103,10 +105,31 @@ class ProgressService
                 'phase' => $goal->phase, 'target' => (int) $latest->kcal,
             ],
             'adherence' => ['loggedDays7' => $loggedDays7, 'weighIns14' => $weighIns14],
-            'checkin' => $checkin, 'undereating' => $under + ['adds' => $adds],
+            'checkin' => $checkin, 'undereating' => $under + ['adds' => $adds], 'insights' => $insights,
             'weights' => DB::table('weight_logs')->where('user_id', $user->id)->orderByDesc('local_date')->limit(14)->get(['id', 'local_date', 'kg'])
                 ->map(fn ($w) => ['id' => (int) $w->id, 'date' => (string) $w->local_date, 'kg' => (float) $w->kg])->all(),
         ];
+    }
+
+    /**
+     * @param list<array{date:string,kcal:?float,target:float,protein:float,proteinTarget:float}> $last7
+     * @param list<array{date:string,kcal:?float}> $done14
+     */
+    private function insights(User $user, array $last7, float $perMeal, array $done14, int $weighIns14): array
+    {
+        $dates = array_column($last7, 'date');
+        $rows = $dates ? DB::table('food_logs')->where('user_id', $user->id)->whereIn('local_date', $dates)->get(['local_date', 'meal_slot', 'kcal', 'protein', 'fibre']) : collect();
+        $days = array_map(function ($d) use ($rows) {
+            $r = $rows->where('local_date', $d['date']);
+
+            return $d + ['fibre' => (float) $r->sum('fibre'), 'kcalWithFibre' => (float) $r->whereNotNull('fibre')->sum('kcal'), 'kcalLogged' => (float) $r->sum('kcal')];
+        }, $last7);
+        $slots = [];
+        foreach ($rows->groupBy('meal_slot') as $slot => $g) {
+            $slots[$slot] = ['days' => $g->pluck('local_date')->unique()->count(), 'protein' => (float) $g->sum('protein')];
+        }
+
+        return Insights::compute($days, $slots, $perMeal, Adherence::loggedCount($done14), $weighIns14);
     }
 
     /** Lightweight: only whether the estimate has settled (for the Today badge). */

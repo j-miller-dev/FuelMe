@@ -166,7 +166,9 @@ class TrainingService
         }
 
         return DB::transaction(function () use ($user, $date, $d) {
-            $this->materialise($user, $date);   // a day you touch stops being "virtual": its template sessions become real, confirmable rows
+            if ($d['materialise'] ?? true) {
+                $this->materialise($user, $date);   // a day you touch stops being "virtual": its template sessions become real, confirmable rows
+            }
 
             return $this->insert($user, $date, ['type' => $d['type'], 'intensity' => $d['intensity'], 'minutes' => (int) $d['minutes'], 'start' => $d['start_time'] ?? null, 'name' => $d['name'] ?? null,
                 'customMet' => $d['custom_met'] ?? null, 'override' => $d['kcal_override'] ?? null, 'rpe' => $d['rpe'] ?? null, 'template_id' => null], $this->kg($user), 'done', 'manual', $d['idempotency_key'] ?? null);

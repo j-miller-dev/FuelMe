@@ -1,5 +1,5 @@
 /** Same-origin JSON requests with Laravel's XSRF cookie. Throws an Error carrying the server's first validation message. */
-function xsrf(): string {
+export function xsrf(): string {
   const raw = document.cookie.split('; ').find((c) => c.startsWith('XSRF-TOKEN='))?.slice('XSRF-TOKEN='.length)
   return raw ? decodeURIComponent(raw) : ''
 }

@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react'
 import { useState } from 'react'
-import { api, uuid } from '@/lib/http'
+import { uuid } from '@/lib/http'
+import { outbox } from '@/lib/outbox'
 import { slotForHour } from '@/lib/food'
 import { INTENSITY_LABEL, inMinutes, type Composer, type ComposerOption, type Session, type TrainingProps } from '@/lib/training'
 import { SessionSheet } from '@/components/training/SessionSheet'
@@ -15,15 +16,22 @@ export function TrainingCard({ training, date, isToday, unit, hour }: { training
   const [msg, setMsg] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const reload = () => router.reload({ only: ['training', 'target', 'dayClass', 'logs'] })
+  // Done / Skip / "Log this" go through the outbox so they work in a gym with no signal. Each one is idempotent on the server.
+  const queue = async (method: 'POST' | 'PATCH', url: string, body: unknown, label: string) => {
+    const r = await outbox.send({ method, url, body, kind: 'raw', label })
+    if (r.status === 'failed') throw new Error(r.message)
+    if (r.status === 'queued') setMsg('Saved on this phone. It will sync when you are back online.')
+    return r
+  }
   const run = async (id: string, fn: () => Promise<unknown>) => { setBusy(id); setMsg(null); try { await fn(); reload() } catch (e) { setMsg(e instanceof Error ? e.message : 'Something went wrong.') } finally { setBusy(null) } }
   // A session copied from your usual week is confirmed/skipped through its template slot (which also makes the day's rows real);
   // one you added yourself is just a row with a status.
   const mark = (s: Session, action: 'done' | 'skip' | 'reset') => run(s.key + action, () => s.template_id !== null
-    ? api('/workouts/template-session', { method: 'POST', body: { template_id: s.template_id, action, local_date: date } })
-    : api(`/workouts/${s.id}`, { method: 'PATCH', body: { status: action === 'skip' ? 'skipped' : action === 'done' ? 'done' : 'planned' } }))
-  const logOption = (o: ComposerOption, id: string) => run(id, () => api('/logs', { method: 'POST', body: { local_date: date, items: o.items.map((i) => (i.kind === 'meal'
+    ? queue('POST', '/workouts/template-session', { template_id: s.template_id, action, local_date: date }, `${s.label}: ${action}`)
+    : queue('PATCH', `/workouts/${s.id}`, { status: action === 'skip' ? 'skipped' : action === 'done' ? 'done' : 'planned' }, `${s.label}: ${action}`))
+  const logOption = (o: ComposerOption, id: string) => run(id, () => queue('POST', '/logs', { local_date: date, items: o.items.map((i) => (i.kind === 'meal'
     ? { idempotency_key: uuid(), meal_slot: slotForHour(hour), source: 'meal', meal_id: i.ref, portions: i.amount }
-    : { idempotency_key: uuid(), meal_slot: slotForHour(hour), source: 'search', food_id: i.ref, grams: i.amount })) } }))
+    : { idempotency_key: uuid(), meal_slot: slotForHour(hour), source: 'search', food_id: i.ref, grams: i.amount })) }, `Log ${o.items.map((i) => i.name).join(' + ')}`))
 
   const f = training.fuel
   const sessions = training.sessions.filter((s) => s.status !== 'skipped' || isToday)

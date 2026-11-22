@@ -7,6 +7,7 @@ export interface ProgressData {
   series: Point[]; today: string
   summary: { trendKg: number; tdee: number; tdeeSd: number; calibrating: boolean; ratePctPerWeek: number | null; rateKgPerWeek: number | null; goalPctPerWeek: number; phase: string; target: number }
   adherence: { loggedDays7: number; weighIns14: number }
+  insights: { days: number; protein: { avg: number; target: number; pct: number } | null; slots: Record<string, number>; perMealG: number; fibre: { avg: number; guide: number; coverage: number } | null; notes: string[] }
   checkin: CheckIn | null; undereating: Nudge; weights: { id: number; date: string; kg: number }[]
 }
 

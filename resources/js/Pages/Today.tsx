@@ -25,7 +25,8 @@ const prettyDate = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateStr
 export default function Today(p: Props) {
   const unit = (usePage().props as { energyUnit?: EnergyUnit }).energyUnit ?? 'kcal'
   const { logs, toast, setToast, add, repeat, remove, update, copy } = useLogging(p.logs, p.date)
-  const [adding, setAdding] = useState(false)
+  // The home-screen shortcut "Log food" opens the Add sheet straight away (/?add=1).
+  const [adding, setAdding] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('add'))
   const [editing, setEditing] = useState<LogRow | null>(null)
   const [slot, setSlot] = useState<Slot>(() => slotForHour(p.serverHour))
   const t = totals(logs)
@@ -83,12 +84,16 @@ export default function Today(p: Props) {
               <ul className="mt-1">
                 {rows.map((l) => (
                   <li key={l.id} className="flex min-h-14 items-center gap-1 border-t border-raised/70 first:border-t-0">
-                    <button onClick={() => l.id > 0 && setEditing(l)} className="min-w-0 flex-1 py-2 pl-1 text-left" aria-label={`Edit ${l.name}`}>
-                      <div className="truncate text-sm">{l.name}</div>
+                    <button onClick={() => l.id > 0 && !l.pending && setEditing(l)} className="min-w-0 flex-1 py-2 pl-1 text-left" aria-label={`Edit ${l.name}`}>
+                      <div className="truncate text-sm">{l.name}{l.pending ? <span className="ml-2 rounded bg-raised px-1.5 text-[10px] text-muted">waiting to sync</span> : null}</div>
                       <div className="truncate text-xs text-muted tabular-nums">{l.grams ? `${Math.round(l.grams)} g · ` : ''}{Math.round(l.protein)}P {Math.round(l.carbs)}C {Math.round(l.fat)}F</div>
                     </button>
                     <span className="text-sm tabular-nums">{fmtEnergy(l.kcal, unit)}</span>
-                    <button onClick={() => l.id > 0 && void repeat(l)} aria-label={`Add ${l.name} again`} className="grid size-11 place-items-center rounded-full bg-raised text-lg text-accent active:scale-90">+</button>
+                    {l.id < 0 ? (
+                      <button onClick={() => void remove(l)} aria-label={`Cancel ${l.name}, not saved yet`} className="grid size-11 place-items-center rounded-full bg-raised text-sm text-muted">✕</button>
+                    ) : (
+                      <button onClick={() => void repeat(l)} aria-label={`Add ${l.name} again`} className="grid size-11 place-items-center rounded-full bg-raised text-lg text-accent active:scale-90">+</button>
+                    )}
                   </li>
                 ))}
               </ul>

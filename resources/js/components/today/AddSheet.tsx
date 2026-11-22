@@ -42,7 +42,7 @@ export function AddSheet({ slot, setSlot, eaten, target, unit, previous, onAdd, 
     const t = setTimeout(() => {
       api<SearchResponse>(`/foods/search?q=${encodeURIComponent(term)}`, { signal: ctl.signal })
         .then((r) => { if (mine === seq.current) { setResults(r.results); setSearchErr(null) } })
-        .catch((e) => { if (mine === seq.current && e?.name !== 'AbortError') setSearchErr('Search failed. Check your connection.') })
+        .catch((e) => { if (mine === seq.current && e?.name !== 'AbortError') setSearchErr(navigator.onLine ? 'Search failed. Try again in a moment.' : 'You are offline, so search is unavailable. Use your recent foods, favourites or Quick add and it will sync later.') })
     }, 120)
     return () => { clearTimeout(t); ctl.abort() }
   }, [q])

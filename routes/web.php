@@ -3,6 +3,7 @@
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\CaptureController;
+use App\Http\Controllers\DataController;
 use App\Http\Controllers\FoodController;
 use App\Http\Controllers\FoodSearchController;
 use App\Http\Controllers\LogController;
@@ -71,6 +72,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/foods/search', [FoodSearchController::class, 'index'])->middleware('throttle:120,1')->name('foods.search');
 
+    Route::get('/settings/data', [DataController::class, 'show'])->name('settings.data');
+    Route::get('/settings/data/backup.json', [DataController::class, 'backup'])->name('settings.data.backup');
+    Route::get('/settings/data/{what}.csv', [DataController::class, 'csv'])->whereIn('what', ['food-logs', 'weights', 'workouts'])->name('settings.data.csv');
+    Route::post('/import/rows', [DataController::class, 'rows'])->middleware('throttle:60,1')->name('import.rows');
     Route::get('/settings/about', [AboutController::class, 'show'])->name('settings.about');
 
     // Passkey management needs a recent password confirmation (also enforced on the JSON endpoints by Fortify).

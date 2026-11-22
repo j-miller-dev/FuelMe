@@ -1,4 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react'
+import { clearOfflineCaches } from '@/lib/offline'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
@@ -78,12 +79,13 @@ export default function Security({ passkeys }: { passkeys: Passkey[] }) {
         </form>
       </section>
 
+      <Link href="/settings/data" className="mb-2 block text-center text-sm text-muted underline">Your data: export and import</Link>
       <Link href="/training" className="mb-2 block text-center text-sm text-muted underline">Training week</Link>
       <Link href="/shopping" className="mb-2 block text-center text-sm text-muted underline">Shopping lists</Link>
       <Link href="/meals" className="mb-2 block text-center text-sm text-muted underline">Meals</Link>
       <Link href="/foods" className="mb-2 block text-center text-sm text-muted underline">Your foods</Link>
       <Link href="/settings/about" className="mb-4 block text-center text-sm text-muted underline">About &amp; data sources</Link>
-      <Button variant="ghost" className="w-full" onClick={() => router.post('/logout')}>Sign out</Button>
+      <Button variant="ghost" className="w-full" onClick={() => { void clearOfflineCaches().finally(() => router.post('/logout')) }}>Sign out</Button>
     </AppLayout>
   )
 }

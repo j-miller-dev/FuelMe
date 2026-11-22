@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api, uuid } from '@/lib/http'
+import { outbox } from '@/lib/outbox'
 import { INTENSITY_LABEL, type Catalogue, type Session, type TemplateRow } from '@/lib/training'
 import { Sheet } from '@/components/today/Sheet'
 
@@ -42,7 +43,8 @@ export function SessionSheet({ mode, catalogue, kg, onClose, onSaved }: { mode: 
       } else if (ex) {
         await api(`/workouts/${(ex as Session).id}`, { method: 'PATCH', body: { minutes: mins, intensity: body.intensity, start_time: start || null, kcal_override: kcal === '' ? null : Number(kcal.replace(',', '.')) } })
       } else {
-        await api('/workouts', { method: 'POST', body: { ...body, local_date: mode.date, kcal_override: kcal === '' ? null : Number(kcal.replace(',', '.')), idempotency_key: key } })
+        const r = await outbox.send({ method: 'POST', url: '/workouts', kind: 'raw', label: `Session: ${name.trim() || catalogue[type]?.label || type}`, body: { ...body, local_date: mode.date, kcal_override: kcal === '' ? null : Number(kcal.replace(',', '.')), idempotency_key: key } })
+        if (r.status === 'failed') throw new Error(r.message)   // saved on the phone (queued) counts as success: the outbox sends it later
       }
       onSaved()
     } catch (e) { setErr(e instanceof Error ? e.message : 'Could not save.'); setBusy(false) }

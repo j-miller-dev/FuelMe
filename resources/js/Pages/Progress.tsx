@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import AppLayout from '@/layouts/AppLayout'
 import { TrendChart } from '@/components/progress/TrendChart'
 import { api } from '@/lib/http'
+import { outbox } from '@/lib/outbox'
 import { RANGES, longDate, type ProgressData } from '@/lib/progress'
 import { energyLabel, fmtEnergy, type EnergyUnit } from '@/lib/units'
 
@@ -24,8 +25,13 @@ export default function Progress({ data, today }: { data: ProgressData | null; t
   async function weigh() {
     setBusy(true); setMsg(null)
     try {
-      const r = await api<{ saved: { kg: number }; note: string | null }>('/weights', { method: 'POST', body: { kg: num } })
-      setKg(''); setMsg({ text: `Saved ${r.saved.kg} kg.${r.note ? ' ' + r.note : ''}` }); reload()
+      // Through the outbox: a weigh-in in a gym basement with no signal is saved on the phone and sent later (one per day, so a replay is harmless).
+      const r = await outbox.send({ method: 'POST', url: '/weights', kind: 'raw', label: `Weigh-in ${num} kg`, body: { kg: num } })
+      if (r.status === 'failed') throw new Error(r.message)
+      setKg('')
+      if (r.status === 'queued') { setMsg({ text: `Saved ${num} kg on this phone. It will sync when you are back online.` }); return }
+      const d = r.data as { saved: { kg: number }; note: string | null }
+      setMsg({ text: `Saved ${d.saved.kg} kg.${d.note ? ' ' + d.note : ''}` }); reload()
     } catch (e) { setMsg({ text: e instanceof Error ? e.message : 'Could not save.', error: true }) } finally { setBusy(false) }
   }
   async function removeWeight(id: number) {
@@ -107,6 +113,23 @@ export default function Progress({ data, today }: { data: ProgressData | null; t
                   <ul className="mt-1 space-y-1">{data.undereating.adds.map((a) => <li key={a.name} className="flex items-center justify-between rounded-xl bg-raised px-3 py-2 text-sm"><span className="truncate">{a.name} <span className="text-muted">{Math.round(a.grams)} {a.unit}</span></span><span className="ml-2 shrink-0 tabular-nums text-muted">+{fmtEnergy(a.kcal, unit)} · {Math.round(a.protein)} g P</span></li>)}</ul>
                 </>
               ) : null}
+            </section>
+          ) : null}
+
+          {data.insights.notes.length ? (
+            <section className="mt-4 rounded-2xl bg-surface p-4" aria-label="This week">
+              <h2 className="font-semibold">This week</h2>
+              {Object.keys(data.insights.slots).length ? (
+                <div className="mt-2" aria-label="Average protein per meal">
+                  {(['breakfast', 'lunch', 'dinner'] as const).map((k) => data.insights.slots[k] !== undefined ? (
+                    <div key={k} className="flex items-center gap-2 text-xs"><span className="w-16 capitalize text-muted">{k}</span>
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-raised"><div className="h-full bg-protein" style={{ width: `${Math.min(100, (data.insights.slots[k]! / Math.max(1, data.insights.perMealG)) * 100)}%`, background: 'var(--protein)' }} /></div>
+                      <span className="w-12 text-right tabular-nums">{data.insights.slots[k]} g</span></div>
+                  ) : null)}
+                  <p className="mt-1 text-xs text-muted">Protein per meal, averaged over the days you ate it. A good dose is about {data.insights.perMealG} g.</p>
+                </div>
+              ) : null}
+              <ul className="mt-3 space-y-1 text-sm text-muted">{data.insights.notes.map((n, i) => <li key={i}>{n}</li>)}</ul>
             </section>
           ) : null}
 

@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react'
 import type { ReactNode } from 'react'
+import { OutboxStatus } from '@/components/OutboxStatus'
 import { cn } from '@/lib/utils'
 
 const tabs = [
@@ -15,6 +16,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const path = url.split('?')[0]
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col">
+      <OutboxStatus />
       <main className="flex-1 px-4 pb-40 pt-6">{children}</main>
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-10 border-t border-raised bg-canvas/95 backdrop-blur" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <ul className="mx-auto flex max-w-md">
