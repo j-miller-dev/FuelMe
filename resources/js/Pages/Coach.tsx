@@ -10,7 +10,7 @@ interface Reply { thread_id: number; message: Msg }
 
 const TOOL_LABEL: Record<string, string> = {
   get_today_status: 'today', get_targets: 'targets', get_week_plan: 'week plan', get_trend: 'weight trend', get_expenditure: 'expenditure estimate',
-  get_weekly_checkin: 'weekly check-in', get_training: 'training', get_adherence: 'logging consistency', get_next_session_fuel: 'next session fuel', get_assumptions: 'assumptions', search_principles: 'your notes',
+  get_weekly_checkin: 'weekly check-in', get_training: 'training', get_adherence: 'logging consistency', get_next_session_fuel: 'next session fuel', get_assumptions: 'assumptions', search_principles: 'your notes', get_lifting: 'lifting',
 }
 
 export default function Coach({ enabled, overCap, threadId, messages, maxChars, suggestions }: Props) {

@@ -38,6 +38,7 @@ class CoachTools
             ['name' => 'get_adherence', 'description' => 'How many of the last days counted, weigh-ins, and whether you have been under target.', 'input_schema' => $none],
             ['name' => 'get_next_session_fuel', 'description' => 'The next session (today, else tomorrow): when, and the eating and fluid plan around it.', 'input_schema' => $none],
             ['name' => 'search_principles', 'description' => 'Search the person\'s OWN principle notes (from their reading) for ideas that fit a question. Returns up to 3 cards with source, grade and stance. Numbers in a card are the note author\'s, not the person\'s targets.', 'input_schema' => ['type' => 'object', 'properties' => ['query' => ['type' => 'string', 'description' => 'a few keywords, e.g. "recovery sleep" or "training to failure"']], 'required' => ['query']]],
+            ['name' => 'get_lifting', 'description' => 'Your lifting from synced Hevy workouts: recent sessions, per-exercise progress status (estimated 1RM trend, progressing/holding/stalled/down), what to beat next time, weekly hard sets per muscle, and strength change next to weight change. Empty if Hevy is not connected.', 'input_schema' => $days('how many days back (default 90)')],
             ['name' => 'get_assumptions', 'description' => 'The fixed assumptions and rules of thumb the app uses, so you can say what is an estimate.', 'input_schema' => $none],
         ];
     }
@@ -55,6 +56,7 @@ class CoachTools
             'get_training' => $this->trainingRange($user, $this->days($args, 14)),
             'get_adherence' => $this->adherence($user),
             'get_next_session_fuel' => $this->nextFuel($user),
+            'get_lifting' => $this->lifting($user, $this->days($args, 90)),
             'search_principles' => $this->principles($user, (string) ($args['query'] ?? '')),
             'get_assumptions' => $this->assumptions(),
             default => ['error' => 'Unknown tool.'],
@@ -219,5 +221,19 @@ class CoachTools
             'cards' => array_map(fn ($c) => ['title' => $c['title'], 'source' => $c['source'], 'grade' => $c['grade'], 'stance' => $c['stance'], 'tags' => $c['tags'], 'text' => mb_substr($c['body'], 0, 700)], $cards),
             'note' => $cards ? 'These are the person\'s own notes. Numbers inside are the note author\'s, not the person\'s targets.' : 'No matching notes. Do not invent one.',
         ];
+    }
+
+    /** @return array<string,mixed> */
+    private function lifting(User $user, int $days): array
+    {
+        $svc = app(\App\Services\Hevy\StrengthService::class);
+        if (! $svc->connected($user)) {
+            return ['connected' => false, 'note' => 'Hevy is not connected, so there is no lifting data.'];
+        }
+        $o = $svc->overview($user, $days);
+        $o['exercises'] = array_map(fn ($e) => array_diff_key($e, ['id' => 1, 'trend' => 1]) + ['trend_last' => array_slice($e['trend'], -4)], array_slice($o['exercises'], 0, 12));
+        $o['recent'] = array_slice($o['recent'], 0, 5);
+
+        return ['connected' => true] + $o;
     }
 }

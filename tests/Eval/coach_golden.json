@@ -211,6 +211,36 @@
    "expect_tools": [
     "search_principles"
    ]
+  },
+  {
+   "q": "Which of my lifts are stalling?",
+   "expect_tools": [
+    "get_lifting"
+   ]
+  },
+  {
+   "q": "What should I try to beat next session on my leg press?",
+   "expect_tools": [
+    "get_lifting"
+   ]
+  },
+  {
+   "q": "How many hard sets did I do for chest this week?",
+   "expect_tools": [
+    "get_lifting"
+   ]
+  },
+  {
+   "q": "Am I getting stronger while I gain weight?",
+   "expect_tools": [
+    "get_lifting"
+   ]
+  },
+  {
+   "q": "How did my last lifting session compare with my best?",
+   "expect_tools": [
+    "get_lifting"
+   ]
   }
  ]
 }

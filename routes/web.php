@@ -90,6 +90,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/principles/stance', [\App\Http\Controllers\PrincipleController::class, 'saveStance'])->name('principles.my-stance');
     Route::patch('/principles/{principle}/stance', [\App\Http\Controllers\PrincipleController::class, 'stance'])->whereNumber('principle')->name('principles.stance');
     Route::delete('/principles/{principle}', [\App\Http\Controllers\PrincipleController::class, 'archive'])->whereNumber('principle')->name('principles.archive');
+    Route::get('/lifting', [\App\Http\Controllers\HevyController::class, 'show'])->name('lifting');
+    Route::post('/lifting/connect', [\App\Http\Controllers\HevyController::class, 'connect'])->middleware('throttle:10,1')->name('lifting.connect');
+    Route::post('/lifting/sync', [\App\Http\Controllers\HevyController::class, 'sync'])->middleware('throttle:10,1')->name('lifting.sync');
+    Route::delete('/lifting/connection', [\App\Http\Controllers\HevyController::class, 'disconnect'])->name('lifting.disconnect');
     Route::get('/coach', [\App\Http\Controllers\CoachController::class, 'show'])->name('coach');
     Route::post('/coach/messages', [\App\Http\Controllers\CoachController::class, 'ask'])->middleware('throttle:20,1')->name('coach.ask');
     Route::delete('/coach/threads/{thread}', [\App\Http\Controllers\CoachController::class, 'destroyThread'])->whereNumber('thread')->name('coach.destroy');

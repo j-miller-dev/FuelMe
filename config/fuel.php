@@ -57,6 +57,12 @@ return [
     | The model only PARSES text into foods and amounts; every number comes from the food database.
     | Prices are not assumed: the cap is on TOKENS per calendar month.
     */
+    'hevy' => [
+        'base_url' => env('FUEL_HEVY_BASE_URL', 'https://api.hevyapp.com'),
+        'timeout' => 20,
+        'plate_step_kg' => (float) env('FUEL_PLATE_STEP_KG', 2.5),   // ASSUMPTION used for the "small load step" suggestion
+    ],
+
     'capture' => [
         'api_key' => env('ANTHROPIC_API_KEY'),
         'model' => env('FUEL_CAPTURE_MODEL', 'claude-haiku-5-5'),
