@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Training\EffortRamp;
 use App\Jobs\SyncHevy;
 use App\Services\Hevy\HevyClient;
 use App\Services\Hevy\HevyException;
@@ -28,6 +29,9 @@ class HevyController extends Controller
             'connection' => $conn ? ['last_synced_at' => $conn->last_synced_at, 'last_error' => $conn->last_error] : null,
             'data' => $conn ? $strength->overview($user) : null,
             'insights' => $conn ? $strength->insights($user) : [],
+            'ramp' => $user->profile->effort_ramp ?: null,
+            'rampNow' => EffortRamp::weekFor($user->profile->effort_ramp ?: null, now($user->profile->tz)->toDateString()),
+            'today' => now($user->profile->tz)->toDateString(),
         ]);
     }
 
@@ -61,6 +65,25 @@ class HevyController extends Controller
             DB::table('hevy_workouts')->where('user_id', $user->id)->delete();   // sets go with them (cascade)
             DB::table('hevy_templates')->where('user_id', $user->id)->delete();
         }
+
+        return back();
+    }
+
+    /** Your own reps-in-reserve plan for lifting weeks, for example 2-3, 1-2, then 0-1. Cleared with DELETE. */
+    public function saveRamp(Request $request): RedirectResponse
+    {
+        $ramp = EffortRamp::normalise($request->input('ramp'));
+        if ($ramp === null) {
+            return back()->withErrors(['ramp' => 'Each week needs a low and high number of reps in reserve from 0 to 5, low not above high, up to 8 weeks, and a start date.']);
+        }
+        $request->user()->profile()->update(['effort_ramp' => $ramp]);
+
+        return back();
+    }
+
+    public function clearRamp(Request $request): RedirectResponse
+    {
+        $request->user()->profile()->update(['effort_ramp' => null]);
 
         return back();
     }

@@ -46,7 +46,7 @@ class TodayController extends Controller
             'date' => $date,
             'isToday' => $date === $today,
             'dayClass' => $day['class'] ?? null,
-            'training' => ['catalogue' => $training->catalogue(), 'kg' => round($training->kg($user), 1), 'sessions' => $training->sessions($user, $date, true), 'explain' => $dp['explain'], 'fuel' => $date === $today ? $this->fuelPlan($fuel, $plans, $user, $today, (int) $local->format('G') * 60 + (int) $local->format('i'), $remaining) : null],
+            'training' => ['catalogue' => $training->catalogue(), 'kg' => round($training->kg($user), 1), 'sessions' => $training->sessions($user, $date, true), 'explain' => $dp['explain'], 'effort_plan' => \App\Domain\Training\EffortRamp::weekFor($profile->effort_ramp ?: null, $date), 'fuel' => $date === $today ? $this->fuelPlan($fuel, $plans, $user, $today, (int) $local->format('G') * 60 + (int) $local->format('i'), $remaining) : null],
             'target' => [
                 'kcal' => (int) round($day['kcal'] ?? $target->kcal), 'protein' => (int) round($day['protein'] ?? $target->protein),
                 'carbs' => (int) round($day['carbs'] ?? $target->carbs), 'fat' => (int) round($day['fat'] ?? $target->fat),

@@ -37,7 +37,19 @@ class TrainingController extends Controller
             'template' => $this->training->template($user), 'catalogue' => $this->training->catalogue(), 'recent' => $recent, 'today' => $today,
             'week' => $this->summary($user), 'kg' => round($this->training->kg($user), 1),
             'style' => $user->profile->lifting_style,
+            'load' => $this->load($user, $today),
         ]);
+    }
+
+    /** @return array{this_week:array<string,int>,last_week:array<string,int>} session load (your effort rating x minutes), rated sessions only */
+    private function load($user, string $today): array
+    {
+        $monday = $this->training->mondayOf($today);
+        $lastMonday = date('Y-m-d', strtotime($monday . ' -7 days'));
+        $rows = \Illuminate\Support\Facades\DB::table('workout_logs')->where('user_id', $user->id)->where('status', 'done')->where('local_date', '>=', $lastMonday)->get()
+            ->map(fn ($r) => ['date' => (string) $r->local_date, 'minutes' => (int) $r->minutes, 'rpe' => $r->rpe !== null ? (float) $r->rpe : null])->all();
+
+        return ['this_week' => \App\Domain\Training\SessionLoad::between($rows, $monday, $today), 'last_week' => \App\Domain\Training\SessionLoad::between($rows, $lastMonday, date('Y-m-d', strtotime($monday . ' -1 day')))];
     }
 
     /** @return array<string,array{class:string,netKcal:float,carbs:int,kcal:int}> what the template week looks like to the planner */

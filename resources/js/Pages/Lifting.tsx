@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button'
 interface Beat { kg: number; reps: number; label: string }
 interface Ex { id: string; title: string; muscle: string | null; status: 'not_enough_data' | 'progressing' | 'holding' | 'stalled' | 'down'; sessions: number; best_e1rm: number | null; latest_e1rm: number | null; last_date: string; last_set: { kg: number; reps: number }; trend: number[]; beat_the_log: Beat[] }
 interface Effort { working: number; failure: number; rpe_logged: number; unlabelled: number; avg_rpe: number | null }
-interface Recent { date: string; title: string; minutes: number | null; exercises: number; working_sets: number; effort: Effort; vs_your_best: { index: number | null; beat: number; matched: number; down: number; compared: number } }
+interface Recent { date: string; title: string; minutes: number | null; exercises: number; working_sets: number; effort: Effort; vs_plan: { verdict: 'harder' | 'easier' | 'in_range' | 'unknown'; avg_rir: number | null; planned: string } | null; vs_your_best: { index: number | null; beat: number; matched: number; down: number; compared: number } }
 interface Data { sessions_in_window: number; exercises: Ex[]; recent: Recent[]; weekly_sets: { this_week: Record<string, number>; last_week: Record<string, number> }; strength_vs_bodyweight: { strength_change_pct: number | null; weight_change_kg: number | null; exercises: number; note: string }; assumptions: string[] }
 interface Insight { key: string; title: string; n: number; strength: string; text: string; caveats: string[] }
-interface Props { connection: { last_synced_at: string | null; last_error: string | null } | null; data: Data | null; insights: Insight[] }
+interface Ramp { start: string; weeks: [number, number][] }
+interface RampNow { week: number; of: number; min: number; max: number; label: string }
+interface Props { ramp: Ramp | null; rampNow: RampNow | null; today: string; connection: { last_synced_at: string | null; last_error: string | null } | null; data: Data | null; insights: Insight[] }
 
 const STATUS: Record<Ex['status'], { label: string; cls: string }> = {
   progressing: { label: 'Progressing', cls: 'text-accent' }, holding: { label: 'Holding', cls: 'text-muted' }, stalled: { label: 'Stalled', cls: 'text-carbs' },
@@ -24,7 +26,41 @@ function Spark({ v }: { v: number[] }) {
   return <svg viewBox="0 0 60 24" className="h-6 w-16" aria-hidden><polyline points={pts} fill="none" stroke="currentColor" strokeWidth="2" /></svg>
 }
 
-export default function Lifting({ connection, data, insights }: Props) {
+const VERDICT: Record<string, string> = { harder: 'harder than planned', easier: 'easier than planned', in_range: 'in your planned range', unknown: 'no effort logged to compare' }
+
+function RampCard({ ramp, now, today }: { ramp: Ramp | null; now: RampNow | null; today: string }) {
+  const monday = (() => { const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10) })()
+  const [weeks, setWeeks] = useState<[number, number][]>(ramp?.weeks ?? [[2, 3], [1, 2], [0, 1]])
+  const [start, setStart] = useState(ramp?.start ?? monday)
+  const set = (i: number, k: 0 | 1, v: number) => setWeeks((w) => w.map((x, j) => (j === i ? (k === 0 ? [v, Math.max(v, x[1])] : [Math.min(x[0], v), v]) : x)) as [number, number][])
+  return (
+    <section className="mt-3 rounded-2xl bg-surface p-4" aria-label="Effort plan">
+      <h2 className="font-semibold">Effort plan</h2>
+      <p className="mt-1 text-xs text-muted">Your own plan for reps in reserve (0 = failure) across lifting weeks. The cycle repeats after the last week. FUEL compares your logged sets with it; it never changes your lifting.</p>
+      {now ? <p className="mt-2 text-sm">This week: {now.label} (week {now.week} of {now.of}).</p> : ramp ? <p className="mt-2 text-sm text-muted">Starts on {ramp.start}.</p> : null}
+      <label className="mt-3 block text-xs text-muted">Week 1 starts<input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="mt-1 block min-h-11 rounded-xl bg-canvas/60 px-3 text-sm text-fg" /></label>
+      <ul className="mt-2 space-y-2">
+        {weeks.map((w, i) => (
+          <li key={i} className="flex items-center gap-2 text-sm">
+            <span className="w-16">Week {i + 1}</span>
+            <select aria-label={`Week ${i + 1} fewest reps in reserve`} value={w[0]} onChange={(e) => set(i, 0, Number(e.target.value))} className="min-h-11 rounded-xl bg-canvas/60 px-2">{[0, 1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}</select>
+            <span>to</span>
+            <select aria-label={`Week ${i + 1} most reps in reserve`} value={w[1]} onChange={(e) => set(i, 1, Number(e.target.value))} className="min-h-11 rounded-xl bg-canvas/60 px-2">{[0, 1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}</select>
+            {weeks.length > 1 ? <button type="button" aria-label={`Remove week ${i + 1}`} className="size-11 text-muted" onClick={() => setWeeks((x) => x.filter((_, j) => j !== i))}>✕</button> : null}
+          </li>
+        ))}
+      </ul>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {weeks.length < 8 ? <button type="button" className="min-h-11 rounded-full bg-raised px-4 text-sm" onClick={() => setWeeks((w) => [...w, [0, 1]])}>Add a week</button> : null}
+        <Button type="button" onClick={() => router.put('/lifting/effort-ramp', { ramp: { start, weeks } }, { preserveScroll: true })}>Save plan</Button>
+        {ramp ? <button type="button" className="min-h-11 px-3 text-sm text-muted underline" onClick={() => router.delete('/lifting/effort-ramp', { preserveScroll: true })}>Clear</button> : null}
+      </div>
+      <p className="mt-2 text-xs text-muted">In Hevy, tag your true failure set as failure, and give the other top sets an RPE (RPE 8 = 2 in reserve, 7 = 3). Sets with no effort logged are left out of the comparison.</p>
+    </section>
+  )
+}
+
+export default function Lifting({ connection, data, insights, ramp, rampNow, today }: Props) {
   const form = useForm({ api_key: '' })
   const [open, setOpen] = useState<string | null>(null)
   const sets = Object.entries(data?.weekly_sets.this_week ?? {})
@@ -58,6 +94,8 @@ export default function Lifting({ connection, data, insights }: Props) {
         </section>
       )}
 
+      <RampCard key={ramp ? JSON.stringify(ramp) : 'none'} ramp={ramp} now={rampNow} today={today} />
+
       {data && data.exercises.length === 0 ? <p className="mt-4 text-sm text-muted">No workouts yet. They appear here once the first sync finishes.</p> : null}
 
       {data && data.exercises.length > 0 ? (
@@ -90,7 +128,7 @@ export default function Lifting({ connection, data, insights }: Props) {
                 {data.recent.map((r) => (
                   <li key={r.date + r.title}>
                     <span className="font-medium">{pretty(r.date)}: {r.title}</span>
-                    <span className="block text-muted">{r.exercises} exercises, {r.working_sets} working sets{r.minutes ? `, ${r.minutes} min` : ''}. {r.effort.failure ? `${r.effort.failure} to failure` : 'None tagged failure'}{r.effort.avg_rpe !== null ? `, average RPE ${r.effort.avg_rpe}` : ''}{r.effort.unlabelled ? `, ${r.effort.unlabelled} without effort info` : ''}{r.vs_your_best.compared ? `. Against your own best: ${r.vs_your_best.beat} beat, ${r.vs_your_best.matched} matched, ${r.vs_your_best.down} below.` : ''}</span>
+                    <span className="block text-muted">{r.exercises} exercises, {r.working_sets} working sets{r.minutes ? `, ${r.minutes} min` : ''}. {r.effort.failure ? `${r.effort.failure} to failure` : 'None tagged failure'}{r.effort.avg_rpe !== null ? `, average RPE ${r.effort.avg_rpe}` : ''}{r.effort.unlabelled ? `, ${r.effort.unlabelled} without effort info` : ''}{r.vs_plan && r.vs_plan.verdict !== 'unknown' ? `. Against your plan (${r.vs_plan.planned}): ${VERDICT[r.vs_plan.verdict]}, average ${r.vs_plan.avg_rir} in reserve` : ''}{r.vs_your_best.compared ? `. Against your own best: ${r.vs_your_best.beat} beat, ${r.vs_your_best.matched} matched, ${r.vs_your_best.down} below.` : ''}</span>
                   </li>
                 ))}
               </ul>

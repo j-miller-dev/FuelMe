@@ -7,6 +7,24 @@ import { WorkoutSay } from '@/components/training/WorkoutSay'
 import { SessionSheet } from '@/components/training/SessionSheet'
 import { energyLabel, fmtEnergy, type EnergyUnit } from '@/lib/units'
 
+const RPE_WORDS: Record<number, string> = { 1: 'very easy', 3: 'easy', 5: 'moderate', 7: 'hard', 9: 'very hard', 10: 'all out' }
+
+/** "How hard was it?" 1-10, asked after a session is done. Optional; a rating makes your weekly load more accurate. */
+function EffortRow({ s, onSet, disabled }: { s: Session; onSet: (rpe: number | null) => void; disabled: boolean }) {
+  if (s.id === null || s.status !== 'done') return null
+  if (s.rpe != null) {
+    return <div className="flex items-center justify-between pb-2 text-xs text-muted"><span>Effort {s.rpe} of 10 · load {Math.round(s.rpe * s.minutes)}</span><button type="button" disabled={disabled} className="min-h-11 px-2 underline" onClick={() => onSet(null)}>Change</button></div>
+  }
+  return (
+    <div className="pb-2" role="group" aria-label={`How hard was ${s.label}?`}>
+      <p className="text-xs text-muted">How hard was it? 1 easy, 10 all out.</p>
+      <div className="mt-1 flex flex-wrap gap-1">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => <button key={n} type="button" disabled={disabled} title={RPE_WORDS[n]} aria-label={`${n}${RPE_WORDS[n] ? `, ${RPE_WORDS[n]}` : ''}`} className="size-11 rounded-xl bg-raised text-sm tabular-nums disabled:opacity-40" onClick={() => onSet(n)}>{n}</button>)}
+      </div>
+    </div>
+  )
+}
+
 const STATUS: Record<string, string> = { virtual: 'Planned', planned: 'Planned', done: 'Done', skipped: 'Skipped' }
 
 /** Today's training and the "next up" fuelling card. Sessions are estimates; nothing here changes your food target except what the day is. */
@@ -56,9 +74,10 @@ export function TrainingCard({ training, date, isToday, unit, hour }: { training
         <button onClick={() => setSheet({})} className="min-h-11 rounded-full bg-raised px-3 text-sm text-accent">Log a session</button>
       </div>
       {training.explain ? <p className="mt-1 text-xs text-accent">{training.explain}</p> : null}
+      {training.effort_plan && sessions.some((x) => x.type === 'lifting') ? <p className="mt-1 text-xs text-muted">Lifting effort this week (week {training.effort_plan.week} of {training.effort_plan.of}): {training.effort_plan.label}. Your plan.</p> : null}
       {sessions.length === 0 ? <p className="mt-1 text-sm text-muted">Rest day. Add a session if you train.</p> : (
         <ul className="mt-1">{sessions.map((s) => (
-          <li key={s.key} className="flex min-h-14 items-center gap-2 border-t border-raised/70 text-sm">
+          <li key={s.key} className="border-t border-raised/70 text-sm"><div className="flex min-h-14 items-center gap-2">
             <button onClick={() => s.id !== null ? setSheet({ row: s }) : undefined} className="min-w-0 flex-1 py-2 text-left" disabled={s.id === null} aria-label={`${s.label}, ${STATUS[s.status]}`}>
               <span className={`block truncate font-medium ${s.status === 'skipped' ? 'text-muted line-through' : ''}`}>{s.start ? `${s.start} ` : ''}{s.label} <span className="font-normal text-muted">· {INTENSITY_LABEL[s.intensity] ?? s.intensity}</span></span>
               <span className="block text-xs text-muted tabular-nums">{s.minutes} min · ≈ {kc(s.netKcal)}{s.override ? ' (watch)' : ` (${fmtEnergy(s.low, unit)}–${fmtEnergy(s.high, unit)})`}</span>
@@ -71,6 +90,8 @@ export function TrainingCard({ training, date, isToday, unit, hour }: { training
               </>
             ) : null}
             {s.status === 'skipped' ? <button disabled={!!busy} onClick={() => void mark(s, 'reset')} className="min-h-11 px-2 text-sm text-accent">Undo</button> : null}
+          </div>
+          <EffortRow s={s} disabled={!!busy} onSet={(rpe) => void run('rpe' + s.key, () => api(`/workouts/${s.id}`, { method: 'PATCH', body: { rpe } }))} />
           </li>))}</ul>
       )}
       {msg ? <p role="alert" className="mt-2 text-sm text-danger">{msg}</p> : null}

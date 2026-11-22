@@ -25,6 +25,7 @@ class Profile extends Model
             'fat_min_g_per_kg' => 'float',
             'kcal_offset' => 'integer',
             'hit_rules' => 'array',
+            'effort_ramp' => 'array',
             'rollover_hour' => 'integer',
             'disclaimer_ack_at' => 'datetime',
         ];

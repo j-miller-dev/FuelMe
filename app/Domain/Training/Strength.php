@@ -66,6 +66,24 @@ final class Strength
     }
 
     /**
+     * The lowest reps-in-reserve of each exercise's working sets (its hardest set), only where effort was logged.
+     * @param list<array<string,mixed>> $exercises
+     * @return list<int>
+     */
+    public static function hardestRirs(array $exercises): array
+    {
+        $out = [];
+        foreach ($exercises as $ex) {
+            $r = array_values(array_filter(array_map(fn ($s) => ($s['type'] ?? 'normal') === 'warmup' ? null : self::rir($s), $ex['sets']), fn ($x) => $x !== null));
+            if ($r) {
+                $out[] = min($r);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * How hard the working sets were, as far as you logged it. Unlabelled sets are counted as unlabelled, never guessed.
      * @param list<array<string,mixed>> $sets
      * @return array{working:int,failure:int,rpe_logged:int,unlabelled:int,avg_rpe:?float}

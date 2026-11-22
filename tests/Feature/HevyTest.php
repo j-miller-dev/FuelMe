@@ -162,3 +162,20 @@ it('retries a busy Hevy once instead of failing the sync', function () {
     ]);
     expect(app(HevySync::class)->sync($u->fresh())['ok'])->toBeTrue()->and(DB::table('hevy_workouts')->count())->toBe(1);
 });
+
+it('compares a session with your effort plan, and says nothing when no effort was logged', function () {
+    Bus::fake();
+    $this->travelTo(\Carbon\Carbon::parse('2026-11-25 10:00', 'Australia/Melbourne'));
+    $u = loggedInUser();
+    $hard = hevyWorkout('hard', '2026-11-23 02:00', [[100, 8]]);
+    $hard['exercises'][0]['sets'][0]['rpe'] = 10;                      // 0 in reserve
+    $plain = hevyWorkout('plain', '2026-11-24 02:00', [[100, 8]]);     // no effort logged
+    hevyFake([$hard, $plain]);
+    hevyConnect($this, $u);
+    app(HevySync::class)->sync($u->fresh());
+    $this->actingAs($u)->put('/lifting/effort-ramp', ['ramp' => ['start' => '2026-11-23', 'weeks' => [[2, 3]]]])->assertSessionHasNoErrors();
+
+    $this->actingAs($u->fresh())->get('/lifting')->assertInertia(fn ($p) => $p
+        ->where('data.recent.0.vs_plan.verdict', 'unknown')
+        ->where('data.recent.1.vs_plan.verdict', 'harder')->where('data.recent.1.vs_plan.avg_rir', 0)->where('data.recent.1.vs_plan.planned', '2-3 reps in reserve'));
+});

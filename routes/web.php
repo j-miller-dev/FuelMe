@@ -93,6 +93,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/lifting', [\App\Http\Controllers\HevyController::class, 'show'])->name('lifting');
     Route::post('/lifting/connect', [\App\Http\Controllers\HevyController::class, 'connect'])->middleware('throttle:10,1')->name('lifting.connect');
     Route::post('/lifting/sync', [\App\Http\Controllers\HevyController::class, 'sync'])->middleware('throttle:10,1')->name('lifting.sync');
+    Route::put('/lifting/effort-ramp', [\App\Http\Controllers\HevyController::class, 'saveRamp'])->name('lifting.ramp');
+    Route::delete('/lifting/effort-ramp', [\App\Http\Controllers\HevyController::class, 'clearRamp'])->name('lifting.ramp.clear');
     Route::delete('/lifting/connection', [\App\Http\Controllers\HevyController::class, 'disconnect'])->name('lifting.disconnect');
     Route::get('/coach', [\App\Http\Controllers\CoachController::class, 'show'])->name('coach');
     Route::post('/coach/messages', [\App\Http\Controllers\CoachController::class, 'ask'])->middleware('throttle:20,1')->name('coach.ask');

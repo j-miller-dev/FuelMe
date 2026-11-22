@@ -162,6 +162,7 @@ class CoachTools
 
         return ['days' => $days, 'done' => $rows->where('status', 'done')->count(), 'skipped' => $rows->where('status', 'skipped')->count(),
             'sessions' => $rows->map(fn ($r) => ['date' => (string) $r->local_date, 'type' => $r->type, 'intensity' => $r->intensity, 'minutes' => (int) $r->minutes, 'status' => $r->status, 'energy_estimate_kcal' => (int) round((float) ($r->kcal_override ?? $r->net_kcal))] + ($r->rpe !== null ? ['session_rpe' => (float) $r->rpe, 'load_rpe_x_minutes' => (int) round((float) $r->rpe * (int) $r->minutes)] : []))->values()->all(),
+            'load_this_week' => \App\Domain\Training\SessionLoad::between($rows->where('status', 'done')->map(fn ($r) => ['date' => (string) $r->local_date, 'minutes' => (int) $r->minutes, 'rpe' => $r->rpe !== null ? (float) $r->rpe : null])->values()->all(), date('Y-m-d', strtotime($today . ' -' . ((int) date('N', strtotime($today)) - 1) . ' days')), $today),
             'note' => 'Energy is an estimate (about 25% either way) and is not added to the food target. session_rpe and load (RPE x minutes) appear only for sessions where the person rated effort.'];
     }
 

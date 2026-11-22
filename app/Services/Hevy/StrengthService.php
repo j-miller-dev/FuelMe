@@ -4,6 +4,7 @@ namespace App\Services\Hevy;
 
 use App\Domain\Progress\Adherence;
 use App\Domain\Progress\Insights;
+use App\Domain\Training\EffortRamp;
 use App\Domain\Training\Strength;
 use App\Models\TargetHistory;
 use App\Models\User;
@@ -72,6 +73,7 @@ class StrengthService
         }
         usort($exercises, fn ($a, $b) => strcmp($b['last_date'], $a['last_date']) ?: strcmp($a['title'], $b['title']));
 
+        $ramp = $user->profile->effort_ramp ?: null;
         $monday = date('Y-m-d', strtotime('monday this week', strtotime($today)));
         $lastMonday = date('Y-m-d', strtotime($monday . ' -7 days'));
         $recent = [];
@@ -82,10 +84,13 @@ class StrengthService
                 array_push($all_sets, ...$ex['sets']);
             }
             $eff = Strength::effort($all_sets);
-            $recent[] = ['date' => $s['date'], 'title' => $s['title'], 'minutes' => $s['minutes'], 'exercises' => count($s['exercises']), 'working_sets' => $eff['working'], 'effort' => $eff, 'vs_your_best' => $idx];
+            $wk = EffortRamp::weekFor($ramp, $s['date']);
+            $vs = $wk ? EffortRamp::compare(Strength::hardestRirs($s['exercises']), $wk['min'], $wk['max']) + ['planned' => $wk['label']] : null;
+            $recent[] = ['date' => $s['date'], 'title' => $s['title'], 'minutes' => $s['minutes'], 'exercises' => count($s['exercises']), 'working_sets' => $eff['working'], 'effort' => $eff, 'vs_plan' => $vs, 'vs_your_best' => $idx];
         }
 
         return [
+            'effort_plan' => ['this_week' => EffortRamp::weekFor($ramp, $today), 'cycle' => $ramp, 'note' => 'Set by you. The cycle repeats after its last week. Only sets where you logged effort (failure tag or RPE) are compared.'],
             'sessions_in_window' => count($window), 'exercises' => $exercises, 'recent' => $recent,
             'weekly_sets' => ['this_week' => Strength::weeklySets($all, $monday, $today), 'last_week' => Strength::weeklySets($all, $lastMonday, date('Y-m-d', strtotime($monday . ' -1 day')))],
             'strength_vs_bodyweight' => $this->vsBodyweight($user, $window),

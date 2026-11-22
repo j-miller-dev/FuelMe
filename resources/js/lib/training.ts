@@ -2,7 +2,7 @@ export interface Catalogue { [type: string]: { label: string; minutes: number; i
 export interface TemplateRow { id: number; day: string; start: string | null; type: string; intensity: string; minutes: number; customMet: number | null; name: string | null }
 export interface Session {
   key: string; id: number | null; template_id: number | null; status: 'virtual' | 'planned' | 'done' | 'skipped'; type: string; intensity: string; minutes: number; start: string | null
-  label: string; netKcal: number; low: number; high: number; met: number; source: string; name: string | null; override: number | null; date?: string
+  rpe?: number | null; label: string; netKcal: number; low: number; high: number; met: number; source: string; name: string | null; override: number | null; date?: string
 }
 export interface ComposerItem { kind: 'meal' | 'food'; ref: number; name: string; label: string; amount: number; unit: string }
 export interface ComposerOption { items: ComposerItem[]; carbs: number; protein: number; fat: number; fibre: number; kcal: number; after: { kcal: number; protein: number; carbs: number; fat: number } }
@@ -15,7 +15,8 @@ export interface Fuel {
   post: { proteinG: number; withinHours: number; carbsG?: number; carbsGPerHour?: [number, number]; forHours?: number; note: string }
   postMeal: Composer | null; timeline: TimelineStep[] | null; when: 'today' | 'tomorrow'; leads: Record<string, { pre: Pre; composer: Composer | null }>; hasTags: boolean; later: number
 }
-export interface TrainingProps { sessions: Session[]; explain: string | null; fuel: Fuel | null; catalogue: Catalogue; kg: number }
+export interface EffortPlan { week: number; of: number; min: number; max: number; label: string }
+export interface TrainingProps { sessions: Session[]; explain: string | null; effort_plan?: EffortPlan | null; fuel: Fuel | null; catalogue: Catalogue; kg: number }
 
 export const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 export const DAY_LABEL: Record<string, string> = { mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday' }

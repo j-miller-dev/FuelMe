@@ -7,9 +7,10 @@ import { CLASS_LABEL, DAYS, DAY_LABEL, INTENSITY_LABEL, type Catalogue, type Ses
 import { longDate } from '@/lib/progress'
 import hitBanner from '@/assets/hit-banner.webp'
 
-interface Props { template: TemplateRow[]; catalogue: Catalogue; recent: (Session & { date: string })[]; today: string; week: Record<string, { class: string; netKcal: number; carbs: number; kcal: number }>; kg: number; style: 'hit' | 'volume' }
+interface Props { template: TemplateRow[]; catalogue: Catalogue; recent: (Session & { date: string })[]; today: string; week: Record<string, { class: string; netKcal: number; carbs: number; kcal: number }>; kg: number; style: 'hit' | 'volume'; load: { this_week: Load; last_week: Load } }
+interface Load { load: number; rated: number; unrated: number }
 
-export default function Training({ template, catalogue, recent, today, week, kg, style }: Props) {
+export default function Training({ template, catalogue, recent, today, week, kg, style, load }: Props) {
   const [sheet, setSheet] = useState<{ kind: 'template'; day: string; row?: TemplateRow } | { kind: 'log'; date: string; row?: Session } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const reload = () => router.reload({ only: ['template', 'week', 'recent'] })
@@ -52,6 +53,11 @@ export default function Training({ template, catalogue, recent, today, week, kg,
       </ul>
       <p className="mt-2 text-xs text-muted">Training energy is an estimate based on your weight ({kg} kg), good to about ±25%. It is never added to your food target.</p>
 
+      <section className="mt-6 rounded-2xl bg-surface p-4" aria-label="Weekly load">
+        <h2 className="font-semibold">Weekly load</h2>
+        <p className="mt-1 text-sm tabular-nums">This week {load.this_week.load}{load.this_week.unrated ? ` (${load.this_week.unrated} unrated)` : ''} · last week {load.last_week.load}{load.last_week.unrated ? ` (${load.last_week.unrated} unrated)` : ''}</p>
+        <p className="mt-1 text-xs text-muted">Load = how hard you rated each done session (1-10) × its minutes, rated sessions only. A rough way to compare BJJ, HIIT and lifting. It is not a target and nothing changes because of it.</p>
+      </section>
       <div className="mt-6 flex items-center justify-between"><h2 className="text-sm font-semibold text-muted">Last two weeks</h2>
         <button onClick={() => setSheet({ kind: 'log', date: today })} className="min-h-11 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent">Log a session</button></div>
       {recent.length === 0 ? <p className="mt-2 text-sm text-muted">Nothing logged yet. Sessions you confirm or add from Today show up here.</p> : (
