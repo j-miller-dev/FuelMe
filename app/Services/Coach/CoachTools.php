@@ -37,6 +37,7 @@ class CoachTools
             ['name' => 'get_training', 'description' => 'Sessions in the last N days (type, intensity, minutes, status, energy estimate).', 'input_schema' => $days('how many days back (default 14)')],
             ['name' => 'get_adherence', 'description' => 'How many of the last days counted, weigh-ins, and whether you have been under target.', 'input_schema' => $none],
             ['name' => 'get_next_session_fuel', 'description' => 'The next session (today, else tomorrow): when, and the eating and fluid plan around it.', 'input_schema' => $none],
+            ['name' => 'search_principles', 'description' => 'Search the person\'s OWN principle notes (from their reading) for ideas that fit a question. Returns up to 3 cards with source, grade and stance. Numbers in a card are the note author\'s, not the person\'s targets.', 'input_schema' => ['type' => 'object', 'properties' => ['query' => ['type' => 'string', 'description' => 'a few keywords, e.g. "recovery sleep" or "training to failure"']], 'required' => ['query']]],
             ['name' => 'get_assumptions', 'description' => 'The fixed assumptions and rules of thumb the app uses, so you can say what is an estimate.', 'input_schema' => $none],
         ];
     }
@@ -54,6 +55,7 @@ class CoachTools
             'get_training' => $this->trainingRange($user, $this->days($args, 14)),
             'get_adherence' => $this->adherence($user),
             'get_next_session_fuel' => $this->nextFuel($user),
+            'search_principles' => $this->principles($user, (string) ($args['query'] ?? '')),
             'get_assumptions' => $this->assumptions(),
             default => ['error' => 'Unknown tool.'],
         };
@@ -206,5 +208,16 @@ class CoachTools
             'protein_cap_pct_of_calories' => 35, 'target_moves_at_most_kcal_per_week' => 150, 'target_moves_pct_of_the_way_per_week' => 60,
             'rough_day_intake_error_kcal' => (int) IntakeModel::ROUGH_DAY_SD, 'min_days_of_data_for_checkin' => WeeklyCheckin::MIN_DAYS_OF_DATA, 'min_weigh_ins_in_14_days' => WeeklyCheckin::MIN_WEIGH_INS,
             'notes' => ['Muscle-gain ceilings and per-meal leucine or protein amounts are rules of thumb, not measurements.', 'Fluid amounts are guidelines, not prescriptions.', 'Not medical advice.']];
+    }
+
+    /** @return array<string,mixed> */
+    private function principles(User $user, string $query): array
+    {
+        $cards = app(PrincipleService::class)->search($user, mb_substr($query, 0, 200), 3);
+
+        return [
+            'cards' => array_map(fn ($c) => ['title' => $c['title'], 'source' => $c['source'], 'grade' => $c['grade'], 'stance' => $c['stance'], 'tags' => $c['tags'], 'text' => mb_substr($c['body'], 0, 700)], $cards),
+            'note' => $cards ? 'These are the person\'s own notes. Numbers inside are the note author\'s, not the person\'s targets.' : 'No matching notes. Do not invent one.',
+        ];
     }
 }

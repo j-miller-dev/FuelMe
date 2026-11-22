@@ -43,6 +43,7 @@ export default function Progress({ data, today }: { data: ProgressData | null; t
     <AppLayout>
       <Head title="Progress" />
       <h1 className="text-2xl font-bold">Progress</h1>
+      <Link href="/principles" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>My notes (principles)</span><span className="text-accent" aria-hidden>›</span></Link>
       <Link href="/coach" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>Ask the coach</span><span className="text-accent" aria-hidden>›</span></Link>
       <Link href="/review" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>Weekly review and event mode</span><span className="text-accent" aria-hidden>›</span></Link>
 

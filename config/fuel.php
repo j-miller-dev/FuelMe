@@ -83,6 +83,7 @@ return [
         'timeout' => (int) env('FUEL_COACH_TIMEOUT', 40),
         'monthly_token_cap' => (int) env('FUEL_COACH_MONTHLY_TOKENS', 1000000),
         'max_chars' => 500,
+        'persona' => env('FUEL_COACH_PERSONA', 'trainer'),
         'max_rounds' => 6,
     ],
 ];

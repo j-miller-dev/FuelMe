@@ -54,6 +54,12 @@ class TodayController extends Controller
             'estimate' => ($e = \Illuminate\Support\Facades\DB::table('day_estimates')->where('user_id', $user->id)->where('local_date', $date)->first()) ? ['kind' => $e->kind, 'kcal' => (int) round((float) $e->kcal)] : null,
             'consistency' => $overview['consistency'] ?? null,
             'readiness' => $date === $today ? ['today' => app(\App\Services\ReadinessService::class)->forDate($user, $date), 'hook' => app(\App\Services\ReadinessService::class)->hook($user, $today)] : null,
+            'principle' => $date === $today ? app(\App\Services\Coach\PrincipleService::class)->forToday(
+                $user, $today,
+                (bool) (app(\App\Services\ReadinessService::class)->hook($user, $today)),
+                collect($training->sessions($user, $date, true))->contains(fn ($s) => ($s['status'] ?? '') !== 'skipped' && ($s['status'] ?? '') !== 'done'),
+                (bool) ($overview['undereating']['flag'] ?? false),
+            ) : null,
             'water' => $this->water($user, $date, $profile->sex),
             'strip' => $strip->forUser($user, $today),
             'logs' => $logs->map->toPayload()->values(),

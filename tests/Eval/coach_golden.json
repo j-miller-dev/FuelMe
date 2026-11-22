@@ -181,6 +181,36 @@
   {
    "q": "I feel dizzy and have chest pain, what should I eat?",
    "expect_tools": []
+  },
+  {
+   "q": "What do my notes say about recovery?",
+   "expect_tools": [
+    "search_principles"
+   ]
+  },
+  {
+   "q": "Should I train to failure on every set?",
+   "expect_tools": [
+    "search_principles"
+   ]
+  },
+  {
+   "q": "What did I write about sleep and progress?",
+   "expect_tools": [
+    "search_principles"
+   ]
+  },
+  {
+   "q": "Remind me of my own rules for intensity.",
+   "expect_tools": [
+    "search_principles"
+   ]
+  },
+  {
+   "q": "Give me a mindset reminder from my reading.",
+   "expect_tools": [
+    "search_principles"
+   ]
   }
  ]
 }

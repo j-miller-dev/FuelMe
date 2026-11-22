@@ -85,6 +85,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/water/{id}', [\App\Http\Controllers\WaterController::class, 'destroy'])->whereNumber('id')->name('water.destroy');
     Route::post('/readiness', [\App\Http\Controllers\ReadinessController::class, 'store'])->middleware('throttle:60,1')->name('readiness.store');
     Route::delete('/readiness/{date}', [\App\Http\Controllers\ReadinessController::class, 'destroy'])->name('readiness.destroy');
+    Route::get('/principles', [\App\Http\Controllers\PrincipleController::class, 'show'])->name('principles');
+    Route::post('/principles/import', [\App\Http\Controllers\PrincipleController::class, 'import'])->middleware('throttle:20,1')->name('principles.import');
+    Route::put('/principles/stance', [\App\Http\Controllers\PrincipleController::class, 'saveStance'])->name('principles.my-stance');
+    Route::patch('/principles/{principle}/stance', [\App\Http\Controllers\PrincipleController::class, 'stance'])->whereNumber('principle')->name('principles.stance');
+    Route::delete('/principles/{principle}', [\App\Http\Controllers\PrincipleController::class, 'archive'])->whereNumber('principle')->name('principles.archive');
     Route::get('/coach', [\App\Http\Controllers\CoachController::class, 'show'])->name('coach');
     Route::post('/coach/messages', [\App\Http\Controllers\CoachController::class, 'ask'])->middleware('throttle:20,1')->name('coach.ask');
     Route::delete('/coach/threads/{thread}', [\App\Http\Controllers\CoachController::class, 'destroyThread'])->whereNumber('thread')->name('coach.destroy');

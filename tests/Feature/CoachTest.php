@@ -101,9 +101,9 @@ it('stops after max_rounds of tool calls', function () {
 
 it('offers only read-only tools', function () {
     $names = array_column(app(CoachTools::class)->definitions(), 'name');
-    expect($names)->toHaveCount(10);
+    expect($names)->toHaveCount(11);
     foreach ($names as $n) {
-        expect($n)->toStartWith('get_');
+        expect($n)->toMatch('/^(get|search)_/');
     }
     expect(app(CoachTools::class)->run('log_food', [], loggedInUser()))->toBe(['error' => 'Unknown tool.']);
 });

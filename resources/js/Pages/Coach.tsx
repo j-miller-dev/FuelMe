@@ -10,7 +10,7 @@ interface Reply { thread_id: number; message: Msg }
 
 const TOOL_LABEL: Record<string, string> = {
   get_today_status: 'today', get_targets: 'targets', get_week_plan: 'week plan', get_trend: 'weight trend', get_expenditure: 'expenditure estimate',
-  get_weekly_checkin: 'weekly check-in', get_training: 'training', get_adherence: 'logging consistency', get_next_session_fuel: 'next session fuel', get_assumptions: 'assumptions',
+  get_weekly_checkin: 'weekly check-in', get_training: 'training', get_adherence: 'logging consistency', get_next_session_fuel: 'next session fuel', get_assumptions: 'assumptions', search_principles: 'your notes',
 }
 
 export default function Coach({ enabled, overCap, threadId, messages, maxChars, suggestions }: Props) {
@@ -39,7 +39,7 @@ export default function Coach({ enabled, overCap, threadId, messages, maxChars, 
       <Head title="Coach" />
       <header className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Coach</h1>
-        <Link href="/progress" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Progress</Link>
+        <span className="flex gap-1"><Link href="/principles" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">My notes</Link><Link href="/progress" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Progress</Link></span>
       </header>
       <p className="mt-1 text-sm text-muted">Answers questions about your own numbers. It reads your data and explains it; it cannot change targets, log food or move sessions. Not medical advice.</p>
 
