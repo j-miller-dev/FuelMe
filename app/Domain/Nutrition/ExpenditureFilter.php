@@ -27,7 +27,8 @@ final class ExpenditureFilter
     ) {}
 
     /**
-     * @param array<int,array{date:string,weight:?float,intake:?float}> $days chronological, one row per day
+     * @param array<int,array{date:string,weight:?float,intake:?float,intakeSd?:?float}> $days chronological, one row per day. A row may carry its own
+     *   `intakeSd` (kcal): a rough or estimated day says how unsure it is, instead of being skipped or treated as exact.
      * @param float $priorTdee   starting estimate (e.g. Mifflin-St Jeor * activity)
      * @param float $priorTdeeSd how unsure we are of that prior
      * @return array<int,array{date:string,trend:float,tdee:float,tdeeSd:float,scale:?float}>
@@ -42,6 +43,7 @@ final class ExpenditureFilter
         $p22 = $priorTdeeSd ** 2;
         $out = [];
         $prevIntake = null;
+        $prevSd = $this->intakeSd;
 
         foreach ($days as $i => $d) {
             if ($i > 0) {
@@ -50,7 +52,7 @@ final class ExpenditureFilter
                     $w += ($prevIntake - $e) / $k;
                     $n11 = $p11 - 2 * $p12 / $k + $p22 / ($k * $k);
                     $n12 = $p12 - $p22 / $k;
-                    $p11 = $n11 + $this->weightProcessSd ** 2 + ($this->intakeSd / $k) ** 2;
+                    $p11 = $n11 + $this->weightProcessSd ** 2 + ($prevSd / $k) ** 2;
                     $p12 = $n12;
                 } else {
                     $p11 += $this->weightProcessSd ** 2 + ($this->missingIntakeSd / $k) ** 2;
@@ -85,6 +87,7 @@ final class ExpenditureFilter
                 'scale' => $d['weight'],
             ];
             $prevIntake = $d['intake'];
+            $prevSd = max($this->intakeSd, (float) ($d['intakeSd'] ?? 0.0));   // a row can only be MORE unsure than the default, never less
         }
 
         return $out;

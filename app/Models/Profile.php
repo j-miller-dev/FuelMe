@@ -21,6 +21,11 @@ class Profile extends Model
             'height_cm' => 'float',
             'body_fat_pct' => 'float',
             'protein_g_per_kg_override' => 'float',
+            'protein_g_override' => 'integer',
+            'fat_min_g_per_kg' => 'float',
+            'kcal_offset' => 'integer',
+            'hit_rules' => 'array',
+            'effort_ramp' => 'array',
             'rollover_hour' => 'integer',
             'disclaimer_ack_at' => 'datetime',
         ];

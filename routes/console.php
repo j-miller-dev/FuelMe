@@ -14,3 +14,7 @@ if (config('fuel.off_auto_import')) {
         ->withoutOverlapping(360)->runInBackground();
     Schedule::command('foods:reindex')->weeklyOn(0, '05:30')->timezone(config('fuel.default_timezone'));
 }
+
+// BLUEPRINT 9A.3: the weekly review. Runs hourly; the command itself only acts on Sunday from 18:00 in the user's timezone, once per week.
+Schedule::command('review:weekly')->hourly()->withoutOverlapping(30);
+Schedule::command('hevy:sync')->everyThirtyMinutes()->withoutOverlapping(25);

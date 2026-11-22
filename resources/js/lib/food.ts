@@ -11,14 +11,14 @@ export interface Per100 { kcal: number | null; protein: number | null; carbs: nu
 export interface FoodHit {
   id: number; source: string; name: string; brand: string | null; barcode: string | null; stores: string[]; category: string | null; state: string | null
   is_liquid: boolean; needs_check: boolean; per100: Per100
-  servings: { label: string; grams: number }[]
+  servings: { id?: number | null; label: string; grams: number; own?: boolean }[]
   portion: { grams: number | null; label: string }
   last_grams: number | null; is_favourite: boolean
 }
 export interface LogRow {
   id: number; local_date: string; meal_slot: Slot; food_id: number | null; name: string; grams: number | null; serving_label: string | null
   kcal: number; protein: number; carbs: number; fat: number; fibre: number | null; source: string
-  meal_id?: number | null; portions?: number | null
+  meal_id?: number | null; portions?: number | null; is_rough?: boolean
   /** true while the change is saved on this phone but not yet on the server */
   pending?: boolean
 }

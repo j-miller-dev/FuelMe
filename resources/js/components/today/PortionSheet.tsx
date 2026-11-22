@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { api } from '@/lib/http'
 import { SLOTS, SLOT_LABEL, macrosFor, stepFor, type Per100, type Slot } from '@/lib/food'
 import { Sheet } from './Sheet'
 
@@ -8,8 +9,12 @@ export interface PortionResult { grams: number; slot: Slot; serving_label: strin
  * The serving stepper. Used to add a food (per100 from the food row) and to edit a logged one (per100 derived from the log's
  * own snapshot, so editing never re-reads a food that may have changed).
  */
-export function PortionSheet({ title, subtitle, per100, unit, servings, initialGrams, initialSlot, mode, favourite, onFavourite, onSubmit, onRemove, onClose }: {
-  title: string; subtitle?: string; per100: Per100; unit: 'g' | 'mL'; servings: { label: string; grams: number }[]
+type Serving = { id?: number | null; label: string; grams: number; own?: boolean }
+
+export function PortionSheet({ title, subtitle, per100, unit, servings, foodId, onServingsChange, initialGrams, initialSlot, mode, favourite, onFavourite, onSubmit, onRemove, onClose }: {
+  title: string; subtitle?: string; per100: Per100; unit: 'g' | 'mL'; servings: Serving[]
+  /** When given, you can save the current amount as your own named serving ("1 egg") for this food. */
+  foodId?: number; onServingsChange?: (s: Serving[]) => void
   initialGrams: number; initialSlot: Slot; mode: 'add' | 'edit'
   favourite?: boolean; onFavourite?: () => void
   onSubmit: (r: PortionResult) => void; onRemove?: () => void; onClose: () => void
@@ -17,6 +22,9 @@ export function PortionSheet({ title, subtitle, per100, unit, servings, initialG
   const [text, setText] = useState(String(initialGrams))
   const [slot, setSlot] = useState<Slot>(initialSlot)
   const [label, setLabel] = useState<string | null>(null)
+  const [naming, setNaming] = useState(false)
+  const [newLabel, setNewLabel] = useState('')
+  const [svError, setSvError] = useState<string | null>(null)
   const grams = Number(text)
   const valid = Number.isFinite(grams) && grams >= 0.1 && grams <= 5000
   const m = macrosFor(per100, valid ? grams : 0)
@@ -24,6 +32,19 @@ export function PortionSheet({ title, subtitle, per100, unit, servings, initialG
     const g = valid ? grams : initialGrams
     const next = Math.max(1, Math.round((g + d * stepFor(g)) * 10) / 10)
     setText(String(next)); setLabel(null); navigator.vibrate?.(6)
+  }
+  const saveServing = async () => {
+    if (!foodId || !valid || !newLabel.trim()) return
+    setSvError(null)
+    try {
+      const r = await api<{ servings: Serving[] }>(`/foods/${foodId}/servings`, { method: 'POST', body: { label: newLabel.trim(), grams } })
+      onServingsChange?.(r.servings); setNaming(false); setNewLabel('')
+    } catch (e) { setSvError(e instanceof Error ? e.message : 'Could not save.') }
+  }
+  const dropServing = async (id: number) => {
+    setSvError(null)
+    try { const r = await api<{ servings: Serving[] }>(`/foods/servings/${id}`, { method: 'DELETE' }); onServingsChange?.(r.servings) }
+    catch (e) { setSvError(e instanceof Error ? e.message : 'Could not remove.') }
   }
   return (
     <Sheet label={`${mode === 'add' ? 'Add' : 'Edit'} ${title}`} onClose={onClose} z={50}>
@@ -54,8 +75,11 @@ export function PortionSheet({ title, subtitle, per100, unit, servings, initialG
         {(
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Common amounts">
             {servings.map((s) => (
-              <button key={s.label} onClick={() => { setText(String(s.grams)); setLabel(s.label) }}
-                className={`min-h-11 shrink-0 rounded-full px-3 text-sm ${Number(text) === s.grams ? 'bg-accent/20 text-accent ring-1 ring-accent' : 'bg-surface'}`}>{s.label}</button>
+              <span key={s.label} className="flex shrink-0 items-center">
+                <button onClick={() => { setText(String(s.grams)); setLabel(s.label) }}
+                  className={`min-h-11 rounded-full px-3 text-sm ${Number(text) === s.grams ? 'bg-accent/20 text-accent ring-1 ring-accent' : 'bg-surface'}`}>{s.label}</button>
+                {s.own && s.id ? <button aria-label={`Remove your serving ${s.label}`} onClick={() => void dropServing(s.id as number)} className="ml-0.5 size-8 rounded-full text-xs text-muted">✕</button> : null}
+              </span>
             ))}
             {[50, 100, 200].map((g) => (
               <button key={g} onClick={() => { setText(String(g)); setLabel(null) }}
@@ -63,6 +87,22 @@ export function PortionSheet({ title, subtitle, per100, unit, servings, initialG
             ))}
           </div>
         )}
+
+        {foodId && mode === 'add' ? (
+          <div className="mt-1">
+            {!naming ? (
+              <button onClick={() => setNaming(true)} disabled={!valid} className="min-h-9 text-xs text-accent disabled:opacity-40">＋ Save {valid ? `${grams} ${unit}` : 'this amount'} as a serving (for example “1 egg”)</button>
+            ) : (
+              <div className="flex gap-2">
+                <input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} maxLength={60} placeholder={`Name, e.g. 1 egg (= ${grams} ${unit})`} aria-label="Serving name"
+                  className="min-h-11 min-w-0 flex-1 rounded-xl bg-surface px-3 text-sm outline-none ring-1 ring-transparent focus:ring-accent" />
+                <button onClick={() => void saveServing()} disabled={!newLabel.trim()} className="min-h-11 rounded-xl bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-40">Save</button>
+                <button onClick={() => { setNaming(false); setNewLabel('') }} aria-label="Cancel" className="min-h-11 px-2 text-muted">✕</button>
+              </div>
+            )}
+            {svError ? <p role="alert" className="mt-1 text-xs text-danger">{svError}</p> : null}
+          </div>
+        ) : null}
 
         <div className="mt-3 grid grid-cols-4 gap-2 rounded-2xl bg-surface p-3 text-center" aria-live="polite">
           <div><div className="text-xl font-bold tabular-nums">{Math.round(m.kcal)}</div><div className="text-xs text-muted">kcal</div></div>

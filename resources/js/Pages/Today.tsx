@@ -4,10 +4,16 @@ import AppLayout from '@/layouts/AppLayout'
 import { AddSheet } from '@/components/today/AddSheet'
 import { PortionSheet } from '@/components/today/PortionSheet'
 import { CalorieRing, MacroRings } from '@/components/today/Rings'
+import { HitStrip, type Strip } from '@/components/today/HitStrip'
+import { ReadinessCard, type Readiness } from '@/components/today/ReadinessCard'
+import { PrincipleCard, type PrincipleToday } from '@/components/today/PrincipleCard'
+import { WaterCard, type Water } from '@/components/today/WaterCard'
 import { TrainingCard } from '@/components/today/TrainingCard'
 import type { TrainingProps } from '@/lib/training'
 import { SLOTS, SLOT_LABEL, slotForHour, totals, type LogRow, type Slot } from '@/lib/food'
 import { useLogging } from '@/lib/useLogging'
+import { api } from '@/lib/http'
+import { router } from '@inertiajs/react'
 import { energyLabel, fmtEnergy, type EnergyUnit } from '@/lib/units'
 
 interface Props {
@@ -15,6 +21,9 @@ interface Props {
   target: { kcal: number; protein: number; carbs: number; fat: number }
   logs: LogRow[]; previous: { date: string; count: number; kcal: number }
   calibrating: boolean; serverHour: number; weighedToday: boolean; training: TrainingProps
+  strip: Strip; water: Water; readiness: Readiness | null; principle: PrincipleToday | null
+  estimate: { kind: 'on_target' | 'under' | 'over'; kcal: number } | null
+  consistency: { counted: number; total: number; exact: number; within15: number } | null
   nudge: { lowDays: number; loggedDays: number; gapKcal: number; gapProtein: number; adds: { name: string; grams: number; unit: string; kcal: number; protein: number }[] } | null
 }
 
@@ -30,6 +39,16 @@ export default function Today(p: Props) {
   const [editing, setEditing] = useState<LogRow | null>(null)
   const [slot, setSlot] = useState<Slot>(() => slotForHour(p.serverHour))
   const t = totals(logs)
+  const [busy, setBusy] = useState(false)
+  const ringKcal = p.estimate ? Math.max(t.kcal, p.estimate.kcal) : t.kcal
+  const setEstimate = async (kind: 'on_target' | 'under' | 'over') => {
+    setBusy(true)
+    try { await api('/days/estimate', { method: 'POST', body: { kind, local_date: p.date } }); router.reload({ only: ['estimate', 'consistency', 'strip'] }) } finally { setBusy(false) }
+  }
+  const clearEstimate = async () => {
+    setBusy(true)
+    try { await api(`/days/${p.date}/estimate`, { method: 'DELETE' }); router.reload({ only: ['estimate', 'consistency', 'strip'] }) } finally { setBusy(false) }
+  }
   const u = energyLabel(unit)
 
   const bySlot = SLOTS.map((s) => ({ s, rows: logs.filter((l) => l.meal_slot === s), kcal: logs.filter((l) => l.meal_slot === s).reduce((a, l) => a + l.kcal, 0) })).filter((g) => g.rows.length)
@@ -49,7 +68,7 @@ export default function Today(p: Props) {
         {p.dayClass ? <span className="rounded-full bg-raised px-3 py-1 text-sm text-accent">{CLASS_LABEL[p.dayClass] ?? p.dayClass}</span> : null}
       </header>
 
-      <div className="mt-3"><CalorieRing eaten={t.kcal} target={p.target.kcal} unit={unit} calibrating={p.calibrating} /></div>
+      <div className="mt-3"><CalorieRing eaten={ringKcal} target={p.target.kcal} unit={unit} calibrating={p.calibrating} /></div>
       {p.calibrating ? (
         <div className="mt-2 rounded-2xl bg-surface p-3 text-sm"><span className="text-carbs">Calibrating.</span> <span className="text-muted">Targets are a starting estimate until your weigh-ins and food logs refine your expenditure.</span></div>
       ) : null}
@@ -60,7 +79,27 @@ export default function Today(p: Props) {
           <span className="text-muted">{p.nudge.adds.length ? `Easy adds from your usual foods: ${p.nudge.adds.map((a) => a.name).join(', ')}.` : 'Tap for ideas.'}</span>
         </Link>
       ) : null}
+      {p.estimate ? (
+        <div className="mt-2 flex items-center justify-between gap-3 rounded-2xl bg-surface p-3 text-sm">
+          <span><span className="font-medium">Busy day, counted as roughly {fmtEnergy(p.estimate.kcal, unit)} {u}.</span> <span className="text-muted">Used with a wide margin of error, not as an exact day.</span></span>
+          <button type="button" disabled={busy} onClick={clearEstimate} className="min-h-11 shrink-0 px-2 text-accent underline">Undo</button>
+        </div>
+      ) : t.kcal < p.target.kcal * 0.4 ? (
+        <section className="mt-2 rounded-2xl bg-surface p-3" aria-label="Busy day">
+          <p className="text-sm"><span className="font-medium">Busy day?</span> <span className="text-muted">Skip the logging. Roughly how did it go?</span></p>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {([['under', 'Ate less'], ['on_target', 'About right'], ['over', 'Ate more']] as const).map(([k, label]) => (
+              <button key={k} type="button" disabled={busy} onClick={() => setEstimate(k)} className="min-h-11 rounded-xl bg-raised px-2 text-sm font-medium disabled:opacity-40">{label}</button>
+            ))}
+          </div>
+        </section>
+      ) : null}
       <MacroRings eaten={t} target={p.target} />
+      {p.isToday ? <HitStrip strip={p.strip} energyLabel={u} fmt={(k) => fmtEnergy(k, unit)} /> : null}
+      {p.isToday && p.consistency && p.consistency.total > 0 ? <p className="mt-2 text-xs text-muted">{p.consistency.counted} of the last {p.consistency.total} days counted, {p.consistency.within15} within 15% of target. A rough day still counts.</p> : null}
+      {p.isToday && p.readiness ? <ReadinessCard r={p.readiness} date={p.date} /> : null}
+      {p.isToday && p.principle ? <PrincipleCard p={p.principle} date={p.date} /> : null}
+      <WaterCard water={p.water} date={p.date} />
       <TrainingCard training={p.training} date={p.date} isToday={p.isToday} unit={unit} hour={p.serverHour} />
 
       {bySlot.length === 0 ? (

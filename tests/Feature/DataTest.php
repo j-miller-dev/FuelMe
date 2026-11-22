@@ -159,9 +159,9 @@ it('shows the data page with your counts', function () {
 
 it('gives weekly insights on the progress page', function () {
     $u = loggedInUser();
-    DB::table('weight_logs')->insert(['user_id' => $u->id, 'local_date' => date('Y-m-d', strtotime('-12 days')), 'kg' => 74, 'source' => 'manual', 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('weight_logs')->insert(['user_id' => $u->id, 'local_date' => \Illuminate\Support\Carbon::now('Australia/Melbourne')->subDays(12)->toDateString(), 'kg' => 74, 'source' => 'manual', 'created_at' => now(), 'updated_at' => now()]);
     foreach (range(1, 7) as $n) {
-        $d = date('Y-m-d', strtotime("-{$n} days"));
+        $d = \Illuminate\Support\Carbon::now('Australia/Melbourne')->subDays($n)->toDateString();
         foreach (['breakfast' => 8, 'lunch' => 55, 'dinner' => 60] as $slot => $p) {
             DB::table('food_logs')->insert(['user_id' => $u->id, 'local_date' => $d, 'logged_at' => now(), 'meal_slot' => $slot, 'name' => 'Seed', 'kcal' => 1000, 'protein' => $p, 'carbs' => 100, 'fat' => 30, 'fibre' => 8, 'source' => 'quick', 'created_at' => now(), 'updated_at' => now()]);
         }

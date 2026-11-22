@@ -1,33 +1,45 @@
 <?php
 
-use App\Domain\Progress\Insights;
+use App\Domain\Progress\Insights as I;
 
-function insDay(?float $kcal, float $protein = 150.0, float $fibre = 30.0, float $withFibre = null): array
-{
-    return ['date' => 'd', 'kcal' => $kcal, 'target' => 3000.0, 'protein' => $protein, 'proteinTarget' => 165.0, 'fibre' => $fibre, 'kcalWithFibre' => $withFibre ?? ($kcal ?? 0.0), 'kcalLogged' => $kcal ?? 0.0];
-}
-
-it('says protein is on track, or points at the light meals when it is not', function () {
-    $ok = Insights::compute(array_fill(0, 7, insDay(3000.0, 160.0)), ['breakfast' => ['days' => 7, 'protein' => 7 * 30.0], 'lunch' => ['days' => 7, 'protein' => 7 * 55.0], 'dinner' => ['days' => 7, 'protein' => 7 * 60.0]], 30.0, 12, 8);
-    expect($ok['protein'])->toMatchArray(['avg' => 160.0, 'target' => 165.0])->and($ok['notes'][0])->toContain('on track')->and($ok['slots']['breakfast'])->toBe(30.0);
-
-    $low = Insights::compute(array_fill(0, 7, insDay(2500.0, 110.0)), ['breakfast' => ['days' => 7, 'protein' => 7 * 8.0], 'lunch' => ['days' => 7, 'protein' => 7 * 50.0], 'dinner' => ['days' => 7, 'protein' => 7 * 52.0]], 30.0, 12, 8);
-    expect($low['notes'][0])->toContain('67%')->and(implode(' ', $low['notes']))->toContain('Breakfast averages about 8 g of protein');
+it('computes Spearman rank correlation, including ties', function () {
+    expect(I::spearman([1, 2, 3, 4, 5], [2, 4, 6, 8, 10]))->toBe(1.0)
+        ->and(I::spearman([1, 2, 3, 4, 5], [10, 8, 6, 4, 2]))->toBe(-1.0)
+        ->and(I::spearman([1, 1, 2, 2], [3, 3, 4, 4]))->toBe(1.0)
+        ->and(I::spearman([1, 2, 3], [5, 5, 5]))->toBeNull();
 });
 
-it('only talks about fibre when most of the food has fibre data, and compares with the guide', function () {
-    $days = array_fill(0, 7, insDay(3000.0, 160.0, 20.0));   // 20 g against a 42 g guide
-    expect(Insights::compute($days, [], 30.0, 7, 7)['fibre'])->toMatchArray(['avg' => 20.0, 'guide' => 42.0]);
-    expect(implode(' ', Insights::compute($days, [], 30.0, 7, 7)['notes']))->toContain('Fibre averaged 20 g');
-
-    $unknown = array_fill(0, 7, insDay(3000.0, 160.0, 20.0, 600.0));   // only 20% of calories have fibre data
-    expect(Insights::compute($unknown, [], 30.0, 7, 7)['fibre'])->toBeNull();
+it('never shows an insight with fewer than 8 pairs', function () {
+    $seven = array_map(fn ($i) => [(float) $i, (float) $i], range(1, 7));
+    $eight = array_map(fn ($i) => [(float) $i, (float) $i], range(1, 8));
+    expect(I::pair('k', 't', 'sleep', 'energy', $seven))->toBeNull()
+        ->and(I::pair('k', 't', 'sleep', 'energy', $eight))->not->toBeNull();
 });
 
-it('is kind about consistency and does not judge a thin week', function () {
-    $few = Insights::compute([insDay(null), insDay(null), insDay(3000.0), insDay(null), insDay(3000.0), insDay(null), insDay(null)], [], 30.0, 4, 3);
+it('labels the strength, the sample size and the not-proof caveat, with no causal wording', function () {
+    $pairs = array_map(fn ($i) => [(float) $i, (float) $i + ($i % 3)], range(1, 10));
+    $r = I::pair('k', 'Sleep and energy', 'sleep quality', 'energy', $pairs);
+    expect($r['n'])->toBe(10)->and($r['strength'])->toBeIn(['moderate', 'strong'])
+        ->and($r['caveats'][0])->toContain('not proof')->and($r['caveats'])->toHaveCount(2)
+        ->and($r['text'])->not->toContain('cause')->not->toContain('because')->toContain('10 days');
+});
 
-    expect($few['days'])->toBe(2)->and($few['protein'])->toBeNull()->and(implode(' ', $few['notes']))->toContain('a few more days')->and(implode(' ', $few['notes']))->toContain('not a failure');
-    $good = Insights::compute(array_fill(0, 7, insDay(3000.0, 165.0)), [], 30.0, 14, 8);
-    expect(implode(' ', $good['notes']))->toContain('solid week');
+it('says there is no clear link when the correlation is tiny', function () {
+    $x = [1, 2, 3, 4, 5, 6, 7, 8];
+    $y = [4, 7, 1, 8, 3, 6, 2, 5];   // rho = -0.095
+    expect(I::pair('k', 't', 'a', 'b', array_map(null, $x, $y))['strength'])->toBe('none');
+});
+
+it('offers options, not orders, after 3 poor days before a hard session', function () {
+    $days = [['date' => '2026-11-21', 'sleep' => 2, 'soreness' => 3, 'energy' => 3], ['date' => '2026-11-20', 'sleep' => 4, 'soreness' => 4, 'energy' => 3], ['date' => '2026-11-19', 'sleep' => 1, 'soreness' => 2, 'energy' => 2]];
+    $hook = I::readinessHook($days, ['label' => 'HIT lifting', 'intensity' => 'hit']);
+    expect($hook['options'])->toHaveCount(3)->and($hook['message'])->toContain('Your call');
+    expect(I::readinessHook($days, null))->toBeNull();
+    $days[1]['sleep'] = 4; $days[1]['soreness'] = 2;
+    expect(I::readinessHook($days, ['label' => 'x', 'intensity' => 'hit']))->toBeNull();
+});
+
+it('needs consecutive days for the hook', function () {
+    $gap = [['date' => '2026-11-21', 'sleep' => 1, 'soreness' => 5, 'energy' => 1], ['date' => '2026-11-19', 'sleep' => 1, 'soreness' => 5, 'energy' => 1], ['date' => '2026-11-18', 'sleep' => 1, 'soreness' => 5, 'energy' => 1]];
+    expect(I::readinessHook($gap, ['label' => 'x', 'intensity' => 'hit']))->toBeNull();
 });

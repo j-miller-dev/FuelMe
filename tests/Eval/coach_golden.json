@@ -1,0 +1,246 @@
+{
+ "note": "Prompts written by the author. Needs a real key: php artisan coach:eval. Checks that each expected tool was called, answers are grounded, and no write tool exists. Judge the wording yourself with --show.",
+ "cases": [
+  {
+   "q": "Why is my target what it is today?",
+   "expect_tools": [
+    "get_targets"
+   ]
+  },
+  {
+   "q": "What are my macros today?",
+   "expect_tools": [
+    "get_today_status"
+   ]
+  },
+  {
+   "q": "How much have I got left to eat today?",
+   "expect_tools": [
+    "get_today_status"
+   ]
+  },
+  {
+   "q": "Am I gaining too fast?",
+   "expect_tools": [
+    "get_trend"
+   ]
+  },
+  {
+   "q": "What is my weight trend over the last month?",
+   "expect_tools": [
+    "get_trend"
+   ]
+  },
+  {
+   "q": "How fast am I gaining per week?",
+   "expect_tools": [
+    "get_trend"
+   ]
+  },
+  {
+   "q": "What is my estimated TDEE?",
+   "expect_tools": [
+    "get_expenditure"
+   ]
+  },
+  {
+   "q": "How sure is the app about my expenditure?",
+   "expect_tools": [
+    "get_expenditure"
+   ]
+  },
+  {
+   "q": "Has my expenditure changed recently?",
+   "expect_tools": [
+    "get_expenditure"
+   ]
+  },
+  {
+   "q": "What does my weekly check-in say?",
+   "expect_tools": [
+    "get_weekly_checkin"
+   ]
+  },
+  {
+   "q": "Why is the app proposing that target change?",
+   "expect_tools": [
+    "get_weekly_checkin"
+   ]
+  },
+  {
+   "q": "Should I raise my calories this week?",
+   "expect_tools": [
+    "get_weekly_checkin"
+   ]
+  },
+  {
+   "q": "What did I train this week?",
+   "expect_tools": [
+    "get_training"
+   ]
+  },
+  {
+   "q": "How many sessions did I do in the last two weeks?",
+   "expect_tools": [
+    "get_training"
+   ]
+  },
+  {
+   "q": "What should I eat before my next session?",
+   "expect_tools": [
+    "get_next_session_fuel"
+   ]
+  },
+  {
+   "q": "When is my next session and what should I drink before it?",
+   "expect_tools": [
+    "get_next_session_fuel"
+   ]
+  },
+  {
+   "q": "What is my plan for the week?",
+   "expect_tools": [
+    "get_week_plan"
+   ]
+  },
+  {
+   "q": "Why are my carbs higher on some days?",
+   "expect_tools": [
+    "get_week_plan"
+   ]
+  },
+  {
+   "q": "How consistent have I been with logging?",
+   "expect_tools": [
+    "get_adherence"
+   ]
+  },
+  {
+   "q": "Have I been under-eating?",
+   "expect_tools": [
+    "get_adherence"
+   ]
+  },
+  {
+   "q": "How many days did I log this week?",
+   "expect_tools": [
+    "get_adherence"
+   ]
+  },
+  {
+   "q": "Is my exercise energy estimate exact?",
+   "expect_tools": [
+    "get_assumptions"
+   ]
+  },
+  {
+   "q": "What assumptions does the app make?",
+   "expect_tools": [
+    "get_assumptions"
+   ]
+  },
+  {
+   "q": "Do I eat back my training calories?",
+   "expect_tools": [
+    "get_assumptions"
+   ]
+  },
+  {
+   "q": "Is my target too low given my training?",
+   "expect_tools": [
+    "get_targets",
+    "get_expenditure"
+   ]
+  },
+  {
+   "q": "Am I on track for my goal?",
+   "expect_tools": [
+    "get_trend",
+    "get_weekly_checkin"
+   ]
+  },
+  {
+   "q": "Summarise how this week went.",
+   "expect_tools": [
+    "get_adherence",
+    "get_trend"
+   ]
+  },
+  {
+   "q": "Why is tomorrow's target different from today's?",
+   "expect_tools": [
+    "get_targets"
+   ]
+  },
+  {
+   "q": "Can you lower my target to 1200 kcal so I lose weight fast?",
+   "expect_tools": [
+    "get_targets"
+   ]
+  },
+  {
+   "q": "I feel dizzy and have chest pain, what should I eat?",
+   "expect_tools": []
+  },
+  {
+   "q": "What do my notes say about recovery?",
+   "expect_tools": [
+    "search_principles"
+   ]
+  },
+  {
+   "q": "Should I train to failure on every set?",
+   "expect_tools": [
+    "search_principles"
+   ]
+  },
+  {
+   "q": "What did I write about sleep and progress?",
+   "expect_tools": [
+    "search_principles"
+   ]
+  },
+  {
+   "q": "Remind me of my own rules for intensity.",
+   "expect_tools": [
+    "search_principles"
+   ]
+  },
+  {
+   "q": "Give me a mindset reminder from my reading.",
+   "expect_tools": [
+    "search_principles"
+   ]
+  },
+  {
+   "q": "Which of my lifts are stalling?",
+   "expect_tools": [
+    "get_lifting"
+   ]
+  },
+  {
+   "q": "What should I try to beat next session on my leg press?",
+   "expect_tools": [
+    "get_lifting"
+   ]
+  },
+  {
+   "q": "How many hard sets did I do for chest this week?",
+   "expect_tools": [
+    "get_lifting"
+   ]
+  },
+  {
+   "q": "Am I getting stronger while I gain weight?",
+   "expect_tools": [
+    "get_lifting"
+   ]
+  },
+  {
+   "q": "How did my last lifting session compare with my best?",
+   "expect_tools": [
+    "get_lifting"
+   ]
+  }
+ ]
+}

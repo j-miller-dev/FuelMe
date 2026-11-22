@@ -57,6 +57,12 @@ return [
     | The model only PARSES text into foods and amounts; every number comes from the food database.
     | Prices are not assumed: the cap is on TOKENS per calendar month.
     */
+    'hevy' => [
+        'base_url' => env('FUEL_HEVY_BASE_URL', 'https://api.hevyapp.com'),
+        'timeout' => 20,
+        'plate_step_kg' => (float) env('FUEL_PLATE_STEP_KG', 2.5),   // ASSUMPTION used for the "small load step" suggestion
+    ],
+
     'capture' => [
         'api_key' => env('ANTHROPIC_API_KEY'),
         'model' => env('FUEL_CAPTURE_MODEL', 'claude-haiku-5-5'),
@@ -64,5 +70,26 @@ return [
         'timeout' => (int) env('FUEL_CAPTURE_TIMEOUT', 8),
         'monthly_token_cap' => (int) env('FUEL_CAPTURE_MONTHLY_TOKENS', 2000000),
         'max_chars' => 600,
+    ],
+
+    /*
+    | Weekly review (BLUEPRINT 9A.3). The template note always works. With an API key the model may reword it, but only if it adds no number.
+    */
+    'review' => [
+        'use_model' => (bool) env('FUEL_REVIEW_USE_MODEL', true),
+    ],
+
+    /*
+    | Coach chat (BLUEPRINT 9A.2). Needs ANTHROPIC_API_KEY. Read-only tools only; every number in an answer is checked against the
+    | tool results, and an answer that fails the check is replaced. Set FUEL_COACH_ENABLED=false to switch the coach off entirely.
+    */
+    'coach' => [
+        'enabled' => (bool) env('FUEL_COACH_ENABLED', true),
+        'model' => env('FUEL_COACH_MODEL', 'claude-sonnet-5-5'),
+        'timeout' => (int) env('FUEL_COACH_TIMEOUT', 40),
+        'monthly_token_cap' => (int) env('FUEL_COACH_MONTHLY_TOKENS', 1000000),
+        'max_chars' => 500,
+        'persona' => env('FUEL_COACH_PERSONA', 'trainer'),
+        'max_rounds' => 6,
     ],
 ];

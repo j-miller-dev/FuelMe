@@ -27,7 +27,7 @@ final class MacroPlanner
      * @param array{
      *   weightKg: float, sex?: string, bodyFatPct?: ?float, phase: string, kcalTarget: float,
      *   week: array<string,array<int,array{type:string,intensity:string,minutes:int}>>,
-     *   proteinGPerKg?: ?float, carbMode?: string, carbCapG?: ?float, periodisation?: float
+     *   proteinGPerKg?: ?float, fatMinGPerKg?: ?float, carbMode?: string, carbCapG?: ?float, periodisation?: float
      * } $p
      */
     public static function plan(array $p): array
@@ -79,11 +79,14 @@ final class MacroPlanner
             'maintain' => 1.8 * $kg,
             default => 1.8 * $kg, // bulk (ISSN/Iraki 1.6-2.2)
         };
-        $protG = min($protG, 0.35 * $kcal / 4);
-        $protG = round($protG);
+        $protCap = 0.35 * $kcal / 4;
+        if ($protG > $protCap + 0.5 && isset($p['proteinGPerKg'])) {
+            $warnings[] = ['level' => 'warn', 'code' => 'protein_capped', 'msg' => sprintf('Protein is capped at 35%% of calories (%d g) so there is room for carbs and fat. Raise calories to go higher.', round($protCap))];
+        }
+        $protG = round(min($protG, $protCap));
 
         // 4. Fat: floor 0.6 g/kg (literature minimum 0.5), target share by phase, ceiling 1.5 g/kg
-        $fatFloor = max(0.6 * $kg, 0.15 * $kcal / 9);
+        $fatFloor = max(0.6 * $kg, 0.15 * $kcal / 9, (float) ($p['fatMinGPerKg'] ?? 0) * $kg);
         $fatShare = match ($phase) { 'cut' => 0.25, 'maintain' => 0.27, default => 0.25 };
         $fatG = max($fatFloor, $fatShare * $kcal / 9);
         $fatG = round(min($fatG, 1.5 * $kg));

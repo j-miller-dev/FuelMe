@@ -217,13 +217,19 @@ final class FoodSearch
         }
         $ids = array_map(fn ($r) => $r->id, $rows);
         $servings = DB::table('food_servings')->whereIn('food_id', $ids)->orderBy('id')->get()->groupBy('food_id');
+        // Your own measures ("1 egg" = 50 g) come first and win over the food's own entry with the same label.
+        $mine = $userId ? DB::table('user_food_servings')->where('user_id', $userId)->whereIn('food_id', $ids)->orderBy('id')->get()->groupBy('food_id') : collect();
         // The weight you last logged of each food (default portion next time) and which are favourites.
         $last = $userId ? DB::table('food_logs')->whereIn('id', fn ($q) => $q->selectRaw('max(id)')->from('food_logs')
             ->where('user_id', $userId)->whereIn('food_id', $ids)->whereNotNull('grams')->groupBy('food_id'))->pluck('grams', 'food_id') : collect();
         $favs = $userId ? DB::table('food_favourites')->where('user_id', $userId)->whereIn('food_id', $ids)->pluck('food_id')->flip() : collect();
 
-        return array_map(function ($r) use ($servings, $qty, $unit, $last, $favs) {
-            $sv = ($servings[$r->id] ?? collect())->map(fn ($s) => ['label' => $s->label, 'grams' => (float) $s->grams])->values()->all();
+        return array_map(function ($r) use ($servings, $mine, $qty, $unit, $last, $favs) {
+            $own = ($mine[$r->id] ?? collect())->map(fn ($s) => ['id' => (int) $s->id, 'label' => $s->label, 'grams' => (float) $s->grams, 'own' => true])->values()->all();
+            $ownLabels = array_column($own, 'label');
+            $shared = ($servings[$r->id] ?? collect())->reject(fn ($s) => in_array($s->label, $ownLabels, true))
+                ->map(fn ($s) => ['label' => $s->label, 'grams' => (float) $s->grams])->values()->all();
+            $sv = array_merge($own, $shared);
             $portion = ServingResolver::resolve($qty, $unit, (bool) $r->is_liquid, $r->density_g_ml !== null ? (float) $r->density_g_ml : null, $sv);
 
             return [

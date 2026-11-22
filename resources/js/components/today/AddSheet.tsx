@@ -167,7 +167,7 @@ export function AddSheet({ slot, setSlot, eaten, target, unit, previous, onAdd, 
 
       {picked && (
         <PortionSheet title={hitName(picked)} subtitle={[picked.category, picked.state].filter(Boolean).join(' · ')} per100={picked.per100} unit={unitOf(picked) as 'g' | 'mL'}
-          servings={picked.servings} initialGrams={defaultGrams(picked)} initialSlot={slot} mode="add" favourite={picked.is_favourite} onFavourite={() => toggleFav(picked)}
+          servings={picked.servings} foodId={picked.id} onServingsChange={(sv) => setPicked((p) => (p ? { ...p, servings: sv } : p))} initialGrams={defaultGrams(picked)} initialSlot={slot} mode="add" favourite={picked.is_favourite} onFavourite={() => toggleFav(picked)}
           onClose={() => setPicked(null)}
           onSubmit={(r) => { setAdded((a) => ({ ...a, [picked.id]: (a[picked.id] ?? 0) + 1 })); void onAdd([{ kind: 'food', food: picked, grams: r.grams, slot: r.slot, serving_label: r.serving_label }]); setPicked(null) }} />
       )}
@@ -177,6 +177,7 @@ export function AddSheet({ slot, setSlot, eaten, target, unit, previous, onAdd, 
 
 function QuickAdd({ slot, onAdd }: { slot: Slot; onAdd: (it: NewLog) => void }) {
   const [v, setV] = useState({ name: '', kcal: '', protein: '', carbs: '', fat: '' })
+  const [rough, setRough] = useState(false)
   const n = (s: string) => (Number(s.replace(',', '.')) > 0 ? Number(s.replace(',', '.')) : 0)
   const derived = Math.round(4 * n(v.protein) + 4 * n(v.carbs) + 9 * n(v.fat))
   const kcal = n(v.kcal) || derived
@@ -196,7 +197,11 @@ function QuickAdd({ slot, onAdd }: { slot: Slot; onAdd: (it: NewLog) => void }) 
         {field('kcal', 'Calories', derived ? String(derived) : undefined)}{field('protein', 'Protein g')}{field('carbs', 'Carbs g')}{field('fat', 'Fat g')}
       </div>
       <p className="mt-2 text-xs text-muted">Leave calories blank to work them out from the macros (4 · 4 · 9).</p>
-      <button disabled={kcal <= 0} onClick={() => onAdd({ kind: 'quick', name: v.name.trim(), kcal: n(v.kcal) || null, protein: n(v.protein), carbs: n(v.carbs), fat: n(v.fat), slot })}
+      <label className="mt-3 flex min-h-11 items-center gap-3 text-sm">
+        <input type="checkbox" checked={rough} onChange={(e) => setRough(e.target.checked)} className="size-5 accent-[var(--accent)]" />
+        <span>Rough estimate <span className="text-muted">(takeaway, restaurant). Counts, with a wider error margin.</span></span>
+      </label>
+      <button disabled={kcal <= 0} onClick={() => onAdd({ kind: 'quick', name: v.name.trim(), kcal: n(v.kcal) || null, protein: n(v.protein), carbs: n(v.carbs), fat: n(v.fat), slot, rough })}
         className="mt-3 min-h-12 w-full rounded-2xl bg-accent font-semibold text-on-accent disabled:opacity-40">Log {kcal > 0 ? `${kcal} kcal ` : ''}to {SLOT_LABEL[slot].toLowerCase()}</button>
     </div>
   )

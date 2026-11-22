@@ -85,6 +85,19 @@ class CaptureService
         return array_slice(array_merge($aliases, $own), 0, 40);
     }
 
+    /**
+     * One ingredient line ("600 g chicken breast", "woolworths chicken breast") -> the same review item the Say tab builds, always with the
+     * rule parser (no AI, no cost). Null when nothing food-like can be read.
+     *
+     * @return array<string,mixed>|null
+     */
+    public function ingredient(User $user, string $line, string $id): ?array
+    {
+        $it = $this->rules->parse($line)['items'][0] ?? null;
+
+        return $it === null ? null : $this->resolve($user->id, $id, $it);
+    }
+
     /** @param array<string,mixed> $it @return array<string,mixed> */
     private function resolve(int $userId, string $id, array $it): array
     {

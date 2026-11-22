@@ -14,4 +14,5 @@ it('passes engine script', function (string $script) {
     '../Domain/goal_tests.php',
     '../Domain/prior_tests.php',
     '../Domain/rates_tests.php',
+    'rough_tests.php',
 ]);

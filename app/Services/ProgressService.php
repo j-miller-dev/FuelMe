@@ -6,9 +6,10 @@ use App\Domain\Foods\LocalDay;
 use App\Domain\Foods\QuickFoods;
 use App\Domain\Nutrition\ExpenditureFilter;
 use App\Domain\Progress\Adherence;
-use App\Domain\Progress\Insights;
+use App\Domain\Progress\IntakeModel;
 use App\Domain\Progress\NudgePicker;
 use App\Domain\Progress\TrendStats;
+use App\Domain\Progress\WeekInsights;
 use App\Domain\Progress\UndereatingDetector;
 use App\Domain\Progress\WeeklyCheckin;
 use App\Models\TargetHistory;
@@ -35,14 +36,18 @@ class ProgressService
 
         $today = LocalDay::of(now(), $profile->tz, $profile->rollover_hour);
         $first = array_key_first($weights);
-        $intake = DB::table('food_logs')->where('user_id', $user->id)->where('local_date', '>=', $first)->groupBy('local_date')->selectRaw('local_date, sum(kcal) as kcal')
-            ->pluck('kcal', 'local_date')->map(fn ($k) => (float) $k)->all();
+        $sums = DB::table('food_logs')->where('user_id', $user->id)->where('local_date', '>=', $first)->groupBy('local_date')
+            ->selectRaw('local_date, sum(kcal) as kcal, sum(case when is_rough then kcal else 0 end) as rough')->get()->keyBy('local_date');
+        $estimates = DB::table('day_estimates')->where('user_id', $user->id)->where('local_date', '>=', $first)->pluck('kcal', 'local_date')->map(fn ($k) => (float) $k)->all();
 
-        $targetFor = function (string $date) use ($targets): array {
+        // Your own adjustments count here: "did I eat enough" is measured against what you are aiming for, not the bare recommendation.
+        $offset = (int) $profile->kcal_offset;
+        $proteinOverride = $profile->protein_g_override ? (float) $profile->protein_g_override : null;
+        $targetFor = function (string $date) use ($targets, $offset, $proteinOverride): array {
             $t = $targets->last(fn ($x) => $x->effective_from->toDateString() <= $date) ?? $targets->first();
             $d = $t->plan_json['plan']['days'][LocalDay::dayKey($date)] ?? null;
 
-            return ['kcal' => (float) ($d['kcal'] ?? $t->kcal), 'protein' => (float) ($d['protein'] ?? $t->protein)];
+            return ['kcal' => (float) ($d['kcal'] ?? $t->kcal) + $offset, 'protein' => $proteinOverride ?? (float) ($d['protein'] ?? $t->protein)];
         };
 
         // One row per day from the first weigh-in. Today is incomplete, so its intake is not used (the filter only needs yesterday's).
@@ -50,10 +55,11 @@ class ProgressService
         $perDay = [];
         for ($d = $first; $d <= $today; $d = date('Y-m-d', strtotime($d . ' +1 day'))) {
             $tg = $targetFor($d);
-            $kcal = $intake[$d] ?? 0.0;
-            $logged = $d < $today && $kcal >= Adherence::LOGGED_AT * $tg['kcal'];
-            $rows[] = ['date' => $d, 'weight' => $weights[$d] ?? null, 'intake' => $logged ? $kcal : null];
-            $perDay[$d] = $tg + ['kcalLogged' => $kcal, 'logged' => $logged];
+            // An exact day is trusted, a rough day (a whole-day estimate, or rough meals) is used with a wider error, only a nearly empty day is missing.
+            $m = IntakeModel::day((float) ($sums[$d]->kcal ?? 0.0), (float) ($sums[$d]->rough ?? 0.0), $estimates[$d] ?? null, $tg['kcal']);
+            $logged = $d < $today && $m['state'] !== 'missing';
+            $rows[] = ['date' => $d, 'weight' => $weights[$d] ?? null, 'intake' => $logged ? $m['kcal'] : null, 'intakeSd' => $logged ? $m['sd'] : null];
+            $perDay[$d] = $tg + ['kcalLogged' => (float) $m['kcal'], 'logged' => $logged, 'state' => $logged ? $m['state'] : 'missing'];
         }
 
         $prior = $targets->first()->plan_json['prior'] ?? [];
@@ -61,6 +67,9 @@ class ProgressService
         $series = array_map(fn ($r) => ['date' => $r['date'], 'trend' => round($r['trend'], 2), 'tdee' => round($r['tdee']), 'tdeeSd' => round($r['tdeeSd']), 'scale' => $r['scale']],
             $filter->run($rows, reset($weights), (float) ($prior['tdee'] ?? 2500), (float) ($prior['sd'] ?? 350)));
         $last = end($series);
+        if ($last === false) {
+            return null;   // the first weigh-in is dated after today, so there is nothing to show yet
+        }
 
         $slope14 = TrendStats::slope($series);
         $slopePrev = TrendStats::slope($series, 14, 10, 14);
@@ -76,6 +85,15 @@ class ProgressService
             }
         }
         $last7 = array_slice($done, -7);
+        // The weekly consistency score (instead of a streak): days that counted, however roughly, out of the last 7 finished days.
+        $week = [];
+        for ($i = 7; $i >= 1; $i--) {
+            $d = date('Y-m-d', strtotime($today . " -{$i} days"));
+            if (isset($perDay[$d])) {
+                $p = $perDay[$d];
+                $week[] = ['state' => $p['state'], 'kcal' => $p['logged'] ? $p['kcalLogged'] : null, 'target' => $p['kcal']];
+            }
+        }
         $loggedDays7 = Adherence::loggedCount($last7);
         $weighIns14 = count(array_filter(array_keys($weights), fn ($d) => $d > date('Y-m-d', strtotime($today . ' -14 days'))));
 
@@ -105,6 +123,7 @@ class ProgressService
                 'phase' => $goal->phase, 'target' => (int) $latest->kcal,
             ],
             'adherence' => ['loggedDays7' => $loggedDays7, 'weighIns14' => $weighIns14],
+            'consistency' => IntakeModel::consistency($week),
             'checkin' => $checkin, 'undereating' => $under + ['adds' => $adds], 'insights' => $insights,
             'weights' => DB::table('weight_logs')->where('user_id', $user->id)->orderByDesc('local_date')->limit(14)->get(['id', 'local_date', 'kg'])
                 ->map(fn ($w) => ['id' => (int) $w->id, 'date' => (string) $w->local_date, 'kg' => (float) $w->kg])->all(),
@@ -129,7 +148,7 @@ class ProgressService
             $slots[$slot] = ['days' => $g->pluck('local_date')->unique()->count(), 'protein' => (float) $g->sum('protein')];
         }
 
-        return Insights::compute($days, $slots, $perMeal, Adherence::loggedCount($done14), $weighIns14);
+        return WeekInsights::compute($days, $slots, $perMeal, Adherence::loggedCount($done14), $weighIns14);
     }
 
     /** Lightweight: only whether the estimate has settled (for the Today badge). */
@@ -156,7 +175,7 @@ class ProgressService
         $plan = $this->targets->replan([
             'sex' => $profile->sex, 'body_fat_pct' => $profile->body_fat_pct, 'lifting_style' => $profile->lifting_style, 'phase' => $user->goal->phase,
             'protein_g_per_kg' => $profile->protein_g_per_kg_override, 'carb_mode' => $profile->carb_mode,
-        ], $o['summary']['trendKg'], (float) $c['proposedKcal'], $this->training->templateWeek($user));
+        ], $o['summary']['trendKg'], (float) $c['proposedKcal'], $this->training->templateWeek($user));  // the recommendation: your overrides are layered on at read time
 
         $w = $plan['weekly'];
         TargetHistory::create([
