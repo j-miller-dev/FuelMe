@@ -90,7 +90,9 @@ class CoachService
             }
         } catch (\Throwable $e) {
             report($e);
-            $answer = 'The coach could not be reached just now. Your numbers are all on the Today, Targets and Progress screens.';
+            // One person's own app: say what actually failed (class + first part of the message, never the key) so it can be fixed without server logs.
+            $why = class_basename($e) . ': ' . mb_substr(preg_replace('/\s+/', ' ', $e->getMessage()), 0, 300);
+            $answer = 'The coach could not be reached just now. Your numbers are all on the Today, Targets and Progress screens. (Technical detail: ' . $why . ')';
             $grounded = true;
         }
 
