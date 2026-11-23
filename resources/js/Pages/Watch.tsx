@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/AppLayout'
 import { Button } from '@/components/ui/button'
 
 interface Day { date: string; sleepMin: number | null; restingHr: number | null; hrv: number | null; steps: number | null }
-interface Act { id: number; date: string; name: string; type: string | null; minutes: number | null; avgHr: number | null; maxHr: number | null; load: number | null; source: string | null }
+interface Act { id: number; date: string; name: string; type: string | null; minutes: number | null; avgHr: number | null; maxHr: number | null; load: number | null; source: string | null; alsoRecordedBy?: string[] }
 interface Props { connection: { last_synced_at: string | null; last_error: string | null } | null; days: Day[]; activities: Act[] }
 
 const hm = (min: number | null) => (min === null ? '–' : `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}`)
@@ -57,10 +57,10 @@ export default function Watch({ connection, days, activities }: Props) {
             <ul className="mt-2 space-y-2">{activities.map((a) => (
               <li key={a.id} className="rounded-2xl bg-surface p-3 text-sm">
                 <div className="font-medium">{a.name}</div>
-                <div className="text-xs text-muted tabular-nums">{day(a.date)}{a.minutes ? ` · ${a.minutes} min` : ''}{a.avgHr ? ` · avg HR ${a.avgHr}` : ''}{a.maxHr ? ` · max ${a.maxHr}` : ''}{a.load ? ` · load ${a.load}` : ''}{a.source ? ` · ${a.source}` : ''}</div>
+                <div className="text-xs text-muted tabular-nums">{day(a.date)}{a.minutes ? ` · ${a.minutes} min` : ''}{a.avgHr ? ` · avg HR ${a.avgHr}` : ''}{a.maxHr ? ` · max ${a.maxHr}` : ''}{a.load ? ` · load ${a.load}` : ''}{a.source ? ` · ${a.source}` : ''}{a.alsoRecordedBy?.length ? ` · also recorded by ${a.alsoRecordedBy.join(', ')} (Polar is used when both did)` : ''}</div>
               </li>))}</ul>
           )}
-          <p className="mt-3 text-xs text-muted">If both of your watches recorded the same session you may see it twice. Sleep, HRV and resting HR are the watch&apos;s estimates, not medical measurements.</p>
+          <p className="mt-3 text-xs text-muted">When both watches recorded the same session, only one is shown and Polar is used. Sleep, HRV and resting HR are the watch&apos;s estimates, not medical measurements.</p>
         </>
       ) : null}
     </AppLayout>

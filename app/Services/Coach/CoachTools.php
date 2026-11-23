@@ -39,6 +39,7 @@ class CoachTools
             ['name' => 'get_next_session_fuel', 'description' => 'The next session (today, else tomorrow): when, and the eating and fluid plan around it.', 'input_schema' => $none],
             ['name' => 'search_principles', 'description' => 'Search the person\'s OWN principle notes (from their reading) for ideas that fit a question. Returns up to 3 cards with source, grade and stance. Numbers in a card are the note author\'s, not the person\'s targets.', 'input_schema' => ['type' => 'object', 'properties' => ['query' => ['type' => 'string', 'description' => 'a few keywords, e.g. "recovery sleep" or "training to failure"']], 'required' => ['query']]],
             ['name' => 'get_lifting', 'description' => 'Your lifting from synced Hevy workouts: recent sessions, per-exercise progress status (estimated 1RM trend, progressing/holding/stalled/down), what to beat next time, weekly hard sets per muscle, and strength change next to weight change. Empty if Hevy is not connected.', 'input_schema' => $days('how many days back (default 90)')],
+            ['name' => 'get_recovery', 'description' => 'Your recovery picture from the watch: a green/amber/red signal with every flag and reason, HRV and resting HR against your own 60-day baseline, sleep against your target, training load against your usual, and deload weeks. Empty if no watch data. A suggestion, not a diagnosis.', 'input_schema' => $none],
             ['name' => 'get_assumptions', 'description' => 'The fixed assumptions and rules of thumb the app uses, so you can say what is an estimate.', 'input_schema' => $none],
         ];
     }
@@ -58,6 +59,7 @@ class CoachTools
             'get_next_session_fuel' => $this->nextFuel($user),
             'get_lifting' => $this->lifting($user, $this->days($args, 90)),
             'search_principles' => $this->principles($user, (string) ($args['query'] ?? '')),
+            'get_recovery' => $this->recovery($user),
             'get_assumptions' => $this->assumptions(),
             default => ['error' => 'Unknown tool.'],
         };
@@ -203,6 +205,18 @@ class CoachTools
             'timeline' => array_map(fn ($t) => ['at' => $t['at'], 'title' => $t['title'], 'what' => $t['text']], $f['timeline'] ?? []),
             'during' => $f['during']['note'], 'after' => ['protein_g' => $f['post']['proteinG'], 'carbs_g' => $f['post']['carbsG'] ?? null, 'within_hours' => $f['post']['withinHours']],
             'note' => 'These amounts come out of the day\'s targets, they are not extra.'];
+    }
+
+    /** @return array<string,mixed> */
+    private function recovery(User $user): array
+    {
+        $r = app(\App\Services\RecoveryService::class);
+        if (! $r->connected($user)) {
+            return ['connected' => false, 'note' => 'No watch data yet.'];
+        }
+        $o = $r->overview($user);
+
+        return ['signal' => $o['signal'], 'hrv' => $o['hrv'], 'resting_hr' => $o['rhr'], 'sleep' => $o['sleep'], 'load_vs_usual' => ['session_rpe' => $o['load']['srpe'], 'watch' => $o['load']['watch']], 'deload' => $o['deload'], 'assumptions' => $o['assumptions']];
     }
 
     private function assumptions(): array

@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 /** Your lifting numbers from synced Hevy workouts. Estimates and rules of thumb, labelled as such; nothing here changes a target. */
 class StrengthService
 {
-    public function __construct(private TrainingService $training) {}
+    public function __construct(private TrainingService $training, private \App\Services\DeloadService $deloads) {}
 
     public function connected(User $user): bool
     {
@@ -29,6 +29,7 @@ class StrengthService
         if ($w->isEmpty()) {
             return [];
         }
+        $deloadSet = array_flip($this->deloads->mondays($user));
         $tpl = DB::table('hevy_templates')->where('user_id', $user->id)->get()->keyBy('template_id');
         $sets = DB::table('hevy_sets')->whereIn('hevy_workout_id', $w->pluck('id'))->orderBy('exercise_index')->orderBy('set_index')->get()->groupBy('hevy_workout_id');
         $out = [];
@@ -40,7 +41,7 @@ class StrengthService
                 $ex[] = ['id' => $first->template_id ?: $first->exercise_title, 'title' => $first->exercise_title, 'muscle' => $t->muscle ?? null, 'secondary' => $t ? (json_decode($t->secondary, true) ?: []) : [],
                     'sets' => $list->map(fn ($s) => ['type' => $s->type, 'kg' => $s->weight_kg !== null ? (float) $s->weight_kg : null, 'reps' => $s->reps !== null ? (int) $s->reps : null, 'rpe' => $s->rpe !== null ? (float) $s->rpe : null])->all()];
             }
-            $out[] = ['date' => (string) $row->local_date, 'title' => $row->title, 'minutes' => $row->minutes !== null ? (int) $row->minutes : null, 'exercises' => $ex];
+            $out[] = ['date' => (string) $row->local_date, 'title' => $row->title, 'minutes' => $row->minutes !== null ? (int) $row->minutes : null, 'exercises' => $ex, 'deload' => isset($deloadSet[\App\Domain\Training\Deload::mondayOf((string) $row->local_date)])];
         }
 
         return $out;
@@ -50,8 +51,9 @@ class StrengthService
     public function overview(User $user, int $days = 90): array
     {
         $all = $this->sessions($user, 180);
+        $train = array_values(array_filter($all, fn ($s) => ! $s['deload']));   // deload weeks are left out of stall and best-set checks: an easy week is not a problem
         $today = now($user->profile->tz)->toDateString();
-        $window = array_values(array_filter($all, fn ($s) => $s['date'] >= date('Y-m-d', strtotime($today . " -{$days} days"))));
+        $window = array_values(array_filter($train, fn ($s) => $s['date'] >= date('Y-m-d', strtotime($today . " -{$days} days"))));
         $step = (float) config('fuel.hevy.plate_step_kg');
 
         $exercises = [];
@@ -78,7 +80,7 @@ class StrengthService
         $lastMonday = date('Y-m-d', strtotime($monday . ' -7 days'));
         $recent = [];
         foreach (array_slice(array_reverse($all), 0, 8) as $s) {
-            $idx = Strength::sessionIndex($all, $s['date']);
+            $idx = $s['deload'] ? ['index' => null, 'beat' => 0, 'matched' => 0, 'down' => 0, 'compared' => 0] : Strength::sessionIndex($train, $s['date']);
             $all_sets = [];
             foreach ($s['exercises'] as $ex) {
                 array_push($all_sets, ...$ex['sets']);
@@ -86,15 +88,16 @@ class StrengthService
             $eff = Strength::effort($all_sets);
             $wk = EffortRamp::weekFor($ramp, $s['date']);
             $vs = $wk ? EffortRamp::compare(Strength::hardestRirs($s['exercises']), $wk['min'], $wk['max']) + ['planned' => $wk['label']] : null;
-            $recent[] = ['date' => $s['date'], 'title' => $s['title'], 'minutes' => $s['minutes'], 'exercises' => count($s['exercises']), 'working_sets' => $eff['working'], 'effort' => $eff, 'vs_plan' => $vs, 'vs_your_best' => $idx];
+            $recent[] = ['date' => $s['date'], 'title' => $s['title'], 'minutes' => $s['minutes'], 'exercises' => count($s['exercises']), 'working_sets' => $eff['working'], 'effort' => $eff, 'vs_plan' => $s['deload'] ? null : $vs, 'vs_your_best' => $idx, 'deload' => $s['deload']];
         }
 
         return [
+            'deload_now' => $this->deloads->isDeload($user, $today),
             'effort_plan' => ['this_week' => EffortRamp::weekFor($ramp, $today), 'cycle' => $ramp, 'note' => 'Set by you. The cycle repeats after its last week. Only sets where you logged effort (failure tag or RPE) are compared.'],
             'sessions_in_window' => count($window), 'exercises' => $exercises, 'recent' => $recent,
             'weekly_sets' => ['this_week' => Strength::weeklySets($all, $monday, $today), 'last_week' => Strength::weeklySets($all, $lastMonday, date('Y-m-d', strtotime($monday . ' -1 day')))],
             'strength_vs_bodyweight' => $this->vsBodyweight($user, $window),
-            'assumptions' => ['e1RM is an estimate (Epley, 1-12 reps only); a set tagged failure counts as 0 reps in reserve, and with an RPE logged the reps in reserve are added (RPE 9 = 1). Sets with neither are not adjusted', 'weekly sets: a secondary muscle counts half (rule of thumb)', 'status needs at least 3 sessions, a stall at least 5 over 2+ weeks', 'load step for "beat the log" is ' . $step . ' kg (an assumption)'],
+            'assumptions' => ['e1RM is an estimate (Epley, 1-12 reps only); a set tagged failure counts as 0 reps in reserve, and with an RPE logged the reps in reserve are added (RPE 9 = 1). Sets with neither are not adjusted', 'weekly sets: a secondary muscle counts half (rule of thumb)', 'status needs at least 3 sessions, a stall at least 5 over 2+ weeks; sessions in a week you labelled a deload are left out of status and best-set checks', 'load step for "beat the log" is ' . $step . ' kg (an assumption)'],
         ];
     }
 
@@ -115,7 +118,7 @@ class StrengthService
     /** Session performance (vs your own earlier best) against yesterday's carbs per kg and this morning's sleep. Needs >= 8 comparable sessions each. @return list<array<string,mixed>> */
     public function insights(User $user): array
     {
-        $all = $this->sessions($user, 365);
+        $all = array_values(array_filter($this->sessions($user, 365), fn ($s) => ! $s['deload']));
         $perf = [];
         foreach ($all as $s) {
             $i = Strength::sessionIndex($all, $s['date']);

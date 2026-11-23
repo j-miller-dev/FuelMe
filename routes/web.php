@@ -93,6 +93,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/principles/{principle}', [\App\Http\Controllers\PrincipleController::class, 'archive'])->whereNumber('principle')->name('principles.archive');
     Route::get('/lifting', [\App\Http\Controllers\HevyController::class, 'show'])->name('lifting');
     Route::get('/watch', [\App\Http\Controllers\WatchController::class, 'show'])->name('watch');
+    Route::get('/recovery', [\App\Http\Controllers\RecoveryController::class, 'show'])->name('recovery');
+    Route::put('/recovery/sleep-target', [\App\Http\Controllers\RecoveryController::class, 'sleepTarget'])->name('recovery.sleep');
+    Route::post('/recovery/deload', [\App\Http\Controllers\RecoveryController::class, 'deload'])->name('recovery.deload');
     Route::post('/watch/connect', [\App\Http\Controllers\WatchController::class, 'connect'])->middleware('throttle:10,1')->name('watch.connect');
     Route::post('/watch/sync', [\App\Http\Controllers\WatchController::class, 'sync'])->middleware('throttle:10,1')->name('watch.sync');
     Route::delete('/watch/connection', [\App\Http\Controllers\WatchController::class, 'disconnect'])->name('watch.disconnect');

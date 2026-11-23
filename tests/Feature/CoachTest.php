@@ -101,7 +101,7 @@ it('stops after max_rounds of tool calls', function () {
 
 it('offers only read-only tools', function () {
     $names = array_column(app(CoachTools::class)->definitions(), 'name');
-    expect($names)->toHaveCount(12);
+    expect($names)->toHaveCount(13);
     foreach ($names as $n) {
         expect($n)->toMatch('/^(get|search)_/');
     }

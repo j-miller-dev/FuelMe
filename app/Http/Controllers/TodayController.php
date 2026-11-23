@@ -60,6 +60,7 @@ class TodayController extends Controller
                 collect($training->sessions($user, $date, true))->contains(fn ($s) => ($s['status'] ?? '') !== 'skipped' && ($s['status'] ?? '') !== 'done'),
                 (bool) ($overview['undereating']['flag'] ?? false),
             ) : null,
+            'recovery' => $date === $today ? app(\App\Services\RecoveryService::class)->compact($user) : null,
             'water' => $this->water($user, $date, $profile->sex),
             'strip' => $strip->forUser($user, $today),
             'logs' => $logs->map->toPayload()->values(),

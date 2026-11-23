@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button'
 interface Beat { kg: number; reps: number; label: string }
 interface Ex { id: string; title: string; muscle: string | null; status: 'not_enough_data' | 'progressing' | 'holding' | 'stalled' | 'down'; sessions: number; best_e1rm: number | null; latest_e1rm: number | null; last_date: string; last_set: { kg: number; reps: number }; trend: number[]; beat_the_log: Beat[] }
 interface Effort { working: number; failure: number; rpe_logged: number; unlabelled: number; avg_rpe: number | null }
-interface Recent { date: string; title: string; minutes: number | null; exercises: number; working_sets: number; effort: Effort; vs_plan: { verdict: 'harder' | 'easier' | 'in_range' | 'unknown'; avg_rir: number | null; planned: string } | null; vs_your_best: { index: number | null; beat: number; matched: number; down: number; compared: number } }
-interface Data { sessions_in_window: number; exercises: Ex[]; recent: Recent[]; weekly_sets: { this_week: Record<string, number>; last_week: Record<string, number> }; strength_vs_bodyweight: { strength_change_pct: number | null; weight_change_kg: number | null; exercises: number; note: string }; assumptions: string[] }
+interface Recent { date: string; title: string; minutes: number | null; exercises: number; working_sets: number; effort: Effort; vs_plan: { verdict: 'harder' | 'easier' | 'in_range' | 'unknown'; avg_rir: number | null; planned: string } | null; vs_your_best: { index: number | null; beat: number; matched: number; down: number; compared: number }; deload?: boolean }
+interface Data { deload_now?: boolean; sessions_in_window: number; exercises: Ex[]; recent: Recent[]; weekly_sets: { this_week: Record<string, number>; last_week: Record<string, number> }; strength_vs_bodyweight: { strength_change_pct: number | null; weight_change_kg: number | null; exercises: number; note: string }; assumptions: string[] }
 interface Insight { key: string; title: string; n: number; strength: string; text: string; caveats: string[] }
 interface Ramp { start: string; weeks: [number, number][] }
 interface RampNow { week: number; of: number; min: number; max: number; label: string }
@@ -94,6 +94,8 @@ export default function Lifting({ connection, data, insights, ramp, rampNow, tod
         </section>
       )}
 
+      {data?.deload_now ? <p className="mt-4 rounded-2xl bg-surface p-3 text-sm">This week is labelled a deload. Its sessions are left out of stall checks and best-set comparisons. <Link href="/recovery" className="text-accent underline">Change</Link></p> : null}
+
       <RampCard key={ramp ? JSON.stringify(ramp) : 'none'} ramp={ramp} now={rampNow} today={today} />
 
       {data && data.exercises.length === 0 ? <p className="mt-4 text-sm text-muted">No workouts yet. They appear here once the first sync finishes.</p> : null}
@@ -128,7 +130,7 @@ export default function Lifting({ connection, data, insights, ramp, rampNow, tod
                 {data.recent.map((r) => (
                   <li key={r.date + r.title}>
                     <span className="font-medium">{pretty(r.date)}: {r.title}</span>
-                    <span className="block text-muted">{r.exercises} exercises, {r.working_sets} working sets{r.minutes ? `, ${r.minutes} min` : ''}. {r.effort.failure ? `${r.effort.failure} to failure` : 'None tagged failure'}{r.effort.avg_rpe !== null ? `, average RPE ${r.effort.avg_rpe}` : ''}{r.effort.unlabelled ? `, ${r.effort.unlabelled} without effort info` : ''}{r.vs_plan && r.vs_plan.verdict !== 'unknown' ? `. Against your plan (${r.vs_plan.planned}): ${VERDICT[r.vs_plan.verdict]}, average ${r.vs_plan.avg_rir} in reserve` : ''}{r.vs_your_best.compared ? `. Against your own best: ${r.vs_your_best.beat} beat, ${r.vs_your_best.matched} matched, ${r.vs_your_best.down} below.` : ''}</span>
+                    <span className="block text-muted">{r.exercises} exercises, {r.working_sets} working sets{r.minutes ? `, ${r.minutes} min` : ''}. {r.effort.failure ? `${r.effort.failure} to failure` : 'None tagged failure'}{r.effort.avg_rpe !== null ? `, average RPE ${r.effort.avg_rpe}` : ''}{r.effort.unlabelled ? `, ${r.effort.unlabelled} without effort info` : ''}{r.deload ? '. Deload week: not compared' : ''}{r.vs_plan && r.vs_plan.verdict !== 'unknown' ? `. Against your plan (${r.vs_plan.planned}): ${VERDICT[r.vs_plan.verdict]}, average ${r.vs_plan.avg_rir} in reserve` : ''}{r.vs_your_best.compared ? `. Against your own best: ${r.vs_your_best.beat} beat, ${r.vs_your_best.matched} matched, ${r.vs_your_best.down} below.` : ''}</span>
                   </li>
                 ))}
               </ul>
