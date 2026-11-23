@@ -55,8 +55,9 @@ class ReadinessService
         $today = LocalDay::of(now(), $user->profile->tz, $user->profile->rollover_hour);
         $since = date('Y-m-d', strtotime($today . ' -180 days'));
         $rd = DB::table('readiness_logs')->where('user_id', $user->id)->where('local_date', '>=', $since)->get()->keyBy(fn ($r) => (string) $r->local_date);
+        $watch = $this->watchInsights($user, $rd);
         if ($rd->count() < Insights::MIN_PAIRS) {
-            return [];
+            return $watch;
         }
 
         $sleepEnergy = $sleepSore = [];
@@ -80,10 +81,42 @@ class ReadinessService
             }
         }
 
-        return array_values(array_filter([
+        $own = array_values(array_filter([
             Insights::pair('sleep_energy', 'Sleep and energy', 'sleep quality', 'morning energy', $sleepEnergy),
             Insights::pair('sleep_soreness', 'Sleep and soreness', 'sleep quality', 'soreness', $sleepSore),
             Insights::pair('carbs_energy', 'Yesterday\'s carbs and energy', 'carbs the day before (g per kg)', 'next-morning energy', $carbsEnergy),
+        ]));
+
+        return array_merge($own, $watch);
+    }
+
+    /**
+     * What your watch measured against how you said you felt that morning. Watch sleep and HRV are the watch's own estimates; still a correlation
+     * on your own days, gated at MIN_PAIRS like the rest.
+     *
+     * @param \Illuminate\Support\Collection<string,object> $rd readiness rows keyed by date
+     * @return list<array<string,mixed>>
+     */
+    private function watchInsights(User $user, $rd): array
+    {
+        if ($rd->count() < Insights::MIN_PAIRS) {
+            return [];
+        }
+        $w = DB::table('watch_days')->where('user_id', $user->id)->whereIn('local_date', $rd->keys()->all())->get()->keyBy(fn ($r) => (string) $r->local_date);
+        $sleepE = $hrvE = [];
+        foreach ($rd as $date => $r) {
+            $d = $w[$date] ?? null;
+            if ($d && $d->sleep_secs !== null) {
+                $sleepE[] = [(float) $d->sleep_secs / 3600, (float) $r->energy];
+            }
+            if ($d && $d->hrv !== null) {
+                $hrvE[] = [(float) $d->hrv, (float) $r->energy];
+            }
+        }
+
+        return array_values(array_filter([
+            Insights::pair('watch_sleep_energy', 'Watch sleep and energy', 'hours slept (from your watch)', 'morning energy', $sleepE),
+            Insights::pair('hrv_energy', 'HRV and energy', 'morning HRV (from your watch)', 'morning energy', $hrvE),
         ]));
     }
 }

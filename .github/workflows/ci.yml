@@ -24,6 +24,7 @@ jobs:
       - run: cp .env.example .env && php artisan key:generate
       - run: npm ci
       - run: npx tsc --noEmit
+      - run: npm run test:js
       - run: npm run build
       - run: ./vendor/bin/pest
       - name: Migrations are reversible

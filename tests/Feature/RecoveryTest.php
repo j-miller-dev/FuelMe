@@ -121,3 +121,23 @@ it('gives the coach a recovery tool that is empty without watch data', function 
     $out = app(CoachTools::class)->run('get_recovery', [], $u);
     expect($out['signal']['level'])->toBe('red')->and($out)->toHaveKey('assumptions');
 });
+
+it('compares watch sleep and HRV with how you felt, only once there are 8 matching mornings', function () {
+    $u = loggedInUser();
+    $today = recToday($u);
+    $mk = function (int $n) use ($u, $today) {
+        for ($i = 1; $i <= $n; $i++) {
+            $d = date('Y-m-d', strtotime($today . " -{$i} days"));
+            DB::table('watch_days')->insert(['user_id' => $u->id, 'local_date' => $d, 'sleep_secs' => (5 + $i % 5) * 3600, 'hrv' => 40 + $i * 3, 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('readiness_logs')->insert(['user_id' => $u->id, 'local_date' => $d, 'sleep' => 3, 'soreness' => 2, 'energy' => min(5, 1 + $i % 5), 'created_at' => now(), 'updated_at' => now()]);
+        }
+    };
+    $mk(7);
+    expect(app(\App\Services\ReadinessService::class)->insights($u))->toBe([]);   // 7 pairs is not enough
+
+    DB::table('watch_days')->delete();
+    DB::table('readiness_logs')->delete();
+    $mk(12);
+    $keys = array_column(app(\App\Services\ReadinessService::class)->insights($u), 'key');
+    expect($keys)->toContain('watch_sleep_energy')->and($keys)->toContain('hrv_energy');
+});

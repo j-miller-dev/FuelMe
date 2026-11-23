@@ -133,7 +133,8 @@ class StrengthService
         $targets = TargetHistory::where('user_id', $user->id)->orderBy('effective_from')->orderBy('id')->get();
         $food = DB::table('food_logs')->where('user_id', $user->id)->where('is_rough', false)->groupBy('local_date')->selectRaw('local_date, sum(kcal) as kcal, sum(carbs) as carbs')->get()->keyBy(fn ($r) => (string) $r->local_date);
         $sleep = DB::table('readiness_logs')->where('user_id', $user->id)->pluck('sleep', 'local_date');
-        $carbPairs = $sleepPairs = [];
+        $watchDays = DB::table('watch_days')->where('user_id', $user->id)->whereIn('local_date', array_keys($perf))->get()->keyBy(fn ($r) => (string) $r->local_date);
+        $carbPairs = $sleepPairs = $watchSleep = $hrvPairs = [];
         foreach ($perf as $date => $idx) {
             $prev = date('Y-m-d', strtotime($date . ' -1 day'));
             $f = $food[$prev] ?? null;
@@ -144,11 +145,20 @@ class StrengthService
             if (isset($sleep[$date])) {
                 $sleepPairs[] = [(float) $sleep[$date], $idx];
             }
+            $wd = $watchDays[$date] ?? null;
+            if ($wd && $wd->sleep_secs !== null) {
+                $watchSleep[] = [(float) $wd->sleep_secs / 3600, $idx];
+            }
+            if ($wd && $wd->hrv !== null) {
+                $hrvPairs[] = [(float) $wd->hrv, $idx];
+            }
         }
 
         return array_values(array_filter([
             Insights::pair('carbs_lifting', 'Carbs the day before and lifting', 'carbs the day before (g per kg)', 'lifting performance versus your own best', $carbPairs),
             Insights::pair('sleep_lifting', 'Sleep and lifting', 'sleep quality that morning', 'lifting performance versus your own best', $sleepPairs),
+            Insights::pair('watch_sleep_lifting', 'Watch sleep and lifting', 'hours slept the night before (from your watch)', 'lifting performance versus your own best', $watchSleep),
+            Insights::pair('hrv_lifting', 'HRV and lifting', 'HRV that morning (from your watch)', 'lifting performance versus your own best', $hrvPairs),
         ]));
     }
 }
