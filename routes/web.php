@@ -68,6 +68,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/shopping/{list}/refresh', [ShoppingController::class, 'refresh'])->whereNumber('list')->name('shopping.refresh');
     Route::post('/shopping/{list}/items', [ShoppingController::class, 'addItem'])->whereNumber('list')->name('shopping.items.store');
     Route::post('/shopping/{list}/sync', [ShoppingController::class, 'sync'])->whereNumber('list')->middleware('throttle:120,1')->name('shopping.sync');
+    Route::post('/shopping/{list}/todoist', [\App\Http\Controllers\TodoistController::class, 'export'])->whereNumber('list')->middleware('throttle:10,1')->name('shopping.todoist');
+    Route::get('/settings/todoist', [\App\Http\Controllers\TodoistController::class, 'show'])->name('todoist');
+    Route::post('/todoist/connect', [\App\Http\Controllers\TodoistController::class, 'connect'])->middleware('throttle:10,1')->name('todoist.connect');
+    Route::delete('/todoist/connection', [\App\Http\Controllers\TodoistController::class, 'disconnect'])->name('todoist.disconnect');
     Route::post('/shopping/{list}/done', [ShoppingController::class, 'done'])->whereNumber('list')->name('shopping.done');
     Route::patch('/shopping/items/{item}', [ShoppingController::class, 'updateItem'])->whereNumber('item')->name('shopping.items.update');
     Route::delete('/shopping/items/{item}', [ShoppingController::class, 'destroyItem'])->whereNumber('item')->name('shopping.items.destroy');

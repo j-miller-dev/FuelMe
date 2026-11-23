@@ -30,7 +30,7 @@ class ShoppingController extends Controller
 
     public function show(Request $request, int $list): Response
     {
-        return Inertia::render('Shopping/Show', ['list' => $this->store->payload($request->user()->id, $list)]);
+        return Inertia::render('Shopping/Show', ['list' => $this->store->payload($request->user()->id, $list), 'todoist' => DB::table('todoist_connections')->where('user_id', $request->user()->id)->exists()]);
     }
 
     public function store(Request $request): JsonResponse

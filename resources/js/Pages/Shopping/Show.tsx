@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/AppLayout'
 import { api } from '@/lib/http'
 import { fmtQty, listAsText, packs, useShoppingList, type ShopItem, type ShopList } from '@/lib/shopping'
 
-export default function ShoppingShow({ list: initial }: { list: ShopList }) {
+export default function ShoppingShow({ list: initial, todoist }: { list: ShopList; todoist?: boolean }) {
   const s = useShoppingList(initial)
   const { list } = s
   const [tab, setTab] = useState<'need' | 'have'>('need')
@@ -36,6 +36,14 @@ export default function ShoppingShow({ list: initial }: { list: ShopList }) {
   })
   const refresh = () => online(async () => { const r = await api<{ list: ShopList }>(`/shopping/${list.id}/refresh`, { method: 'POST' }); s.setList(r.list) })
   const copy = async () => { try { await navigator.clipboard.writeText(listAsText(list)); setMsg('Copied. Paste it into any notes app or message.') } catch { setMsg('Could not copy on this device.') } }
+  const toTodoist = async () => {
+    if (!todoist) { router.visit('/settings/todoist'); return }
+    setBusy(true)
+    try {
+      const r = await api<{ sent: number; skipped: number; error: string | null }>(`/shopping/${list.id}/todoist`, { method: 'POST' })
+      setMsg(r.error ? `Sent ${r.sent}, then stopped: ${r.error}` : r.sent ? `Sent ${r.sent} item${r.sent === 1 ? '' : 's'} to Todoist${r.skipped ? ` (${r.skipped} were already there)` : ''}.` : 'Everything on the list is already in Todoist.')
+    } catch { setMsg('Could not reach the server. Try again when you are online.') } finally { setBusy(false) }
+  }
   const finish = async () => { setBusy(true); await online(() => api(`/shopping/${list.id}/done`, { method: 'POST' }).then(() => router.visit('/shopping'))); setBusy(false) }
 
   const row = (i: ShopItem) => {
@@ -89,6 +97,7 @@ export default function ShoppingShow({ list: initial }: { list: ShopList }) {
         <Link href="/shopping" aria-label="All lists" className="flex size-11 items-center justify-center rounded-full bg-surface">‹</Link>
         <h1 className="min-w-0 flex-1 truncate text-xl font-bold">{list.name}</h1>
         <button onClick={() => void copy()} className="min-h-11 rounded-full bg-surface px-3 text-sm">Copy</button>
+        <button disabled={busy} onClick={() => void toTodoist()} className="min-h-11 rounded-full bg-surface px-3 text-sm disabled:opacity-40">{todoist ? 'Send to Todoist' : 'Set up Todoist'}</button>
       </div>
 
       <div className="mt-3" role="progressbar" aria-valuemin={0} aria-valuemax={need.length} aria-valuenow={bought} aria-label="Items bought">

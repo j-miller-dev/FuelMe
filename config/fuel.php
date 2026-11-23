@@ -70,6 +70,11 @@ return [
         'subject' => env('VAPID_SUBJECT', env('APP_URL', 'https://localhost')),   // a URL or mailto: that identifies this server to the push service
     ],
 
+    'todoist' => [
+        'base_url' => env('FUEL_TODOIST_BASE_URL', 'https://api.todoist.com'),
+        'timeout' => 20,
+    ],
+
     'intervals' => [
         'base_url' => env('FUEL_INTERVALS_BASE_URL', 'https://intervals.icu'),
         'timeout' => 20,
