@@ -38,3 +38,20 @@ self.addEventListener('activate', () => void self.clients.claim())
 
 // A first-ever offline visit (nothing cached yet) gets the plain offline page rather than a browser error.
 setCatchHandler(async ({ request }) => (request.destination === 'document' ? ((await matchPrecache('/offline.html')) ?? Response.error()) : Response.error()))
+
+// PHONE NOTIFICATIONS (Web Push). The server sends a small generic message; tapping it opens the app (or focuses it if it is already open).
+self.addEventListener('push', (e) => {
+  let d: { title?: string; body?: string; url?: string; tag?: string } = {}
+  try { d = e.data ? (e.data.json() as typeof d) : {} } catch { d = { body: e.data?.text() } }
+  e.waitUntil(self.registration.showNotification(d.title ?? 'FUEL', { body: d.body, tag: d.tag, icon: '/icon-192.png', badge: '/icon-192.png', data: { url: d.url ?? '/' } }))
+})
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close()
+  const url = new URL((e.notification.data as { url?: string } | undefined)?.url ?? '/', self.location.origin).href
+  e.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    const open = wins.find((w) => w.url.startsWith(self.location.origin))
+    if (open) { await open.focus(); if ('navigate' in open) await (open as WindowClient).navigate(url); return }
+    await self.clients.openWindow(url)
+  })())
+})

@@ -63,6 +63,13 @@ return [
         'plate_step_kg' => (float) env('FUEL_PLATE_STEP_KG', 2.5),   // ASSUMPTION used for the "small load step" suggestion
     ],
 
+    // Web Push (phone notifications). Generate a key pair once with `php artisan push:keys` and set both in the server environment.
+    'push' => [
+        'public_key' => env('VAPID_PUBLIC_KEY'),
+        'private_key' => env('VAPID_PRIVATE_KEY'),
+        'subject' => env('VAPID_SUBJECT', env('APP_URL', 'https://localhost')),   // a URL or mailto: that identifies this server to the push service
+    ],
+
     'intervals' => [
         'base_url' => env('FUEL_INTERVALS_BASE_URL', 'https://intervals.icu'),
         'timeout' => 20,

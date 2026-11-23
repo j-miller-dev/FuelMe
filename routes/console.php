@@ -19,3 +19,5 @@ if (config('fuel.off_auto_import')) {
 Schedule::command('review:weekly')->hourly()->withoutOverlapping(30);
 Schedule::command('hevy:sync')->everyThirtyMinutes()->withoutOverlapping(25);
 Schedule::command('intervals:sync')->hourly()->withoutOverlapping(25);
+Schedule::command('notify:session-fuel')->everyFiveMinutes()->withoutOverlapping(4);
+Schedule::command('notify:checkin')->hourly()->withoutOverlapping(30);

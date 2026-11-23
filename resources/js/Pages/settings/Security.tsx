@@ -79,6 +79,7 @@ export default function Security({ passkeys }: { passkeys: Passkey[] }) {
         </form>
       </section>
 
+      <Link href="/settings/notifications" className="mb-2 block text-center text-sm text-muted underline">Notifications</Link>
       <Link href="/settings/data" className="mb-2 block text-center text-sm text-muted underline">Your data: export and import</Link>
       <Link href="/training" className="mb-2 block text-center text-sm text-muted underline">Training week</Link>
       <Link href="/shopping" className="mb-2 block text-center text-sm text-muted underline">Shopping lists</Link>

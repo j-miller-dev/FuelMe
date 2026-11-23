@@ -13,6 +13,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(\App\Services\Coach\CoachClient::class, \App\Services\Coach\AnthropicCoachClient::class);
+        $this->app->bind(\App\Services\Push\PushTransport::class, \App\Services\Push\WebPushTransport::class);
         $this->app->singleton(\App\Domain\Capture\RuleParser::class, fn () => \App\Domain\Capture\RuleParser::fromFile(base_path('data/capture_vocab.json')));
         // AU synonyms live in data/synonyms.json so they can be extended without code changes.
         $this->app->singleton(Synonyms::class, fn () => Synonyms::fromFile(base_path('data/synonyms.json')));

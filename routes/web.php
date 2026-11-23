@@ -92,6 +92,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/principles/{principle}/stance', [\App\Http\Controllers\PrincipleController::class, 'stance'])->whereNumber('principle')->name('principles.stance');
     Route::delete('/principles/{principle}', [\App\Http\Controllers\PrincipleController::class, 'archive'])->whereNumber('principle')->name('principles.archive');
     Route::get('/lifting', [\App\Http\Controllers\HevyController::class, 'show'])->name('lifting');
+    Route::get('/settings/notifications', [\App\Http\Controllers\PushController::class, 'show'])->name('notifications');
+    Route::post('/push/subscribe', [\App\Http\Controllers\PushController::class, 'subscribe'])->middleware('throttle:20,1')->name('push.subscribe');
+    Route::post('/push/unsubscribe', [\App\Http\Controllers\PushController::class, 'unsubscribe'])->name('push.unsubscribe');
+    Route::put('/push/prefs', [\App\Http\Controllers\PushController::class, 'prefs'])->name('push.prefs');
+    Route::post('/push/test', [\App\Http\Controllers\PushController::class, 'test'])->middleware('throttle:5,1')->name('push.test');
     Route::get('/watch', [\App\Http\Controllers\WatchController::class, 'show'])->name('watch');
     Route::get('/recovery', [\App\Http\Controllers\RecoveryController::class, 'show'])->name('recovery');
     Route::put('/recovery/sleep-target', [\App\Http\Controllers\RecoveryController::class, 'sleepTarget'])->name('recovery.sleep');
