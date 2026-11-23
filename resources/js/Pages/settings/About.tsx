@@ -27,7 +27,7 @@ export default function About({ counts }: { counts: { afcd: number; off: number;
         <p className="mt-1 text-sm text-muted">{counts.user.toLocaleString('en-AU')} foods and meals you created. They rank above everything else in search.</p>
       </section>
 
-      <Link href="/settings/security" className="text-sm text-accent">Back to Security</Link>
+      <Link href="/more" className="text-sm text-accent">Back to More</Link>
     </AppLayout>
   )
 }

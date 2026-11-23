@@ -1,4 +1,5 @@
 import { Link, router } from '@inertiajs/react'
+import { Dumbbell } from 'lucide-react'
 import { useState } from 'react'
 import { uuid } from '@/lib/http'
 import { outbox } from '@/lib/outbox'
@@ -77,7 +78,7 @@ export function TrainingCard({ training, date, isToday, unit, hour }: { training
   return (
     <section className="mt-3 rounded-2xl bg-surface p-4" aria-label="Training">
       <div className="flex items-center gap-2">
-        <h2 className="flex-1 font-semibold">{isToday ? 'Training today' : 'Training'}</h2>
+        <h2 className="flex flex-1 items-center gap-2 font-semibold"><Dumbbell aria-hidden size={18} className="text-accent" />{isToday ? 'Training today' : 'Training'}</h2>
         {isToday ? <button onClick={() => setSay(true)} className="min-h-11 rounded-full bg-raised px-3 text-sm text-accent">Say it</button> : null}
         <button onClick={() => setSheet({})} className="min-h-11 rounded-full bg-raised px-3 text-sm text-accent">Log a session</button>
       </div>

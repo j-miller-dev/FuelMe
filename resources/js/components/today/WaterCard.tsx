@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react'
+import { Droplets } from 'lucide-react'
 import { useState } from 'react'
 import { api, uuid } from '@/lib/http'
 
@@ -23,7 +24,7 @@ export function WaterCard({ water, date }: { water: Water; date: string }) {
   return (
     <section className="mt-3 rounded-2xl bg-surface p-4" aria-label="Fluids">
       <div className="flex items-baseline justify-between">
-        <h2 className="font-semibold">Fluids</h2>
+        <h2 className="flex items-center gap-2 font-semibold"><Droplets aria-hidden size={18} className="text-protein" />Fluids</h2>
         <span className="text-sm tabular-nums"><span className="font-semibold">{L(water.ml)}</span><span className="text-muted"> of about {L(water.targetMl)}</span></span>
       </div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-raised" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Fluids today"><div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} /></div>

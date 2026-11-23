@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useMemo, useState } from 'react'
+import { BookOpen, ClipboardCheck, Dumbbell, HeartPulse, MessageCircle, Watch } from 'lucide-react'
 import AppLayout from '@/layouts/AppLayout'
 import { TrendChart } from '@/components/progress/TrendChart'
 import { api } from '@/lib/http'
@@ -49,12 +50,12 @@ export default function Progress({ data, today }: { data: ProgressData | null; t
     <AppLayout>
       <Head title="Progress" />
       <h1 className="text-2xl font-bold">Progress</h1>
-      <Link href="/lifting" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>Lifting (Hevy)</span><span className="text-accent" aria-hidden>›</span></Link>
-      <Link href="/recovery" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>Recovery, sleep and deload</span><span className="text-accent" aria-hidden>›</span></Link>
-      <Link href="/watch" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>Watch data (Intervals.icu)</span><span className="text-accent" aria-hidden>›</span></Link>
-      <Link href="/principles" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>My notes (principles)</span><span className="text-accent" aria-hidden>›</span></Link>
-      <Link href="/coach" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>Ask the coach</span><span className="text-accent" aria-hidden>›</span></Link>
-      <Link href="/review" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>Weekly review and event mode</span><span className="text-accent" aria-hidden>›</span></Link>
+      <Link href="/lifting" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span className="flex items-center gap-3"><Dumbbell aria-hidden size={18} className="text-accent" />Lifting (Hevy)</span><span className="text-accent" aria-hidden>›</span></Link>
+      <Link href="/recovery" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span className="flex items-center gap-3"><HeartPulse aria-hidden size={18} className="text-accent" />Recovery, sleep and deload</span><span className="text-accent" aria-hidden>›</span></Link>
+      <Link href="/watch" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span className="flex items-center gap-3"><Watch aria-hidden size={18} className="text-accent" />Watch data (Intervals.icu)</span><span className="text-accent" aria-hidden>›</span></Link>
+      <Link href="/principles" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span className="flex items-center gap-3"><BookOpen aria-hidden size={18} className="text-accent" />My notes (principles)</span><span className="text-accent" aria-hidden>›</span></Link>
+      <Link href="/coach" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span className="flex items-center gap-3"><MessageCircle aria-hidden size={18} className="text-accent" />Ask the coach</span><span className="text-accent" aria-hidden>›</span></Link>
+      <Link href="/review" className="mt-2 flex min-h-11 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span className="flex items-center gap-3"><ClipboardCheck aria-hidden size={18} className="text-accent" />Weekly review and event mode</span><span className="text-accent" aria-hidden>›</span></Link>
 
       <section className="mt-3 rounded-2xl bg-surface p-4" aria-label="Weigh in">
         <form className="flex items-end gap-2" onSubmit={(e) => { e.preventDefault(); if (valid && !busy) void weigh() }}>

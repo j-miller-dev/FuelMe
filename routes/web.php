@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth')->group(function () {
     Route::get('/', [TodayController::class, 'show'])->name('home');
     Route::get('/progress', [ProgressController::class, 'show'])->name('progress');
+    Route::inertia('/more', 'More')->name('more');
     Route::post('/weights', [ProgressController::class, 'weigh'])->middleware('throttle:60,1')->name('weights.store');
     Route::delete('/weights/{weight}', [ProgressController::class, 'destroyWeight'])->whereNumber('weight')->name('weights.destroy');
     Route::get('/review', [\App\Http\Controllers\ReviewController::class, 'show'])->name('review');

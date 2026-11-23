@@ -51,7 +51,7 @@ export default function Foods({ foods }: { foods: FoodHit[] }) {
           ))}
         </ul>
       )}
-      <Link href="/settings/security" className="mt-6 block text-center text-sm text-muted underline">Back to Security</Link>
+      <Link href="/more" className="mt-6 block text-center text-sm text-muted underline">Back to More</Link>
 
       {editing ? <FoodForm food={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); refresh() }} /> : null}
     </AppLayout>

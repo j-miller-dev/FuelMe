@@ -97,7 +97,7 @@ export default function Meals({ meals }: { meals: Meal[] }) {
         </ul>
       )}
       <Link href="/shopping" className="mt-6 block text-center text-sm text-accent">Shopping lists</Link>
-      <Link href="/settings/security" className="mt-2 block text-center text-sm text-muted underline">Back to Security</Link>
+      <Link href="/more" className="mt-2 block text-center text-sm text-muted underline">Back to More</Link>
       {select ? <div className="h-44" aria-hidden /> : null}
       {select && chosen.length > 0 ? (
         <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md rounded-t-3xl bg-raised p-4 shadow-2xl" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>

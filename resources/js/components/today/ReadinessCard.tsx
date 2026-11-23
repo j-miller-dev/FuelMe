@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react'
+import { Sun } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '@/lib/http'
 
@@ -47,7 +48,7 @@ export function ReadinessCard({ r, date }: { r: Readiness; date: string }) {
         <p className="mt-3 flex items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span className="py-3 text-muted">Checked in: sleep {r.today.sleep}, soreness {r.today.soreness}, energy {r.today.energy} (of 5)</span><button type="button" disabled={busy} onClick={redo} className="min-h-11 px-2 text-accent underline">Redo</button></p>
       ) : gone ? null : (
         <section className="mt-3 rounded-2xl bg-surface p-4" aria-label="Morning check-in">
-          <div className="flex items-baseline justify-between"><h2 className="font-semibold">Morning check-in</h2><button type="button" onClick={skip} className="min-h-11 px-2 text-sm text-muted underline">Skip today</button></div>
+          <div className="flex items-baseline justify-between"><h2 className="flex items-center gap-2 font-semibold"><Sun aria-hidden size={18} className="text-carbs" />Morning check-in</h2><button type="button" onClick={skip} className="min-h-11 px-2 text-sm text-muted underline">Skip today</button></div>
           {ROWS.map((row) => (
             <div key={row.k} className="mt-2">
               <div className="flex justify-between text-xs text-muted"><span>{row.label}</span><span>1 {row.lo} · 5 {row.hi}</span></div>

@@ -1,5 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import { useState } from 'react'
+import { Plus } from 'lucide-react'
 import AppLayout from '@/layouts/AppLayout'
 import { AddSheet } from '@/components/today/AddSheet'
 import { PortionSheet } from '@/components/today/PortionSheet'
@@ -147,12 +148,12 @@ export default function Today(p: Props) {
       )}
 
       <button onClick={() => setAdding(true)} aria-label="Add food"
-        className="fixed left-1/2 z-20 grid size-14 -translate-x-1/2 place-items-center rounded-full bg-accent text-3xl text-on-accent shadow-lg shadow-black/40 active:scale-95"
-        style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}>+</button>
+        className="fixed left-1/2 z-20 grid size-14 -translate-x-1/2 place-items-center rounded-full bg-accent text-on-accent shadow-lg shadow-black/40 transition-transform active:scale-90"
+        style={{ bottom: 'calc(5.25rem + env(safe-area-inset-bottom))' }}><Plus aria-hidden size={28} strokeWidth={2.6} /></button>
 
       {toast ? (
         <div role={toast.error ? 'alert' : 'status'} className="fixed inset-x-4 z-30 mx-auto flex max-w-md items-center gap-3 rounded-2xl bg-raised px-4 py-3 text-sm shadow-lg"
-          style={{ bottom: 'calc(8rem + env(safe-area-inset-bottom))' }}>
+          style={{ bottom: 'calc(9.5rem + env(safe-area-inset-bottom))' }}>
           <span className={`min-w-0 flex-1 truncate ${toast.error ? 'text-danger' : ''}`}>{toast.msg}</span>
           {toast.undo ? <button onClick={toast.undo} className="min-h-9 shrink-0 font-semibold text-accent">Undo</button> : <button onClick={() => setToast(null)} className="min-h-9 shrink-0 text-muted">Dismiss</button>}
         </div>

@@ -35,6 +35,11 @@ class ProgressService
         }
 
         $today = LocalDay::of(now(), $profile->tz, $profile->rollover_hour);
+        // A weigh-in dated after today (clock or timezone change) has no day to belong to yet: leave it out rather than build an empty series.
+        $weights = array_filter($weights, fn ($_, $d) => $d <= $today, ARRAY_FILTER_USE_BOTH);
+        if (! $weights) {
+            return null;
+        }
         $first = array_key_first($weights);
         $sums = DB::table('food_logs')->where('user_id', $user->id)->where('local_date', '>=', $first)->groupBy('local_date')
             ->selectRaw('local_date, sum(kcal) as kcal, sum(case when is_rough then kcal else 0 end) as rough')->get()->keyBy('local_date');

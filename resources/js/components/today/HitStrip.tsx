@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react'
+import { CalendarCheck } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -25,7 +26,7 @@ export function HitStrip({ strip, energyLabel, fmt }: { strip: Strip; energyLabe
   return (
     <section className="mt-3 rounded-2xl bg-surface p-3" aria-label="Last days against target">
       <div className="mb-2 flex items-baseline justify-between">
-        <h2 className="text-sm font-semibold">Last {strip.days.length} days</h2>
+        <h2 className="flex items-center gap-2 text-sm font-semibold"><CalendarCheck aria-hidden size={16} className="text-accent" />Last {strip.days.length} days</h2>
         <span className="text-xs text-muted">{logged === 0 ? 'Nothing logged yet' : `${onTarget} of ${logged} logged: energy and protein on target`}</span>
       </div>
       <ul className="flex justify-between">
