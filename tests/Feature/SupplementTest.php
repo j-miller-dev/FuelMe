@@ -61,3 +61,34 @@ it('counts the last 28 days separately from the last 7', function () {
     }
     $this->actingAs($u)->get('/')->assertInertia(fn ($p) => $p->where('creatine.daysOfLast7', 1)->where('creatine.daysOfLast28', 4));
 });
+
+it('saves your plan, loads in 5 g serves, and then tells you your daily dose', function () {
+    $u = loggedInUser();
+    $today = $this->actingAs($u)->get('/')->viewData('page')['props']['date'];
+    $this->actingAs($u)->putJson('/supplements/creatine-plan', ['plan' => ['mode' => 'loading', 'start' => $today, 'loading_days' => 5, 'maintenance_g' => 4]])
+        ->assertOk()->assertJsonPath('status.phase', 'loading')->assertJsonPath('serveG', 5)->assertJsonPath('hasPlan', true);
+    $r = takeCreatine($this, $u)->assertCreated();
+    expect($r->json('takenG'))->toBe(5)->and($r->json('status.targetG'))->toBeGreaterThanOrEqual(10)->and($r->json('status.saturated'))->toBeFalse();
+
+    // pretend four earlier loading days were completed, then finish today's dose
+    $target = $r->json('status.targetG');
+    foreach ([1, 2, 3, 4] as $back) {
+        DB::table('supplement_logs')->insert(['user_id' => $u->id, 'name' => 'creatine', 'local_date' => date('Y-m-d', strtotime($today . " -{$back} days")), 'amount_g' => $target, 'idempotency_key' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now()]);
+    }
+    $this->actingAs($u)->putJson('/supplements/creatine-plan', ['plan' => ['mode' => 'loading', 'start' => date('Y-m-d', strtotime($today . ' -4 days')), 'loading_days' => 5, 'maintenance_g' => 4]])->assertOk();
+    $last = DB::table('supplement_logs')->where('user_id', $u->id)->where('local_date', $today)->first();
+    DB::table('supplement_logs')->where('id', $last->id)->update(['amount_g' => $target]);
+    $this->actingAs($u)->get('/')->assertInertia(fn ($p) => $p->where('creatine.status.saturated', true)->where('creatine.status.continueG', 4)->where('creatine.status.phase', 'saturated'));
+    // once saturated, a tap logs the daily dose, not a loading serve
+    expect(takeCreatine($this, $u)->json('serveG'))->toBe(4);
+});
+
+it('rejects a bad plan and can reset to the default', function () {
+    $u = loggedInUser();
+    $today = $this->actingAs($u)->get('/')->viewData('page')['props']['date'];
+    $this->actingAs($u)->putJson('/supplements/creatine-plan', ['plan' => ['mode' => 'loading', 'start' => $today, 'loading_days' => 14, 'maintenance_g' => 5]])->assertStatus(422);
+    $this->actingAs($u)->putJson('/supplements/creatine-plan', ['plan' => ['mode' => 'maintenance', 'start' => $today, 'loading_days' => 5, 'maintenance_g' => 3.5]])->assertOk()->assertJsonPath('serveG', 3.5);
+    $this->actingAs($u)->deleteJson('/supplements/creatine-plan')->assertOk()->assertJsonPath('hasPlan', false)->assertJsonPath('serveG', 5);
+    $other = loggedInUser();
+    $this->actingAs($other)->get('/')->assertInertia(fn ($p) => $p->where('creatine.hasPlan', false));
+});

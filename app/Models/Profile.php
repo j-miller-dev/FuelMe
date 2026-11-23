@@ -26,6 +26,7 @@ class Profile extends Model
             'kcal_offset' => 'integer',
             'hit_rules' => 'array',
             'effort_ramp' => 'array',
+            'creatine_plan' => 'array',
             'rollover_hour' => 'integer',
             'disclaimer_ack_at' => 'datetime',
         ];
