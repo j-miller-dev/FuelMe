@@ -52,3 +52,12 @@ it('never touches the food log or the calorie budget', function () {
     takeCreatine($this, $u)->assertCreated();
     expect(DB::table('food_logs')->count())->toBe($before);
 });
+
+it('counts the last 28 days separately from the last 7', function () {
+    $u = loggedInUser();
+    $today = $this->actingAs($u)->get('/')->viewData('page')['props']['date'];
+    foreach ([0, 10, 20, 27, 40] as $back) {
+        takeCreatine($this, $u, null, ['local_date' => date('Y-m-d', strtotime($today . " -{$back} days"))]);
+    }
+    $this->actingAs($u)->get('/')->assertInertia(fn ($p) => $p->where('creatine.daysOfLast7', 1)->where('creatine.daysOfLast28', 4));
+});

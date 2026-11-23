@@ -39,6 +39,7 @@ body {
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
-/* Page change: a short fade and rise so tab switches feel continuous (disabled by reduced motion above). */
-@keyframes page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.page-in { animation: page-in 180ms ease-out both; }
+/* Page change: a short fade so tab switches feel continuous (off under reduced motion). Opacity only, with no fill-forwards:
+   a transform animation that stays applied turns <main> into the containing block for fixed children and pins the + button to the page bottom. */
+@keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
+.page-in { animation: page-in 160ms ease-out backwards; }

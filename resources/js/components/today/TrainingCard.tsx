@@ -1,4 +1,5 @@
 import { Link, router } from '@inertiajs/react'
+import { SESSION_BANNERS } from '@/lib/modeBanners'
 import { Dumbbell } from 'lucide-react'
 import { useState } from 'react'
 import { uuid } from '@/lib/http'
@@ -86,7 +87,9 @@ export function TrainingCard({ training, date, isToday, unit, hour }: { training
       {training.effort_plan && sessions.some((x) => x.type === 'lifting') ? <p className="mt-1 text-xs text-muted">Lifting effort this week (week {training.effort_plan.week} of {training.effort_plan.of}): {training.effort_plan.label}. Your plan.</p> : null}
       {sessions.length === 0 ? <p className="mt-1 text-sm text-muted">Rest day. Add a session if you train.</p> : (
         <ul className="mt-1">{sessions.map((s) => (
-          <li key={s.key} className="border-t border-raised/70 text-sm"><div className="flex min-h-14 items-center gap-2">
+          <li key={s.key} className="border-t border-raised/70 pt-2 text-sm">
+            {SESSION_BANNERS[s.type] ? <img src={SESSION_BANNERS[s.type]} alt="" aria-hidden className={`block h-auto w-full rounded-xl ${s.status === 'done' || s.status === 'skipped' ? 'opacity-40 saturate-50' : ''}`} loading="lazy" /> : null}
+            <div className="flex min-h-14 items-center gap-2">
             <button onClick={() => s.id !== null ? setSheet({ row: s }) : undefined} className="min-w-0 flex-1 py-2 text-left" disabled={s.id === null} aria-label={`${s.label}, ${STATUS[s.status]}`}>
               <span className={`block truncate font-medium ${s.status === 'skipped' ? 'text-muted line-through' : ''}`}>{s.start ? `${s.start} ` : ''}{s.label} <span className="font-normal text-muted">· {INTENSITY_LABEL[s.intensity] ?? s.intensity}</span></span>
               <span className="block text-xs text-muted tabular-nums">{s.minutes} min · ≈ {kc(s.netKcal)}{s.override ? ' (watch)' : ` (${fmtEnergy(s.low, unit)}–${fmtEnergy(s.high, unit)})`}</span>

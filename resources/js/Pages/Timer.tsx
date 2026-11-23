@@ -1,18 +1,14 @@
 import { Head, Link } from '@inertiajs/react'
 import { Minus, Pause, Play, Plus, Square, Vibrate, Volume2, VolumeX } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import bjj from '@/assets/modes/bjj.webp'
-import hiit from '@/assets/modes/hiit.webp'
-import jumprope from '@/assets/modes/jumprope.webp'
-import norwegian from '@/assets/modes/norwegian.webp'
 import { Button } from '@/components/ui/button'
 import AppLayout from '@/layouts/AppLayout'
+import { TIMER_BANNERS } from '@/lib/modeBanners'
 import { fmtClock, LIMITS, PRESETS, sanitise, totalSeconds, type Kind, type Protocol } from '@/lib/intervalTimer'
 import { DEFAULT_PREFS, type AudioPrefs } from '@/lib/timerAudio'
 import { useIntervalTimer } from '@/lib/useIntervalTimer'
 import { cn } from '@/lib/utils'
 
-const BANNERS: Record<string, string> = { hiit, norwegian, jumprope, bjj }
 const KEY = 'fuel.timer.v1'
 
 /** Light per-device preferences only (your tweaks to each protocol, sound options). Nothing here is training data. */
@@ -69,7 +65,7 @@ export default function Timer() {
           <li key={p.id}>
             <button type="button" onClick={() => setPickedId(p.id)} aria-pressed={p.id === base.id}
               className={cn('block w-full overflow-hidden rounded-2xl text-left ring-2 transition-all active:scale-[0.99]', p.id === base.id ? 'ring-accent' : 'ring-transparent')}>
-              <img src={BANNERS[p.id]} alt="" className="block h-auto w-full" loading="lazy" />
+              <img src={TIMER_BANNERS[p.id]} alt="" className="block h-auto w-full" loading="lazy" />
               <span className="sr-only">{p.name}. {p.blurb}</span>
             </button>
           </li>

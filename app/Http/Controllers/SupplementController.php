@@ -40,7 +40,7 @@ class SupplementController extends Controller
         return response()->json(self::state($request->user()->id, $row->name, (string) $row->local_date));
     }
 
-    /** @return array{takenG:float,lastId:?int,daysOfLast7:int,defaultG:float} */
+    /** @return array{takenG:float,lastId:?int,daysOfLast7:int,daysOfLast28:int,defaultG:float} */
     public static function state(int $userId, string $name, string $date): array
     {
         $q = DB::table('supplement_logs')->where('user_id', $userId)->where('name', $name);
@@ -52,6 +52,8 @@ class SupplementController extends Controller
             'lastId' => (clone $day)->orderByDesc('id')->value('id'),
             // days with a dose in the 7 days ending on this date: a consistency line, deliberately not a streak
             'daysOfLast7' => (int) (clone $q)->whereBetween('local_date', [$from, $date])->distinct()->count('local_date'),
+            // days with a dose in the last 28 days: muscle stores fill over roughly four weeks of daily use at 3-5 g (ISSN), a guide not a measurement
+            'daysOfLast28' => (int) (clone $q)->whereBetween('local_date', [date('Y-m-d', strtotime($date . ' -27 days')), $date])->distinct()->count('local_date'),
             'defaultG' => self::DEFAULT_G[$name],
         ];
     }
