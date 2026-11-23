@@ -2,7 +2,9 @@ import { router } from '@inertiajs/react'
 import { useState } from 'react'
 import { api } from '@/lib/http'
 
-export interface Readiness { today: { sleep: number; soreness: number; energy: number; notes: string | null } | null; hook: { days: number; message: string; options: string[] } | null }
+export interface Readiness { today: { sleep: number; soreness: number; energy: number; notes: string | null } | null; hook: { days: number; message: string; options: string[] } | null; watch?: { sleepMin: number | null; restingHr: number | null; hrv: number | null; steps: number | null } | null }
+
+const hm = (min: number) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')} min`
 
 const ROWS = [
   { k: 'sleep', label: 'Sleep', lo: 'Poor', hi: 'Great' },
@@ -33,6 +35,12 @@ export function ReadinessCard({ r, date }: { r: Readiness; date: string }) {
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">{r.hook.options.map((o) => <li key={o}>{o}</li>)}</ul>
           <p className="mt-2 text-xs text-muted">Just suggestions based on how you have been feeling. Not medical advice.</p>
         </section>
+      ) : null}
+
+      {r.watch ? (
+        <p className="mt-3 rounded-2xl bg-surface px-4 py-3 text-sm text-muted" aria-label="From your watch">
+          From your watch: {[r.watch.sleepMin !== null ? `slept ${hm(r.watch.sleepMin)}` : null, r.watch.restingHr !== null ? `resting HR ${r.watch.restingHr}` : null, r.watch.hrv !== null ? `HRV ${r.watch.hrv}` : null].filter(Boolean).join(', ') || 'no overnight data yet'}.
+        </p>
       ) : null}
 
       {r.today ? (

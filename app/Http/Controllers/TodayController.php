@@ -53,7 +53,7 @@ class TodayController extends Controller
             ],
             'estimate' => ($e = \Illuminate\Support\Facades\DB::table('day_estimates')->where('user_id', $user->id)->where('local_date', $date)->first()) ? ['kind' => $e->kind, 'kcal' => (int) round((float) $e->kcal)] : null,
             'consistency' => $overview['consistency'] ?? null,
-            'readiness' => $date === $today ? ['today' => app(\App\Services\ReadinessService::class)->forDate($user, $date), 'hook' => app(\App\Services\ReadinessService::class)->hook($user, $today)] : null,
+            'readiness' => $date === $today ? ['today' => app(\App\Services\ReadinessService::class)->forDate($user, $date), 'hook' => app(\App\Services\ReadinessService::class)->hook($user, $today), 'watch' => app(\App\Services\WatchService::class)->day($user, $date)] : null,
             'principle' => $date === $today ? app(\App\Services\Coach\PrincipleService::class)->forToday(
                 $user, $today,
                 (bool) (app(\App\Services\ReadinessService::class)->hook($user, $today)),

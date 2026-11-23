@@ -63,6 +63,11 @@ return [
         'plate_step_kg' => (float) env('FUEL_PLATE_STEP_KG', 2.5),   // ASSUMPTION used for the "small load step" suggestion
     ],
 
+    'intervals' => [
+        'base_url' => env('FUEL_INTERVALS_BASE_URL', 'https://intervals.icu'),
+        'timeout' => 20,
+    ],
+
     'capture' => [
         'api_key' => env('ANTHROPIC_API_KEY'),
         'model' => env('FUEL_CAPTURE_MODEL', 'claude-haiku-5-5'),

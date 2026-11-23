@@ -92,6 +92,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/principles/{principle}/stance', [\App\Http\Controllers\PrincipleController::class, 'stance'])->whereNumber('principle')->name('principles.stance');
     Route::delete('/principles/{principle}', [\App\Http\Controllers\PrincipleController::class, 'archive'])->whereNumber('principle')->name('principles.archive');
     Route::get('/lifting', [\App\Http\Controllers\HevyController::class, 'show'])->name('lifting');
+    Route::get('/watch', [\App\Http\Controllers\WatchController::class, 'show'])->name('watch');
+    Route::post('/watch/connect', [\App\Http\Controllers\WatchController::class, 'connect'])->middleware('throttle:10,1')->name('watch.connect');
+    Route::post('/watch/sync', [\App\Http\Controllers\WatchController::class, 'sync'])->middleware('throttle:10,1')->name('watch.sync');
+    Route::delete('/watch/connection', [\App\Http\Controllers\WatchController::class, 'disconnect'])->name('watch.disconnect');
     Route::post('/lifting/connect', [\App\Http\Controllers\HevyController::class, 'connect'])->middleware('throttle:10,1')->name('lifting.connect');
     Route::post('/lifting/sync', [\App\Http\Controllers\HevyController::class, 'sync'])->middleware('throttle:10,1')->name('lifting.sync');
     Route::put('/lifting/effort-ramp', [\App\Http\Controllers\HevyController::class, 'saveRamp'])->name('lifting.ramp');
