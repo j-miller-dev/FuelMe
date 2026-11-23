@@ -89,6 +89,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/days/estimate', [\App\Http\Controllers\DayEstimateController::class, 'store'])->middleware('throttle:60,1')->name('days.estimate');
     Route::delete('/days/{date}/estimate', [\App\Http\Controllers\DayEstimateController::class, 'destroy'])->name('days.estimate.destroy');
     Route::post('/supplements', [\App\Http\Controllers\SupplementController::class, 'store'])->middleware('throttle:60,1')->name('supplements.store');
+    Route::put('/supplements/creatine-plan', [\App\Http\Controllers\SupplementController::class, 'plan'])->middleware('throttle:30,1')->name('supplements.plan');
+    Route::delete('/supplements/creatine-plan', [\App\Http\Controllers\SupplementController::class, 'clearPlan'])->name('supplements.plan.clear');
     Route::delete('/supplements/{id}', [\App\Http\Controllers\SupplementController::class, 'destroy'])->whereNumber('id')->name('supplements.destroy');
     Route::post('/water', [\App\Http\Controllers\WaterController::class, 'store'])->middleware('throttle:120,1')->name('water.store');
     Route::delete('/water/{id}', [\App\Http\Controllers\WaterController::class, 'destroy'])->whereNumber('id')->name('water.destroy');
