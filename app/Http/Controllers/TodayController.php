@@ -62,6 +62,7 @@ class TodayController extends Controller
             ) : null,
             'recovery' => $date === $today ? app(\App\Services\RecoveryService::class)->compact($user) : null,
             'water' => $this->water($user, $date, $profile->sex),
+            'creatine' => SupplementController::state($user->id, 'creatine', $date),
             'strip' => $strip->forUser($user, $today),
             'logs' => $logs->map->toPayload()->values(),
             'previous' => ['date' => $prev, 'count' => $prevLogs->count(), 'kcal' => (int) round($prevLogs->sum('kcal'))],

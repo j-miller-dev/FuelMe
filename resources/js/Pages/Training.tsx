@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react'
+import { Timer } from 'lucide-react'
 import { useState } from 'react'
 import AppLayout from '@/layouts/AppLayout'
 import { SessionSheet } from '@/components/training/SessionSheet'
@@ -22,6 +23,7 @@ export default function Training({ template, catalogue, recent, today, week, kg,
       <Head title="Training" />
       {style === 'hit' ? <img src={hitBanner} alt="HIT training mode" width={900} height={337} className="mb-3 h-24 w-full rounded-2xl object-cover object-center" /> : null}
       <h1 className="text-2xl font-bold">Training</h1>
+      <Link href="/timer" className="mt-2 flex min-h-12 items-center justify-between rounded-2xl bg-surface px-4 text-sm font-medium"><span className="flex items-center gap-3"><Timer aria-hidden size={18} className="text-accent" />Interval timer</span><span className="text-accent" aria-hidden>›</span></Link>
       <p className="mt-1 text-sm text-muted">Your usual week. It decides which days get more carbohydrate and when to fuel around sessions. Calories stay the same across the week; they just move to the days you train hardest.</p>
       {error ? <p role="alert" className="mt-2 text-sm text-danger">{error}</p> : null}
 

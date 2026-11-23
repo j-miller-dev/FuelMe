@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [TodayController::class, 'show'])->name('home');
     Route::get('/progress', [ProgressController::class, 'show'])->name('progress');
     Route::inertia('/more', 'More')->name('more');
+    Route::inertia('/timer', 'Timer')->name('timer');
     Route::post('/weights', [ProgressController::class, 'weigh'])->middleware('throttle:60,1')->name('weights.store');
     Route::delete('/weights/{weight}', [ProgressController::class, 'destroyWeight'])->whereNumber('weight')->name('weights.destroy');
     Route::get('/review', [\App\Http\Controllers\ReviewController::class, 'show'])->name('review');
@@ -87,6 +88,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/logs', [LogController::class, 'store'])->middleware('throttle:240,1')->name('logs.store');
     Route::post('/days/estimate', [\App\Http\Controllers\DayEstimateController::class, 'store'])->middleware('throttle:60,1')->name('days.estimate');
     Route::delete('/days/{date}/estimate', [\App\Http\Controllers\DayEstimateController::class, 'destroy'])->name('days.estimate.destroy');
+    Route::post('/supplements', [\App\Http\Controllers\SupplementController::class, 'store'])->middleware('throttle:60,1')->name('supplements.store');
+    Route::delete('/supplements/{id}', [\App\Http\Controllers\SupplementController::class, 'destroy'])->whereNumber('id')->name('supplements.destroy');
     Route::post('/water', [\App\Http\Controllers\WaterController::class, 'store'])->middleware('throttle:120,1')->name('water.store');
     Route::delete('/water/{id}', [\App\Http\Controllers\WaterController::class, 'destroy'])->whereNumber('id')->name('water.destroy');
     Route::post('/readiness', [\App\Http\Controllers\ReadinessController::class, 'store'])->middleware('throttle:60,1')->name('readiness.store');

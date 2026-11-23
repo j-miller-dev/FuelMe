@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 /** `match` lists every path that should light the tab, so sub-pages (Lifting, Review, Shopping...) keep their parent tab active. */
 const tabs: { href: string; label: string; Icon: LucideIcon; match: string[] }[] = [
   { href: '/', label: 'Today', Icon: Flame, match: ['/'] },
-  { href: '/training', label: 'Training', Icon: Dumbbell, match: ['/training', '/lifting'] },
+  { href: '/training', label: 'Training', Icon: Dumbbell, match: ['/training', '/lifting', '/timer'] },
   { href: '/progress', label: 'Progress', Icon: LineChart, match: ['/progress', '/review', '/recovery', '/watch'] },
   { href: '/meals', label: 'Food', Icon: Utensils, match: ['/meals', '/foods', '/shopping'] },
   { href: '/more', label: 'More', Icon: Menu, match: ['/more', '/plan', '/targets', '/profile', '/coach', '/principles', '/settings'] },
