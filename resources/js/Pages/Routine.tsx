@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react'
 import { ArrowLeft } from 'lucide-react'
 import AppLayout from '@/layouts/AppLayout'
+import NextTime, { type Next, type Projection, type StepInfo } from '@/components/lifting/NextTime'
 
 interface Planned { type: string; kg: number | null; reps: number | null; rep_min: number | null; rep_max: number | null }
 interface LastSet { type: string; kg: number | null; reps: number | null; rpe: number | null }
@@ -12,10 +13,12 @@ interface Ex {
   beat_the_log: { kg: number; reps: number; label: string }[]
   heaviest: Rec | null; best_e1rm: { e1rm: number } | null; has_new: boolean
   notes: { id: number; kind: 'cue' | 'worked' | 'note'; body: string; date: string }[]; linkable: boolean
+  next: Next; projection: Projection; step: StepInfo
 }
+interface Diff { date: string; rows: { title: string; status: 'done' | 'partial' | 'skipped' | 'extra'; planned_sets: number; done_sets: number }[]; skipped: number; partial: number; extra: number; done: number }
 interface Routine {
   id: number; title: string; folder: string | null; notes: string | null; last_done: string | null; exercises: Ex[]
-  effort_now: { week: number; of: number; label: string } | null; deload_now: boolean; notes_about: string[]
+  effort_now: { week: number; of: number; label: string } | null; deload_now: boolean; notes_about: string[]; diff: Diff | null
 }
 
 const STATUS = { progressing: ['Progressing', 'text-accent'], holding: ['Holding', 'text-muted'], stalled: ['Stalled', 'text-carbs'], down: ['Down on your best', 'text-fat'], not_enough_data: ['Not enough data yet', 'text-muted'] } as const
@@ -59,6 +62,17 @@ export default function RoutinePage({ routine: r }: { routine: Routine }) {
         <p className="mt-3 rounded-2xl bg-surface p-3 text-sm">Your effort plan this week: <span className="font-medium">{r.effort_now.label}</span> (week {r.effort_now.week} of {r.effort_now.of}).{r.deload_now ? ' This week is labelled a deload.' : ''}</p>
       ) : r.deload_now ? <p className="mt-3 rounded-2xl bg-surface p-3 text-sm">This week is labelled a deload.</p> : null}
       {r.notes ? <p className="mt-3 rounded-2xl bg-surface p-3 text-sm text-muted">{r.notes}</p> : null}
+      <Link href="/lifting/progression" className="mt-3 inline-block min-h-11 text-sm text-accent underline leading-[2.75rem]">See the whole program</Link>
+      {r.diff ? (
+        <section className="rounded-2xl bg-surface p-4" aria-label="Last session against the routine">
+          <h2 className="font-semibold">Last time you did this ({pretty(r.diff.date)})</h2>
+          <p className="mt-1 text-sm">{r.diff.skipped === 0 && r.diff.partial === 0 && r.diff.extra === 0 ? 'You did every exercise and every planned set.' : [r.diff.skipped ? `${r.diff.skipped} skipped` : '', r.diff.partial ? `${r.diff.partial} with fewer sets than planned` : '', r.diff.extra ? `${r.diff.extra} added` : ''].filter(Boolean).join(', ') + '.'}</p>
+          <ul className="mt-2 space-y-0.5 text-sm text-muted">
+            {r.diff.rows.filter((x) => x.status !== 'done').map((x) => <li key={x.title + x.status}>{x.title}: {x.status === 'skipped' ? 'skipped' : x.status === 'partial' ? `${x.done_sets} of ${x.planned_sets} sets` : `added (${x.done_sets} sets)`}</li>)}
+          </ul>
+          <p className="mt-2 text-xs text-muted">A description, not a score. Skipping or adding exercises is often the right call.</p>
+        </section>
+      ) : null}
 
       <ul className="mt-3 space-y-3">
         {r.exercises.map((e) => (
@@ -80,6 +94,8 @@ export default function RoutinePage({ routine: r }: { routine: Routine }) {
               {e.beat_the_log.length ? <div><dt className="inline text-muted">Beat the log: </dt><dd className="inline">{e.beat_the_log.map((b) => `${num(b.kg)} kg × ${b.reps}`).join(' or ')}</dd></div> : null}
               {e.heaviest ? <div><dt className="inline text-muted">Heaviest: </dt><dd className="inline">{num(e.heaviest.kg)} kg × {e.heaviest.reps} ({pretty(e.heaviest.date)}){e.best_e1rm ? `, est. 1RM ${num(e.best_e1rm.e1rm)} kg` : ''}</dd></div> : null}
             </dl>
+
+            <NextTime next={e.next} projection={e.projection} step={e.step} />
 
             {e.hevy_note ? <p className="mt-2 text-sm"><span className="text-muted">Hevy note: </span>{e.hevy_note}</p> : null}
             {e.notes.length ? (

@@ -40,6 +40,7 @@ class CoachTools
             ['name' => 'search_principles', 'description' => 'Search the person\'s OWN principle notes (from their reading) for ideas that fit a question. Returns up to 3 cards with source, grade and stance. Numbers in a card are the note author\'s, not the person\'s targets.', 'input_schema' => ['type' => 'object', 'properties' => ['query' => ['type' => 'string', 'description' => 'a few keywords, e.g. "recovery sleep" or "training to failure"']], 'required' => ['query']]],
             ['name' => 'get_lifting', 'description' => 'Your lifting from synced Hevy workouts: recent sessions, per-exercise progress status (estimated 1RM trend, progressing/holding/stalled/down), what to beat next time, weekly hard sets per muscle, and strength change next to weight change. Empty if Hevy is not connected.', 'input_schema' => $days('how many days back (default 90)')],
             ['name' => 'get_best_lifts', 'description' => 'Your personal records from synced Hevy sets: heaviest weight, best estimated 1RM, best reps at each weight and best session volume per exercise, with the date and whether it is a new PR. Pass "exercise" (a name fragment such as "bench") for one lift, which also returns the person\'s OWN notes (cues, what worked) for it. Empty if Hevy is not connected.', 'input_schema' => ['type' => 'object', 'properties' => ['exercise' => ['type' => 'string', 'description' => 'optional name fragment, e.g. "squat"']]]],
+            ['name' => 'get_routines', 'description' => 'Your Hevy routines. With no argument: the list (folder, exercises, sets, when last done). With "routine" (a name fragment such as "Day A"): that routine\'s exercises with the planned sets, what you did last time, the SUGGESTED next weight and reps with the reason, a rough projection of your estimated 1RM as a range, and how your last session of it compared with the plan (skipped, partial, extra). Suggestions come from simple rules on the person\'s own logged sets; they are not a prescription. Empty if Hevy is not connected.', 'input_schema' => ['type' => 'object', 'properties' => ['routine' => ['type' => 'string', 'description' => 'optional name fragment, e.g. "Day B"']]]],
             ['name' => 'get_recovery', 'description' => 'Your recovery picture from the watch: a green/amber/red signal with every flag and reason, HRV and resting HR against your own 60-day baseline, sleep against your target, training load against your usual, and deload weeks. Empty if no watch data. A suggestion, not a diagnosis.', 'input_schema' => $none],
             ['name' => 'get_assumptions', 'description' => 'The fixed assumptions and rules of thumb the app uses, so you can say what is an estimate.', 'input_schema' => $none],
         ];
@@ -61,6 +62,7 @@ class CoachTools
             'get_lifting' => $this->lifting($user, $this->days($args, 90)),
             'search_principles' => $this->principles($user, (string) ($args['query'] ?? '')),
             'get_best_lifts' => $this->bestLifts($user, (string) ($args['exercise'] ?? '')),
+            'get_routines' => $this->routines($user, (string) ($args['routine'] ?? '')),
             'get_recovery' => $this->recovery($user),
             'get_assumptions' => $this->assumptions(),
             default => ['error' => 'Unknown tool.'],
@@ -277,5 +279,34 @@ class CoachTools
 
         return ['connected' => true, 'new_prs' => $b['new_count'],
             'exercises' => array_map(fn ($r) => ['title' => $r['title'], 'heaviest' => $r['heaviest'], 'best_e1rm' => $r['best_e1rm'], 'best_volume' => $r['best_volume'], 'new_pr' => $r['has_new']], array_slice($b['exercises'], 0, 15)), 'note' => $note];
+    }
+
+    /** @return array<string,mixed> */
+    private function routines(User $user, string $name): array
+    {
+        if (! app(\App\Services\Hevy\StrengthService::class)->connected($user)) {
+            return ['connected' => false, 'note' => 'Hevy is not connected, so there are no routines.'];
+        }
+        $svc = app(\App\Services\Hevy\RoutinesService::class);
+        $list = $svc->list($user);
+        if (trim($name) === '') {
+            return ['connected' => true, 'routines' => array_map(fn ($r) => array_diff_key($r, ['id' => 1]), array_slice($list['routines'], 0, 20))];
+        }
+        $n = mb_strtolower(trim($name));
+        $hit = null;
+        foreach ($list['routines'] as $r) {
+            if (str_contains(mb_strtolower($r['title']), $n)) {
+                $hit = $r;
+                break;
+            }
+        }
+        if (! $hit) {
+            return ['connected' => true, 'found' => false, 'note' => 'No routine matches that name. Do not guess one.'];
+        }
+        $d = $svc->show($user, $hit['id']);
+        $cut = fn (array $x) => array_diff_key($x, ['index' => 1, 'template_id' => 1, 'superset' => 1, 'linkable' => 1, 'notes' => 1]);
+
+        return ['connected' => true, 'found' => true, 'routine' => ['title' => $d['title'], 'folder' => $d['folder'], 'last_done' => $d['last_done'], 'effort_plan_now' => $d['effort_now'], 'diff_last_session' => $d['diff'],
+            'exercises' => array_map(fn ($e) => $cut($e), $d['exercises'])], 'note' => 'Suggested weights are the app\'s simple double-progression rule on the person\'s own sets, not a prescription. Projections are rough ranges. Say so, and give the reason shown with each suggestion.'];
     }
 }

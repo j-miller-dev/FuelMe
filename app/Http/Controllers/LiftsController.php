@@ -71,4 +71,21 @@ class LiftsController extends Controller
 
         return back();
     }
+
+    /** Your smallest weight jump for this exercise (a dumbbell rack, a pin stack). DELETE goes back to the default guessed from the name. */
+    public function saveStep(Request $request, LiftsService $lifts, string $id): RedirectResponse
+    {
+        $d = $request->validate(['step_kg' => ['required', 'numeric', 'min:0.25', 'max:25']]);
+        abort_unless($lifts->exercise($request->user(), $id) !== null, 404);
+        DB::table('exercise_prefs')->updateOrInsert(['user_id' => $request->user()->id, 'template_id' => $id], ['step_kg' => round((float) $d['step_kg'] * 4) / 4, 'updated_at' => now(), 'created_at' => now()]);
+
+        return back();
+    }
+
+    public function clearStep(Request $request, string $id): RedirectResponse
+    {
+        DB::table('exercise_prefs')->where('user_id', $request->user()->id)->where('template_id', $id)->delete();
+
+        return back();
+    }
 }

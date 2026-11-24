@@ -4,6 +4,7 @@ namespace App\Services\Hevy;
 
 use App\Domain\Training\EffortRamp;
 use App\Domain\Training\PersonalRecords;
+use App\Domain\Training\RoutineDiff;
 use App\Domain\Training\Strength;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\DB;
  */
 class RoutinesService
 {
-    public function __construct(private StrengthService $strength, private \App\Services\DeloadService $deloads) {}
+    public function __construct(private StrengthService $strength, private \App\Services\DeloadService $deloads, private ProgressionService $progression) {}
 
     /** @return array<string,mixed> */
     public function list(User $user): array
@@ -50,9 +51,10 @@ class RoutinesService
         if (! $r) {
             return null;
         }
-        $today = now($user->profile->tz)->toDateString();
-        $all = $this->strength->sessions($user, 3650);
-        $train = array_values(array_filter($all, fn ($s) => ! $s['deload']));
+        $ctx = $this->progression->context($user);
+        $today = $ctx['today'];
+        $all = $ctx['all'];
+        $train = $ctx['train'];
         $records = [];
         foreach (PersonalRecords::build($all, $today) as $p) {
             $records[$p['id']] = $p;
@@ -83,9 +85,12 @@ class RoutinesService
             $st = $h ? Strength::status($h) : null;
             $rec = $records[$tid] ?? null;
             $mine = ($notes[$tid] ?? collect())->take(3)->map(fn ($n) => ['id' => (int) $n->id, 'kind' => $n->kind, 'body' => $n->body, 'date' => (string) $n->local_date])->values()->all();
+            $plan = json_decode($e->sets, true) ?: [];
+            $p = $this->progression->forExercise($ctx, $tid, $e->title, $plan);
             $exs[] = [
+                'next' => $p['next'], 'projection' => $p['projection'], 'step' => $p['step'],
                 'index' => (int) $e->exercise_index, 'template_id' => $tid, 'title' => $e->title, 'muscle' => $tpl[$tid]->muscle ?? null, 'rest_seconds' => $e->rest_seconds !== null ? (int) $e->rest_seconds : null,
-                'hevy_note' => $e->notes, 'superset' => $e->superset_id, 'planned' => json_decode($e->sets, true) ?: [],
+                'hevy_note' => $e->notes, 'superset' => $e->superset_id, 'planned' => $plan,
                 'last' => $lastDate ? ['date' => $lastDate, 'sets' => $lastSets] : null,
                 'status' => $st ? $st['status'] : null,
                 'beat_the_log' => $lastBest ? Strength::beatTheLog($lastBest, $step) : [],
@@ -96,9 +101,19 @@ class RoutinesService
 
         $ramp = $user->profile->effort_ramp ?: null;
 
-        return ['id' => (int) $r->id, 'title' => $r->title, 'folder' => $r->folder_title, 'notes' => $r->notes, 'last_done' => $this->lastDone($done, $r), 'exercises' => $exs,
+        // the last session of THIS routine (by routine id, else by title) set against what the routine plans
+        $lastSession = null;
+        foreach (array_reverse($all) as $s) {
+            if (($s['routine_id'] !== null && $s['routine_id'] === $r->hevy_id) || ($s['routine_id'] === null && mb_strtolower($s['title']) === mb_strtolower($r->title))) {
+                $lastSession = $s;
+                break;
+            }
+        }
+        $diff = $lastSession ? ['date' => $lastSession['date']] + RoutineDiff::compare(array_map(fn ($x) => ['template_id' => $x['template_id'], 'title' => $x['title'], 'planned' => $x['planned']], $exs), $lastSession['exercises']) : null;
+
+        return ['diff' => $diff, 'effort_label' => $ctx['effort_label'], 'id' => (int) $r->id, 'title' => $r->title, 'folder' => $r->folder_title, 'notes' => $r->notes, 'last_done' => $this->lastDone($done, $r), 'exercises' => $exs,
             'effort_now' => EffortRamp::weekFor($ramp, $today), 'deload_now' => $this->deloads->isDeload($user, $today),
-            'notes_about' => ['Planned sets are read from Hevy and are not changed here.', '"Last time" is your most recent logged session of that exercise, from any routine. Beat the log is a prompt from your own last best set (+1 rep, or +' . $step . ' kg, an assumption), not a prescription.']];
+            'notes_about' => array_merge(['Planned sets are read from Hevy and are not changed here.'], $this->progression->assumptions(), [ '"Last time" is your most recent logged session of that exercise, from any routine. Beat the log is a prompt from your own last best set (+1 rep, or +' . $step . ' kg, an assumption), not a prescription.'])];
     }
 
     /** The most recent date this routine was done: by the routine id Hevy gives, else a workout with the same title. */

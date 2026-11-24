@@ -15,7 +15,7 @@ export default function Routines({ connected, data }: Props) {
       <Head title="Routines" />
       <header className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-lg font-semibold"><ListChecks className="size-5 text-accent" aria-hidden />Routines</h1>
-        <Link href="/lifting" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Lifting</Link>
+        <span className="flex gap-1"><Link href="/lifting/progression" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Progression</Link><Link href="/lifting" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Lifting</Link></span>
       </header>
       <p className="mt-1 text-sm text-muted">Your Hevy routines, read-only. Edit them in Hevy; FUEL shows them next to your own last numbers.</p>
 

@@ -104,9 +104,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/lifting', [\App\Http\Controllers\HevyController::class, 'show'])->name('lifting');
     Route::get('/lifting/routines', [\App\Http\Controllers\RoutinesController::class, 'index'])->name('lifting.routines');
     Route::get('/lifting/routines/{routine}', [\App\Http\Controllers\RoutinesController::class, 'show'])->whereNumber('routine')->name('lifting.routine');
+    Route::get('/lifting/progression', [\App\Http\Controllers\RoutinesController::class, 'progression'])->name('lifting.progression');
     Route::get('/lifting/best', [\App\Http\Controllers\LiftsController::class, 'board'])->name('lifting.best');
     Route::get('/lifting/exercise/{id}', [\App\Http\Controllers\LiftsController::class, 'show'])->where('id', '[A-Za-z0-9_\-]+')->name('lifting.exercise');
     Route::post('/lifting/exercise/{id}/notes', [\App\Http\Controllers\LiftsController::class, 'storeNote'])->where('id', '[A-Za-z0-9_\-]+')->middleware('throttle:60,1')->name('lifting.notes.store');
+    Route::put('/lifting/exercise/{id}/step', [\App\Http\Controllers\LiftsController::class, 'saveStep'])->where('id', '[A-Za-z0-9_\\-]+')->name('lifting.step');
+    Route::delete('/lifting/exercise/{id}/step', [\App\Http\Controllers\LiftsController::class, 'clearStep'])->where('id', '[A-Za-z0-9_\\-]+')->name('lifting.step.clear');
     Route::patch('/lifting/notes/{note}', [\App\Http\Controllers\LiftsController::class, 'updateNote'])->whereNumber('note')->name('lifting.notes.update');
     Route::delete('/lifting/notes/{note}', [\App\Http\Controllers\LiftsController::class, 'destroyNote'])->whereNumber('note')->name('lifting.notes.destroy');
     Route::get('/settings/notifications', [\App\Http\Controllers\PushController::class, 'show'])->name('notifications');

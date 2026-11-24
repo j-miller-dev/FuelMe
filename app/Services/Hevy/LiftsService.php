@@ -13,7 +13,7 @@ class LiftsService
 {
     public const KINDS = ['cue', 'worked', 'note'];
 
-    public function __construct(private StrengthService $strength, private PrincipleService $principles) {}
+    public function __construct(private StrengthService $strength, private PrincipleService $principles, private ProgressionService $progression) {}
 
     private function today(User $u): string
     {
@@ -79,7 +79,7 @@ class LiftsService
         $cards = $this->principles->search($user, trim($title . ' ' . str_replace('_', ' ', (string) $muscle)), 3);
 
         return [
-            'id' => $id, 'title' => $title, 'muscle' => $muscle,
+            'id' => $id, 'title' => $title, 'muscle' => $muscle, 'step' => $this->progression->step($this->progression->context($user), $id, $title),
             'records' => $rec,
             'status' => $status ? ['status' => $status['status'], 'sessions' => $status['sessions'], 'latest_e1rm' => $status['latest'], 'best_e1rm' => $status['best']] : null,
             'trend' => array_map(fn ($x) => ['date' => $x['date'], 'e1rm' => $x['e1rm']], array_slice($h, -20)),

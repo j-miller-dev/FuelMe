@@ -61,6 +61,8 @@ return [
         'base_url' => env('FUEL_HEVY_BASE_URL', 'https://api.hevyapp.com'),
         'timeout' => 20,
         'plate_step_kg' => (float) env('FUEL_PLATE_STEP_KG', 2.5),   // ASSUMPTION used for the "small load step" suggestion
+        // ASSUMPTIONS: the smallest weight jump guessed from the exercise name. You can set your own per exercise (Best lifts > the lift).
+        'steps_kg' => ['dumbbell' => 2.0, 'barbell' => 2.5, 'smith' => 2.5, 'machine' => 2.5, 'cable' => 2.5, 'weighted' => 2.5],
     ],
 
     // Web Push (phone notifications). Generate a key pair once with `php artisan push:keys` and set both in the server environment.

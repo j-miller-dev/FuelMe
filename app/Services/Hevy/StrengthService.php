@@ -41,7 +41,7 @@ class StrengthService
                 $ex[] = ['id' => $first->template_id ?: $first->exercise_title, 'title' => $first->exercise_title, 'muscle' => $t->muscle ?? null, 'secondary' => $t ? (json_decode($t->secondary, true) ?: []) : [],
                     'sets' => $list->map(fn ($s) => ['type' => $s->type, 'kg' => $s->weight_kg !== null ? (float) $s->weight_kg : null, 'reps' => $s->reps !== null ? (int) $s->reps : null, 'rpe' => $s->rpe !== null ? (float) $s->rpe : null])->all()];
             }
-            $out[] = ['date' => (string) $row->local_date, 'title' => $row->title, 'minutes' => $row->minutes !== null ? (int) $row->minutes : null, 'exercises' => $ex, 'deload' => isset($deloadSet[\App\Domain\Training\Deload::mondayOf((string) $row->local_date)])];
+            $out[] = ['date' => (string) $row->local_date, 'routine_id' => $row->routine_id ?? null, 'title' => $row->title, 'minutes' => $row->minutes !== null ? (int) $row->minutes : null, 'exercises' => $ex, 'deload' => isset($deloadSet[\App\Domain\Training\Deload::mondayOf((string) $row->local_date)])];
         }
 
         return $out;

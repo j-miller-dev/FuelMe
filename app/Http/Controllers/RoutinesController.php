@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Hevy\ProgressionService;
 use App\Services\Hevy\RoutinesService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,5 +34,17 @@ class RoutinesController extends Controller
         abort_if($data === null, 404);
 
         return Inertia::render('Routine', ['routine' => $data]);
+    }
+
+    /** /lifting/progression: suggested weights and projections for every exercise in one folder of routines (default Rational Intensity). */
+    public function progression(Request $request, ProgressionService $progression): Response|RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user->profile) {
+            return redirect()->route('onboarding');
+        }
+        $folder = $request->query('folder');
+
+        return Inertia::render('Progression', ['program' => $progression->program($user, is_string($folder) ? mb_substr($folder, 0, 64) : null)]);
     }
 }

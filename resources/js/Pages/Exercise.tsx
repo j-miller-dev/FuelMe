@@ -14,7 +14,7 @@ interface Note { id: number; kind: Kind; body: string; date: string }
 type Kind = 'cue' | 'worked' | 'note'
 interface Card { id: number; title: string; source: string; stance: string; body: string }
 interface Exercise {
-  id: string; title: string; muscle: string | null; records: Records | null
+  id: string; title: string; muscle: string | null; step: { kg: number; custom: boolean }; records: Records | null
   status: { status: 'not_enough_data' | 'progressing' | 'holding' | 'stalled' | 'down'; sessions: number; latest_e1rm: number | null; best_e1rm: number | null } | null
   trend: { date: string; e1rm: number }[]; beat_the_log: { kg: number; reps: number; label: string }[]
   recent: { date: string; deload: boolean; sets: SetRow[] }[]; notes: Note[]; principles: Card[]
@@ -38,6 +38,25 @@ function Trend({ pts }: { pts: { date: string; e1rm: number }[] }) {
       </svg>
       <figcaption className="flex justify-between text-xs text-muted"><span>{pretty(first.date)}: {first.e1rm} kg</span><span>{pretty(last.date)}: {last.e1rm} kg</span></figcaption>
     </figure>
+  )
+}
+
+function StepSetting({ id, step }: { id: string; step: { kg: number; custom: boolean } }) {
+  const [v, setV] = useState(String(step.kg))
+  const n = Number(v)
+  const ok = Number.isFinite(n) && n >= 0.25 && n <= 25
+  return (
+    <section className="mt-3 rounded-2xl bg-surface p-4" aria-label="Smallest weight jump">
+      <h2 className="font-semibold">Smallest weight jump</h2>
+      <p className="mt-1 text-xs text-muted">Used for the "go up" suggestions. {step.custom ? 'This is your setting.' : 'FUEL guesses it from the exercise name; set your own if your gym differs (a dumbbell rack, a pin stack).'}</p>
+      <div className="mt-2 flex items-center gap-2">
+        <label className="sr-only" htmlFor="step-kg">Smallest jump in kilograms</label>
+        <input id="step-kg" type="number" inputMode="decimal" step="0.25" min="0.25" max="25" value={v} onChange={(e) => setV(e.target.value)} className="min-h-11 w-24 rounded-xl bg-canvas/60 px-3 text-sm" />
+        <span className="text-sm text-muted">kg</span>
+        <Button type="button" disabled={!ok} onClick={() => router.put(`/lifting/exercise/${encodeURIComponent(id)}/step`, { step_kg: n }, { preserveScroll: true })}>Save</Button>
+        {step.custom ? <button type="button" className="min-h-11 px-2 text-sm text-muted underline" onClick={() => router.delete(`/lifting/exercise/${encodeURIComponent(id)}/step`, { preserveScroll: true, onSuccess: () => setV('') })}>Use the guess</button> : null}
+      </div>
+    </section>
   )
 }
 
@@ -127,6 +146,8 @@ export default function ExercisePage({ exercise: e }: { exercise: Exercise }) {
           ) : null}
         </section>
       ) : null}
+
+      <StepSetting key={`${e.step.kg}-${e.step.custom}`} id={e.id} step={e.step} />
 
       <section className="mt-3 rounded-2xl bg-surface p-4" aria-label="Your notes">
         <h2 className="font-semibold">Your notes</h2>
