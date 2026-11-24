@@ -3,6 +3,10 @@ import hiit from '@/assets/modes/hiit.webp'
 import jumprope from '@/assets/modes/jumprope.webp'
 import norwegian from '@/assets/modes/norwegian.webp'
 import resistance from '@/assets/modes/resistance.webp'
+import trainingDay from '@/assets/modes/training-day.webp'
+
+/** Header for the Training card on Today when the day has sessions. */
+export const TRAINING_DAY_BANNER = trainingDay
 
 /** Banner image per timer preset id. */
 export const TIMER_BANNERS: Record<string, string> = { hiit, norwegian, jumprope, bjj }

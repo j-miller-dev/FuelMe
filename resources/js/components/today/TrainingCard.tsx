@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react'
-import { SESSION_BANNERS } from '@/lib/modeBanners'
+import { SESSION_BANNERS, TRAINING_DAY_BANNER } from '@/lib/modeBanners'
 import { Dumbbell } from 'lucide-react'
 import { useState } from 'react'
 import { uuid } from '@/lib/http'
@@ -78,6 +78,7 @@ export function TrainingCard({ training, date, isToday, unit, hour }: { training
   const lp = f?.leads[lead]
   return (
     <section className="mt-3 rounded-2xl bg-surface p-4" aria-label="Training">
+      {isToday && sessions.length > 0 ? <img src={TRAINING_DAY_BANNER} alt="" aria-hidden width={900} height={507} className={`mb-3 block h-auto w-full rounded-xl ${sessions.every((s) => s.status === 'done' || s.status === 'skipped') ? 'opacity-50 saturate-50' : ''}`} loading="lazy" /> : null}
       <div className="flex items-center gap-2">
         <h2 className="flex flex-1 items-center gap-2 font-semibold"><Dumbbell aria-hidden size={18} className="text-accent" />{isToday ? 'Training today' : 'Training'}</h2>
         {isToday ? <button onClick={() => setSay(true)} className="min-h-11 rounded-full bg-raised px-3 text-sm text-accent">Say it</button> : null}
