@@ -72,8 +72,10 @@ final class SessionCard
 
             $best = Strength::bestSet($usable);
             $pr = [];
+            $heavy = null;
             if ($usable) {
                 $maxKg = max(array_map(fn ($x) => (float) $x['kg'], $usable));
+                $heavy = ['kg' => $maxKg, 'reps' => max(array_map(fn ($x) => (int) $x['reps'], array_filter($usable, fn ($x) => (float) $x['kg'] === $maxKg)))];
                 if (isset($heaviest[$id])) {   // an earlier session of this lift exists, so beating it is a real PR
                     $maxKg > $heaviest[$id] && $pr[] = 'heaviest';
                     $best && $best['e1rm'] > ($e1[$id] ?? INF) && $pr[] = 'e1rm';
@@ -86,7 +88,7 @@ final class SessionCard
                 $top = ['exercise' => $ex['title'], 'kg' => $best['kg'], 'reps' => $best['reps'], 'e1rm' => $best['e1rm']];
             }
             $rows[] = ['id' => (string) $id, 'title' => $ex['title'], 'muscle' => $ex['muscle'] ?? null, 'sets' => count($sets), 'volume' => round($v, 1), 'best' => $best ? ['kg' => $best['kg'], 'reps' => $best['reps']] : null,
-                'pr' => $pr, 'detail' => array_map(fn ($x) => ['kg' => isset($x['kg']) ? (float) $x['kg'] : null, 'reps' => isset($x['reps']) ? (int) $x['reps'] : null, 'type' => $x['type'] ?? 'normal'], $sets)];
+                'heaviest' => $heavy, 'e1rm' => $best ? round($best['e1rm'], 1) : null, 'pr' => $pr, 'detail' => array_map(fn ($x) => ['kg' => isset($x['kg']) ? (float) $x['kg'] : null, 'reps' => isset($x['reps']) ? (int) $x['reps'] : null, 'type' => $x['type'] ?? 'normal'], $sets)];
         }
 
         arsort($muscles);

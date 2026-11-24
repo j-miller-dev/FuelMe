@@ -21,14 +21,19 @@ class HitStripService
     /** @return array{days:list<array<string,mixed>>,summary:array{logged:int,onTarget:int,total:int}} */
     public function forUser(User $user, string $today): array
     {
-        $first = TargetHistory::where('user_id', $user->id)->min('effective_from');
         $dates = [];
         for ($i = self::DAYS; $i >= 1; $i--) {
-            $d = date('Y-m-d', strtotime($today . " -{$i} days"));
-            if ($first && $d >= substr((string) $first, 0, 10)) {
-                $dates[] = $d;
-            }
+            $dates[] = date('Y-m-d', strtotime($today . " -{$i} days"));
         }
+
+        return $this->forDates($user, $dates);
+    }
+
+    /** @param list<string> $all dates, oldest first; days before your first target are skipped @return array{days:list<array<string,mixed>>,summary:array{logged:int,onTarget:int,total:int}} */
+    public function forDates(User $user, array $all): array
+    {
+        $first = TargetHistory::where('user_id', $user->id)->min('effective_from');
+        $dates = array_values(array_filter($all, fn ($d) => $first && $d >= substr((string) $first, 0, 10)));
         if (! $dates) {
             return ['days' => [], 'summary' => ['logged' => 0, 'onTarget' => 0, 'total' => 0]];
         }

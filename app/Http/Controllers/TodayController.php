@@ -29,6 +29,8 @@ class TodayController extends Controller
         $date = $request->query('date');
         $date = is_string($date) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) && $date <= $today && $date > date('Y-m-d', strtotime($today . ' -400 days')) ? $date : $today;
 
+        $cards = $date === $today && app(\App\Services\Hevy\StrengthService::class)->connected($user) ? app(\App\Services\Hevy\SessionCardsService::class)->cards($user, 3650) : [];
+
         $overview = $progress->overview($user);
         $target = TargetHistory::where('user_id', $user->id)->latest('effective_from')->latest('id')->firstOrFail();
         // The target for THIS date: the current plan, replanned if this week's real sessions differ from the usual week.
@@ -60,7 +62,8 @@ class TodayController extends Controller
                 collect($training->sessions($user, $date, true))->contains(fn ($s) => ($s['status'] ?? '') !== 'skipped' && ($s['status'] ?? '') !== 'done'),
                 (bool) ($overview['undereating']['flag'] ?? false),
             ) : null,
-            'sessionCard' => $date === $today ? app(\App\Services\Hevy\SessionCardsService::class)->today($user) : null,
+            'sessionCard' => $date === $today ? app(\App\Services\Hevy\SessionCardsService::class)->today($user, $cards) : null,
+            'achievements' => $date === $today ? app(\App\Services\AchievementsService::class)->forUser($user, $today, $cards ?? []) : [],
             'recovery' => $date === $today ? app(\App\Services\RecoveryService::class)->compact($user) : null,
             'water' => $this->water($user, $date, $profile->sex),
             'creatine' => SupplementController::state($user, 'creatine', $date),

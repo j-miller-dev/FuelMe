@@ -38,14 +38,14 @@ class SessionCardsService
         return SessionCard::months($this->cards($user));
     }
 
-    /** The newest session card if it is from today (local date), for the Today screen. @return array<string,mixed>|null */
-    public function today(User $user): ?array
+    /** The newest session card if it is from today (local date), for the Today screen. @param list<array<string,mixed>>|null $cards newest first, to avoid reading history twice @return array<string,mixed>|null */
+    public function today(User $user, ?array $cards = null): ?array
     {
         if (! $this->strength->connected($user)) {
             return null;
         }
         $today = now($user->profile->tz)->toDateString();
-        $c = $this->cards($user, 2)[0] ?? null;
+        $c = ($cards ?? $this->cards($user, 2))[0] ?? null;
 
         return $c && $c['date'] === $today ? $c : null;
     }

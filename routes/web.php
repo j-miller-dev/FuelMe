@@ -105,6 +105,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/lifting/routines', [\App\Http\Controllers\RoutinesController::class, 'index'])->name('lifting.routines');
     Route::get('/lifting/routines/{routine}', [\App\Http\Controllers\RoutinesController::class, 'show'])->whereNumber('routine')->name('lifting.routine');
     Route::get('/lifting/progression', [\App\Http\Controllers\RoutinesController::class, 'progression'])->name('lifting.progression');
+    Route::post('/achievements/dismiss', [\App\Http\Controllers\AchievementController::class, 'dismiss'])->middleware('throttle:60,1')->name('achievements.dismiss');
     Route::get('/lifting/sessions', [\App\Http\Controllers\LiftSessionsController::class, 'index'])->name('lifting.sessions');
     Route::get('/lifting/best', [\App\Http\Controllers\LiftsController::class, 'board'])->name('lifting.best');
     Route::get('/lifting/exercise/{id}', [\App\Http\Controllers\LiftsController::class, 'show'])->where('id', '[A-Za-z0-9_\-]+')->name('lifting.exercise');
