@@ -63,6 +63,7 @@ class HevySync
                 } while (++$page <= min($pages, 100));
             }
             DB::table('hevy_connections')->where('user_id', $user->id)->update(['cursor_at' => $startedAt->copy()->subMinutes(5), 'last_synced_at' => now(), 'last_error' => null, 'updated_at' => now()]);
+            $this->routines($user, $client);   // separate: a routines problem is recorded on its own and never fails the workout sync
 
             return ['ok' => true, 'workouts' => $count, 'deleted' => $deleted, 'error' => null];
         } catch (HevyException $e) {
@@ -70,6 +71,64 @@ class HevySync
 
             return ['ok' => false, 'workouts' => $count, 'deleted' => $deleted, 'error' => $e->getMessage()];
         }
+    }
+
+    /** Replaces your routines with Hevy's current list. Routines have no change feed. Nothing is removed unless every page was read. */
+    public function routines(User $user, HevyClient $client): bool
+    {
+        try {
+            $folders = [];
+            $page = 1;
+            do {
+                $r = $client->routineFolders($page);
+                foreach ((array) ($r['routine_folders'] ?? []) as $f) {
+                    if (isset($f['id'])) {
+                        $folders[(string) $f['id']] = mb_substr((string) ($f['title'] ?? ''), 0, 120);
+                    }
+                }
+                $pages = (int) ($r['page_count'] ?? 1);
+            } while (++$page <= min($pages, 20));
+
+            $mapped = [];
+            $page = 1;
+            do {
+                $r = $client->routines($page);
+                if ($page === 1 && ! array_key_exists('routines', $r)) {   // the field names are unverified: never wipe stored routines on a response we do not recognise
+                    throw new HevyException('Hevy sent routines in a shape FUEL does not recognise.');
+                }
+                foreach ((array) ($r['routines'] ?? []) as $raw) {
+                    if ($m = HevyMapper::routine((array) $raw, $folders)) {
+                        $mapped[$m['hevy_id']] = $m;
+                    }
+                }
+                $pages = (int) ($r['page_count'] ?? 1);
+            } while (++$page <= min($pages, 50));
+        } catch (HevyException $e) {
+            DB::table('hevy_connections')->where('user_id', $user->id)->update(['routines_error' => mb_substr($e->getMessage(), 0, 200)]);
+
+            return false;
+        }
+        DB::transaction(function () use ($user, $mapped) {
+            foreach ($mapped as $m) {
+                $row = ['title' => $m['title'], 'folder_id' => $m['folder_id'], 'folder_title' => $m['folder_title'], 'notes' => $m['notes'], 'hevy_updated_at' => $m['updated_at'], 'updated_at' => now()];
+                $existing = DB::table('hevy_routines')->where('user_id', $user->id)->where('hevy_id', $m['hevy_id'])->first();
+                if ($existing) {
+                    DB::table('hevy_routines')->where('id', $existing->id)->update($row);
+                    DB::table('hevy_routine_exercises')->where('hevy_routine_id', $existing->id)->delete();
+                    $id = $existing->id;
+                } else {
+                    $id = DB::table('hevy_routines')->insertGetId($row + ['user_id' => $user->id, 'hevy_id' => $m['hevy_id'], 'created_at' => now()]);
+                }
+                foreach ($m['exercises'] as $e) {
+                    DB::table('hevy_routine_exercises')->insert(['hevy_routine_id' => $id, 'exercise_index' => $e['exercise_index'], 'template_id' => $e['template_id'], 'title' => $e['title'], 'rest_seconds' => $e['rest_seconds'],
+                        'notes' => $e['notes'], 'superset_id' => $e['superset_id'], 'sets' => json_encode($e['sets'])]);
+                }
+            }
+            DB::table('hevy_routines')->where('user_id', $user->id)->whereNotIn('hevy_id', array_keys($mapped) ?: [''])->delete();   // deleted in Hevy
+        });
+        DB::table('hevy_connections')->where('user_id', $user->id)->update(['routines_synced_at' => now(), 'routines_error' => null]);
+
+        return true;
     }
 
     private function templates(User $user, HevyClient $client): void
@@ -96,7 +155,7 @@ class HevySync
             return false;
         }
         DB::transaction(function () use ($user, $m) {
-            $row = ['title' => $m['title'], 'start_at' => $m['start_at'], 'end_at' => $m['end_at'], 'local_date' => $m['local_date'], 'minutes' => $m['minutes'], 'updated_at' => now()];
+            $row = ['title' => $m['title'], 'routine_id' => $m['routine_id'], 'start_at' => $m['start_at'], 'end_at' => $m['end_at'], 'local_date' => $m['local_date'], 'minutes' => $m['minutes'], 'updated_at' => now()];
             $existing = DB::table('hevy_workouts')->where('user_id', $user->id)->where('hevy_id', $m['hevy_id'])->first();
             if ($existing) {
                 DB::table('hevy_workouts')->where('id', $existing->id)->update($row);

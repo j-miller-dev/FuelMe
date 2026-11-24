@@ -36,6 +36,18 @@ class HevyClient
         return $this->get('/v1/exercise_templates', ['page' => $page, 'pageSize' => 100]);
     }
 
+    /** @return array<string,mixed> {page, page_count, routines[]} */
+    public function routines(int $page): array
+    {
+        return $this->get('/v1/routines', ['page' => $page, 'pageSize' => 10]);
+    }
+
+    /** @return array<string,mixed> {page, page_count, routine_folders[]} */
+    public function routineFolders(int $page): array
+    {
+        return $this->get('/v1/routine_folders', ['page' => $page, 'pageSize' => 10]);
+    }
+
     /** @return array<string,mixed> */
     private function get(string $path, array $query = []): array
     {
@@ -44,6 +56,8 @@ class HevyClient
                 ->retry(2, 800, fn ($e) => $e instanceof ConnectionException || ($e instanceof RequestException && in_array($e->response->status(), [429, 500, 502, 503, 504], true)), throw: false)->get($path, $query);
         } catch (ConnectionException) {
             throw new HevyException('Could not reach Hevy.');
+        } catch (RequestException $e) {   // a status the retry rule does not cover (404, 403 ...) arrives as an exception: turn it into the same plain error
+            return $this->body($e->response);
         }
 
         return $this->body($res);

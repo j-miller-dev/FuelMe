@@ -64,6 +64,7 @@ class HevyController extends Controller
         if ($request->boolean('delete_data')) {
             DB::table('hevy_workouts')->where('user_id', $user->id)->delete();   // sets go with them (cascade)
             DB::table('hevy_templates')->where('user_id', $user->id)->delete();
+            DB::table('hevy_routines')->where('user_id', $user->id)->delete();   // exercises go with them (cascade)
         }
 
         return back();

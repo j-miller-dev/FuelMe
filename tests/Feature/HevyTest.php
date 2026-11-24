@@ -22,6 +22,8 @@ function hevyFake(array $workouts, array $events = []): void
     Http::swap(new \Illuminate\Http\Client\Factory);   // fresh stubs: the first matching fake wins, so a second call would be ignored
     Http::fake([
         '*/v1/user/info' => Http::response(['data' => ['name' => 'x']]),
+        '*/v1/routine_folders*' => Http::response(['page' => 1, 'page_count' => 1, 'routine_folders' => []]),
+        '*/v1/routines*' => Http::response(['page' => 1, 'page_count' => 1, 'routines' => []]),
         '*/v1/exercise_templates*' => Http::response(['page' => 1, 'page_count' => 1, 'exercise_templates' => [['id' => 'LP1', 'title' => 'Leg Press', 'primary_muscle_group' => 'quadriceps', 'secondary_muscle_groups' => ['glutes']]]]),
         '*/v1/workouts/events*' => Http::response(['page' => 1, 'page_count' => 1, 'events' => $events]),
         '*/v1/workouts*' => Http::response(['page' => 1, 'page_count' => 1, 'workouts' => $workouts]),
@@ -158,6 +160,7 @@ it('retries a busy Hevy once instead of failing the sync', function () {
     Http::swap(new \Illuminate\Http\Client\Factory);
     Http::fake([
         '*/v1/exercise_templates*' => Http::response(['page' => 1, 'page_count' => 1, 'exercise_templates' => []]),
+        '*/v1/routine*' => Http::response(['error' => 'not found'], 404),   // routines missing must not fail the workout sync
         '*/v1/workouts*' => Http::sequence()->push('busy', 429)->push(['page' => 1, 'page_count' => 1, 'workouts' => [hevyWorkout('w1', '2026-09-01 02:00')]]),
     ]);
     expect(app(HevySync::class)->sync($u->fresh())['ok'])->toBeTrue()->and(DB::table('hevy_workouts')->count())->toBe(1);

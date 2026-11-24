@@ -102,6 +102,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/principles/{principle}/stance', [\App\Http\Controllers\PrincipleController::class, 'stance'])->whereNumber('principle')->name('principles.stance');
     Route::delete('/principles/{principle}', [\App\Http\Controllers\PrincipleController::class, 'archive'])->whereNumber('principle')->name('principles.archive');
     Route::get('/lifting', [\App\Http\Controllers\HevyController::class, 'show'])->name('lifting');
+    Route::get('/lifting/routines', [\App\Http\Controllers\RoutinesController::class, 'index'])->name('lifting.routines');
+    Route::get('/lifting/routines/{routine}', [\App\Http\Controllers\RoutinesController::class, 'show'])->whereNumber('routine')->name('lifting.routine');
     Route::get('/lifting/best', [\App\Http\Controllers\LiftsController::class, 'board'])->name('lifting.best');
     Route::get('/lifting/exercise/{id}', [\App\Http\Controllers\LiftsController::class, 'show'])->where('id', '[A-Za-z0-9_\-]+')->name('lifting.exercise');
     Route::post('/lifting/exercise/{id}/notes', [\App\Http\Controllers\LiftsController::class, 'storeNote'])->where('id', '[A-Za-z0-9_\-]+')->middleware('throttle:60,1')->name('lifting.notes.store');
