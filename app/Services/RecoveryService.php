@@ -126,6 +126,14 @@ class RecoveryService
         }
         $o = $this->overview($user, false);
 
-        return ['level' => $o['signal']['level'], 'headline' => $o['signal']['headline'], 'reasons' => array_slice($o['signal']['flags'], 0, 2), 'deload' => $o['deload']['now']];
+        $pick = fn (array $b) => ['status' => $b['status'], 'low' => $b['low'] ?? null, 'high' => $b['high'] ?? null, 'baseline' => $b['baseline'] ?? null];
+
+        return ['level' => $o['signal']['level'], 'headline' => $o['signal']['headline'], 'reasons' => array_slice($o['signal']['flags'], 0, 2), 'deload' => $o['deload']['now'],
+            'glance' => [
+                'today' => $o['today'], 'sleepTargetMin' => $o['sleep']['targetMin'], 'sleepDebtMin' => $o['sleep']['debt7Min'], 'sleepAvgMin' => $o['sleep']['avg7Min'],
+                'hrv' => $pick($o['hrv']), 'rhr' => $pick($o['rhr']),
+                // oldest first, 7 days ending today; a missing day has nulls so the chart shows a gap, never a zero
+                'days' => array_map(fn ($i) => ['date' => date('Y-m-d', strtotime($o['today'] . " -{$i} days"))] + (collect($o['days'])->firstWhere('date', date('Y-m-d', strtotime($o['today'] . " -{$i} days"))) ?? ['sleepMin' => null, 'restingHr' => null, 'hrv' => null, 'steps' => null]), range(6, 0)),
+            ]];
     }
 }

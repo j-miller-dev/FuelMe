@@ -17,11 +17,11 @@ const num = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).repla
 const range = (a: number | null, b: number | null) => (a === null ? '' : b === null || a === b ? String(a) : `${a}-${b}`)
 
 const BADGE = {
-  increase: { label: 'Go up', cls: 'bg-accent text-canvas', Icon: ArrowUp },
-  hold: { label: 'Same weight', cls: 'bg-raised text-fg', Icon: Equal },
-  repeat: { label: 'Repeat', cls: 'bg-raised text-fg', Icon: Repeat },
+  increase: { label: 'Go up', cls: 'bg-accent text-on-accent', Icon: ArrowUp },
+  hold: { label: 'Same weight', cls: 'bg-raised text-ink', Icon: Equal },
+  repeat: { label: 'Repeat', cls: 'bg-raised text-ink', Icon: Repeat },
   reduce: { label: 'Drop a little', cls: 'bg-fat/20 text-fat', Icon: ArrowDown },
-  start: { label: 'Start here', cls: 'bg-raised text-fg', Icon: Equal },
+  start: { label: 'Start here', cls: 'bg-raised text-ink', Icon: Equal },
 } as const
 
 export function targetText(n: Next): string {

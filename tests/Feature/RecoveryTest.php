@@ -141,3 +141,13 @@ it('compares watch sleep and HRV with how you felt, only once there are 8 matchi
     $keys = array_column(app(\App\Services\ReadinessService::class)->insights($u), 'key');
     expect($keys)->toContain('watch_sleep_energy')->and($keys)->toContain('hrv_energy');
 });
+
+it('gives Today seven oldest-first days for the charts, with gaps as nulls and the usual range', function () {
+    $u = loggedInUser();
+    recSeed($u);
+
+    $g = $this->actingAs($u)->get('/')->viewData('page')['props']['recovery']['glance'];
+
+    expect($g['days'])->toHaveCount(7)->and($g['days'][6]['date'])->toBe($g['today'])->and($g['days'][0]['date'] < $g['days'][6]['date'])->toBeTrue()
+        ->and($g['sleepTargetMin'])->toBe(480)->and($g['hrv']['status'])->toBe('below')->and($g['hrv']['low'])->not->toBeNull();
+});

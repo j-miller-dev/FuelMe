@@ -31,7 +31,7 @@ export default function Progression({ program: p }: { program: Program }) {
           {p.folders.length > 1 ? (
             <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1" role="group" aria-label="Folder">
               {p.folders.map((f) => (
-                <Link key={f.key} href={`/lifting/progression?folder=${encodeURIComponent(f.key)}`} preserveScroll aria-current={f.key === p.selected} className={`flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm ${f.key === p.selected ? 'bg-accent text-canvas' : 'bg-raised'}`}>{f.title}</Link>
+                <Link key={f.key} href={`/lifting/progression?folder=${encodeURIComponent(f.key)}`} preserveScroll aria-current={f.key === p.selected} className={`flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm ${f.key === p.selected ? 'bg-accent text-on-accent' : 'bg-raised'}`}>{f.title}</Link>
               ))}
             </div>
           ) : folder ? <p className="mt-3 text-sm font-medium">{folder.title}</p> : null}
