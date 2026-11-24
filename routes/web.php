@@ -102,6 +102,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/principles/{principle}/stance', [\App\Http\Controllers\PrincipleController::class, 'stance'])->whereNumber('principle')->name('principles.stance');
     Route::delete('/principles/{principle}', [\App\Http\Controllers\PrincipleController::class, 'archive'])->whereNumber('principle')->name('principles.archive');
     Route::get('/lifting', [\App\Http\Controllers\HevyController::class, 'show'])->name('lifting');
+    Route::get('/lifting/best', [\App\Http\Controllers\LiftsController::class, 'board'])->name('lifting.best');
+    Route::get('/lifting/exercise/{id}', [\App\Http\Controllers\LiftsController::class, 'show'])->where('id', '[A-Za-z0-9_\-]+')->name('lifting.exercise');
+    Route::post('/lifting/exercise/{id}/notes', [\App\Http\Controllers\LiftsController::class, 'storeNote'])->where('id', '[A-Za-z0-9_\-]+')->middleware('throttle:60,1')->name('lifting.notes.store');
+    Route::patch('/lifting/notes/{note}', [\App\Http\Controllers\LiftsController::class, 'updateNote'])->whereNumber('note')->name('lifting.notes.update');
+    Route::delete('/lifting/notes/{note}', [\App\Http\Controllers\LiftsController::class, 'destroyNote'])->whereNumber('note')->name('lifting.notes.destroy');
     Route::get('/settings/notifications', [\App\Http\Controllers\PushController::class, 'show'])->name('notifications');
     Route::post('/push/subscribe', [\App\Http\Controllers\PushController::class, 'subscribe'])->middleware('throttle:20,1')->name('push.subscribe');
     Route::post('/push/unsubscribe', [\App\Http\Controllers\PushController::class, 'unsubscribe'])->name('push.unsubscribe');

@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react'
-import { Bell, BookOpen, CalendarRange, ChevronRight, ClipboardCheck, Database, Dumbbell, HeartPulse, Info, ListTodo, type LucideIcon, MessageCircle, ShieldCheck, ShoppingCart, Target, Timer, User, Utensils, Watch } from 'lucide-react'
+import { Bell, BookOpen, CalendarRange, ChevronRight, ClipboardCheck, Database, Dumbbell, HeartPulse, Info, ListTodo, type LucideIcon, MessageCircle, ShieldCheck, ShoppingCart, Target, Timer, Trophy, User, Utensils, Watch } from 'lucide-react'
 import AppLayout from '@/layouts/AppLayout'
 
 interface Item { href: string; label: string; hint: string; Icon: LucideIcon }
@@ -22,6 +22,7 @@ const groups: { title: string; items: Item[] }[] = [
       { href: '/timer', label: 'Interval timer', hint: 'HIIT, Norwegian 4x4, jump rope, BJJ rounds', Icon: Timer },
       { href: '/training', label: 'Training week', hint: 'Your usual sessions', Icon: Dumbbell },
       { href: '/lifting', label: 'Lifting (Hevy)', hint: 'Sync, lifts, effort plan', Icon: Dumbbell },
+      { href: '/lifting/best', label: 'Best lifts', hint: 'Records, notes and cues per exercise', Icon: Trophy },
     ],
   },
   {

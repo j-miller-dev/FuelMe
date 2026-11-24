@@ -69,7 +69,7 @@ export default function Lifting({ connection, data, insights, ramp, rampNow, tod
       <Head title="Lifting" />
       <header className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Lifting</h1>
-        <Link href="/training" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Training</Link>
+        <span className="flex gap-1"><Link href="/lifting/best" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Best lifts</Link><Link href="/training" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Training</Link></span>
       </header>
       <p className="mt-1 text-sm text-muted">Your Hevy workouts, read-only. FUEL never changes anything in Hevy. Strength numbers are estimates, not measurements of muscle.</p>
 
@@ -116,6 +116,7 @@ export default function Lifting({ connection, data, insights, ramp, rampNow, tod
                       <p>Last time ({pretty(e.last_date)}): {e.last_set.kg} kg × {e.last_set.reps}. Estimated 1RM now {e.latest_e1rm} kg, best {e.best_e1rm} kg ({e.sessions} sessions).</p>
                       <p className="mt-1 font-medium text-fg">Beat the log next time:</p>
                       <ul className="mt-1 space-y-1">{e.beat_the_log.map((b) => <li key={b.label}>{b.kg} kg × {b.reps}: {b.label.toLowerCase()}</li>)}</ul>
+                      <Link href={`/lifting/exercise/${encodeURIComponent(e.id)}`} className="mt-2 inline-block min-h-11 text-accent underline leading-[2.75rem]">Records and notes</Link>
                     </div>
                   ) : null}
                 </li>
