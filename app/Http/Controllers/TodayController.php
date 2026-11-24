@@ -60,6 +60,7 @@ class TodayController extends Controller
                 collect($training->sessions($user, $date, true))->contains(fn ($s) => ($s['status'] ?? '') !== 'skipped' && ($s['status'] ?? '') !== 'done'),
                 (bool) ($overview['undereating']['flag'] ?? false),
             ) : null,
+            'sessionCard' => $date === $today ? app(\App\Services\Hevy\SessionCardsService::class)->today($user) : null,
             'recovery' => $date === $today ? app(\App\Services\RecoveryService::class)->compact($user) : null,
             'water' => $this->water($user, $date, $profile->sex),
             'creatine' => SupplementController::state($user, 'creatine', $date),

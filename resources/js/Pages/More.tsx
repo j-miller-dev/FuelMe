@@ -22,6 +22,7 @@ const groups: { title: string; items: Item[] }[] = [
       { href: '/timer', label: 'Interval timer', hint: 'HIIT, Norwegian 4x4, jump rope, BJJ rounds', Icon: Timer },
       { href: '/training', label: 'Training week', hint: 'Your usual sessions', Icon: Dumbbell },
       { href: '/lifting', label: 'Lifting (Hevy)', hint: 'Sync, lifts, effort plan', Icon: Dumbbell },
+      { href: '/lifting/sessions', label: 'Lifting sessions', hint: 'A card for every session', Icon: Dumbbell },
       { href: '/lifting/progression', label: 'Progression', hint: 'What to lift next, and projections', Icon: TrendingUp },
       { href: '/lifting/routines', label: 'Routines', hint: 'Your Hevy routines with last numbers', Icon: ListChecks },
       { href: '/lifting/best', label: 'Best lifts', hint: 'Records, notes and cues per exercise', Icon: Trophy },

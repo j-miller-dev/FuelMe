@@ -7,6 +7,7 @@ import { PortionSheet } from '@/components/today/PortionSheet'
 import { CalorieRing, MacroRings } from '@/components/today/Rings'
 import { HitStrip, type Strip } from '@/components/today/HitStrip'
 import { ReadinessCard, type Readiness } from '@/components/today/ReadinessCard'
+import { SessionCard, type LiftCard } from '@/components/lifting/SessionCard'
 import { RecoveryCard, type RecoveryCompact } from '@/components/today/RecoveryCard'
 import { PrincipleCard, type PrincipleToday } from '@/components/today/PrincipleCard'
 import { CreatineCard, type Creatine } from '@/components/today/CreatineCard'
@@ -24,7 +25,7 @@ interface Props {
   target: { kcal: number; protein: number; carbs: number; fat: number }
   logs: LogRow[]; previous: { date: string; count: number; kcal: number }
   calibrating: boolean; serverHour: number; weighedToday: boolean; training: TrainingProps
-  strip: Strip; water: Water; creatine: Creatine; readiness: Readiness | null; recovery?: RecoveryCompact | null; principle: PrincipleToday | null
+  strip: Strip; water: Water; creatine: Creatine; readiness: Readiness | null; recovery?: RecoveryCompact | null; sessionCard?: LiftCard | null; principle: PrincipleToday | null
   estimate: { kind: 'on_target' | 'under' | 'over'; kcal: number } | null
   consistency: { counted: number; total: number; exact: number; within15: number } | null
   nudge: { lowDays: number; loggedDays: number; gapKcal: number; gapProtein: number; adds: { name: string; grams: number; unit: string; kcal: number; protein: number }[] } | null
@@ -102,6 +103,7 @@ export default function Today(p: Props) {
       {p.isToday ? <HitStrip strip={p.strip} energyLabel={u} fmt={(k) => fmtEnergy(k, unit)} /> : null}
       {p.isToday && p.consistency && p.consistency.total > 0 ? <p className="mt-2 text-xs text-muted">{p.consistency.counted} of the last {p.consistency.total} days counted, {p.consistency.within15} within 15% of target. A rough day still counts.</p> : null}
       {p.isToday && p.readiness ? <ReadinessCard r={p.readiness} date={p.date} /> : null}
+      {p.isToday && p.sessionCard ? <div className="mt-3"><SessionCard c={p.sessionCard} heading={false} /></div> : null}
       {p.isToday && p.recovery ? <RecoveryCard r={p.recovery} /> : null}
       {p.isToday && p.principle ? <PrincipleCard p={p.principle} date={p.date} /> : null}
       <WaterCard water={p.water} date={p.date} />
