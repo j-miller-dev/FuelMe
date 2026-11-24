@@ -29,7 +29,7 @@ final class WatchMapper
         return $row['sleep_secs'] === null && $row['resting_hr'] === null && $row['hrv'] === null && $row['steps'] === null ? null : $row;
     }
 
-    /** @return array{ext_id:string,local_date:string,start_local:string,name:string,type:?string,minutes:?int,avg_hr:?int,max_hr:?int,load:?int,source:?string}|null */
+    /** @return array{ext_id:string,local_date:string,start_local:string,name:string,type:?string,minutes:?int,distance_m:?int,moving_secs:?int,avg_hr:?int,max_hr:?int,load:?int,source:?string}|null */
     public static function activity(array $a): ?array
     {
         $id = (string) ($a['id'] ?? '');
@@ -47,6 +47,8 @@ final class WatchMapper
             'name' => mb_substr(trim((string) ($a['name'] ?? '')) ?: 'Activity', 0, 120),
             'type' => isset($a['type']) ? mb_substr((string) $a['type'], 0, 40) : null,
             'minutes' => $secs === null ? null : (int) max(1, round($secs / 60)),
+            'distance_m' => self::int($a['distance'] ?? null, 1, 1_000_000),          // metres, as Intervals.icu reports it; unreasonable values are dropped
+            'moving_secs' => $secs,
             'avg_hr' => self::int($a['average_heartrate'] ?? null, 30, 230),
             'max_hr' => self::int($a['max_heartrate'] ?? null, 30, 230),
             'load' => self::int($a['icu_training_load'] ?? null, 0, 2000),

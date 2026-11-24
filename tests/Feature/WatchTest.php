@@ -4,6 +4,8 @@ use App\Jobs\SyncIntervals;
 use App\Services\Intervals\IntervalsSync;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -97,4 +99,25 @@ it('disconnects, and deletes the synced data only when asked', function () {
     icuConnect($this, $u);
     $this->actingAs($u)->delete('/watch/connection?delete_data=1')->assertRedirect();
     expect(DB::table('watch_days')->count())->toBe(0);
+});
+
+it('keeps distance and shows activities by month on /watch', function () {
+    $u = loggedInUser();
+    DB::table('intervals_connections')->insert(['user_id' => $u->id, 'api_key' => Crypt::encryptString('k1234567890'), 'athlete_id' => '0', 'created_at' => now(), 'updated_at' => now()]);
+    icuFake([], [['id' => 'a1', 'start_date_local' => '2026-05-28T06:00:00', 'name' => 'Melbourne Run', 'type' => 'Run', 'moving_time' => 4200, 'distance' => 8400, 'source' => 'COROS']]);
+    (new \App\Services\Intervals\IntervalsSync())->sync($u->fresh());
+
+    expect((int) DB::table('watch_activities')->value('distance_m'))->toBe(8400);
+    $this->actingAs($u)->get('/watch')->assertInertia(fn ($p) => $p->component('Watch')->where('months.0.month', '2026-05')->where('months.0.km', 8.4)->where('months.0.items.0.rate.value', 500));
+});
+
+it('re-read the last year clears the sync marker and queues a sync', function () {
+    Queue::fake();
+    $u = loggedInUser();
+    DB::table('intervals_connections')->insert(['user_id' => $u->id, 'api_key' => Crypt::encryptString('k1234567890'), 'athlete_id' => '0', 'last_synced_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+
+    $this->actingAs($u)->post('/watch/resync')->assertRedirect();
+
+    expect(DB::table('intervals_connections')->value('last_synced_at'))->toBeNull();
+    Queue::assertPushed(\App\Jobs\SyncIntervals::class);
 });

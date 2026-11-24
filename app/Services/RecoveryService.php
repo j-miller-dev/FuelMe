@@ -88,7 +88,7 @@ class RecoveryService
         ];
     }
 
-    /** @return array{srpe:array<string,mixed>,watch:array<string,mixed>,weeks:list<array<string,mixed>>} */
+    /** @return array<string,mixed> */
     private function load(User $user, string $today, string $from, array $deloadDates): array
     {
         $srpe = [];
@@ -115,7 +115,10 @@ class RecoveryService
             $weeks[] = ['weekStart' => $mon, 'srpe' => (int) round($sr), 'watch' => (int) round($wa), 'deload' => in_array($mon, $this->deloads->mondays($user), true)];
         }
 
-        return ['srpe' => LoadTrend::ratio($srpe, $today, $deloadDates), 'watch' => LoadTrend::ratio($watch, $today, $deloadDates), 'weeks' => $weeks];
+        $last7 = fn (array $daily) => array_map(fn ($i) => ['date' => date('Y-m-d', strtotime($today . " -{$i} days")), 'value' => (int) round($daily[date('Y-m-d', strtotime($today . " -{$i} days"))] ?? 0)], range(6, 0));
+
+        return ['srpe' => LoadTrend::ratio($srpe, $today, $deloadDates), 'watch' => LoadTrend::ratio($watch, $today, $deloadDates), 'weeks' => $weeks,
+            'daily' => ['srpe' => $last7($srpe), 'watch' => $last7($watch), 'hasWatch' => $watch !== [], 'hasSrpe' => $srpe !== []]];
     }
 
     /** A small version for the Today screen, or null when there is no watch data and no deload to mention. */
@@ -126,10 +129,14 @@ class RecoveryService
         }
         $o = $this->overview($user, false);
 
+        // One stream only (the two scales are never added): the watch's own load if there is any, else your session RPE x minutes.
+        $stream = $o['load']['daily']['hasWatch'] ? 'watch' : ($o['load']['daily']['hasSrpe'] ? 'srpe' : null);
+        $load = $stream === null ? null : ['stream' => $stream, 'label' => $stream === 'watch' ? 'Watch training load' : 'Session load (RPE × minutes)', 'days' => $o['load']['daily'][$stream], 'week' => $o['load'][$stream]['week'], 'usual' => $o['load'][$stream]['usual'], 'ratio' => $o['load'][$stream]['ratio']];
         $pick = fn (array $b) => ['status' => $b['status'], 'low' => $b['low'] ?? null, 'high' => $b['high'] ?? null, 'baseline' => $b['baseline'] ?? null];
 
         return ['level' => $o['signal']['level'], 'headline' => $o['signal']['headline'], 'reasons' => array_slice($o['signal']['flags'], 0, 2), 'deload' => $o['deload']['now'],
             'glance' => [
+                'load' => $load,
                 'today' => $o['today'], 'sleepTargetMin' => $o['sleep']['targetMin'], 'sleepDebtMin' => $o['sleep']['debt7Min'], 'sleepAvgMin' => $o['sleep']['avg7Min'],
                 'hrv' => $pick($o['hrv']), 'rhr' => $pick($o['rhr']),
                 // oldest first, 7 days ending today; a missing day has nulls so the chart shows a gap, never a zero

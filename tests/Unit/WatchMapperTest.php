@@ -18,8 +18,8 @@ it('ignores wellness rows without a real date', function () {
 });
 
 it('maps an activity from its local start time, and skips ones with no data', function () {
-    $a = WatchMapper::activity(['id' => 'i123', 'start_date_local' => '2026-11-23T06:30:00', 'name' => 'Run', 'type' => 'Run', 'moving_time' => 2705, 'average_heartrate' => 151.4, 'max_heartrate' => 178, 'icu_training_load' => 62, 'source' => 'COROS']);
-    expect($a)->toBe(['ext_id' => 'i123', 'local_date' => '2026-11-23', 'start_local' => '2026-11-23 06:30:00', 'name' => 'Run', 'type' => 'Run', 'minutes' => 45, 'avg_hr' => 151, 'max_hr' => 178, 'load' => 62, 'source' => 'COROS']);
+    $a = WatchMapper::activity(['id' => 'i123', 'start_date_local' => '2026-11-23T06:30:00', 'name' => 'Run', 'type' => 'Run', 'moving_time' => 2705, 'distance' => 8423.6, 'average_heartrate' => 151.4, 'max_heartrate' => 178, 'icu_training_load' => 62, 'source' => 'COROS']);
+    expect($a)->toBe(['ext_id' => 'i123', 'local_date' => '2026-11-23', 'start_local' => '2026-11-23 06:30:00', 'name' => 'Run', 'type' => 'Run', 'minutes' => 45, 'distance_m' => 8424, 'moving_secs' => 2705, 'avg_hr' => 151, 'max_hr' => 178, 'load' => 62, 'source' => 'COROS']);
 
     expect(WatchMapper::activity(['id' => 'i9', '_note' => 'STRAVA activities are not available via the API']))->toBeNull();
     $bad = WatchMapper::activity(['id' => 'i10', 'start_date_local' => '2026-11-23T06:30:00', 'average_heartrate' => 400, 'max_heartrate' => 5]);

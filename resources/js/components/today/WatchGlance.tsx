@@ -1,10 +1,11 @@
 import { Link } from '@inertiajs/react'
-import { Activity, Footprints, Heart, Moon } from 'lucide-react'
+import { Activity, Dumbbell, Footprints, Heart, Moon } from 'lucide-react'
 
 export interface Glance {
   today: string; sleepTargetMin: number; sleepDebtMin: number; sleepAvgMin: number | null
   hrv: { status: string; low: number | null; high: number | null; baseline: number | null }
   rhr: { status: string; low: number | null; high: number | null; baseline: number | null }
+  load: { stream: 'watch' | 'srpe'; label: string; days: { date: string; value: number }[]; week: number; usual: number | null; ratio: number | null } | null
   days: { date: string; sleepMin: number | null; restingHr: number | null; hrv: number | null; steps: number | null }[]
 }
 
@@ -78,6 +79,59 @@ function Line({ values, band, label, unit, Icon, goodHigh, status }: { values: (
   )
 }
 
+/** Resting HR on a horizontal range: the shaded part is your usual, the marker is today. Lower is generally calmer, so above-usual is the flagged side. */
+function RhrBar({ g }: { g: Glance }) {
+  const vals = g.days.map((d) => d.restingHr).filter((v): v is number => v !== null)
+  const last = g.days[g.days.length - 1]?.restingHr ?? null
+  const b = g.rhr
+  if (last === null && vals.length === 0) return null
+  const pts = [...vals, ...(b.low !== null && b.high !== null ? [b.low, b.high] : [])]
+  const lo = Math.floor(Math.min(...pts) - 4), hi = Math.ceil(Math.max(...pts) + 4)
+  const x = (v: number) => 4 + ((v - lo) / (hi - lo)) * 192
+  const shown = last ?? vals[vals.length - 1]!
+  const bad = b.status === 'above'
+  const tone = bad ? 'var(--color-fat)' : b.status === 'within' ? 'var(--color-accent)' : 'var(--color-muted)'
+  const word = b.status === 'unknown' ? 'Learning your usual' : b.status === 'within' ? 'Usual range' : b.status === 'above' ? 'Higher than usual' : 'Lower than usual'
+  return (
+    <div className="rounded-xl bg-canvas/60 p-3">
+      <div className="flex items-baseline justify-between"><p className="flex items-center gap-1 text-xs text-muted"><Heart className="size-3.5" aria-hidden />Resting HR</p><p className="text-xs" style={{ color: tone }}>{word}</p></div>
+      <p className="mt-0.5 text-xl font-semibold leading-none">{shown}<span className="ml-1 text-xs font-normal text-muted">bpm</span>{b.baseline !== null ? <span className="ml-2 text-xs font-normal text-muted">usual {Math.round(b.baseline)}</span> : null}</p>
+      <svg viewBox="0 0 200 30" className="mt-2 w-full" role="img" aria-label={`Resting heart rate ${shown} bpm, ${word}`}>
+        <rect x="4" y="12" width="192" height="6" rx="3" className="fill-raised" />
+        {b.low !== null && b.high !== null ? <rect x={x(b.low)} y="10" width={Math.max(4, x(b.high) - x(b.low))} height="10" rx="5" fill="var(--color-accent)" opacity="0.3" /> : null}
+        <polygon points={`${x(shown) - 6},4 ${x(shown) + 6},4 ${x(shown)},14`} fill={tone} />
+        <text x="4" y="29" fontSize="9" className="fill-muted">{lo}</text><text x="196" y="29" textAnchor="end" fontSize="9" className="fill-muted">{hi}</text>
+      </svg>
+    </div>
+  )
+}
+
+/** Seven days of training load with your own usual day as a dashed line. "Usual" is your last four weeks (deload weeks skipped), not a recommendation. */
+function LoadBars({ l }: { l: NonNullable<Glance['load']> }) {
+  const perDay = l.usual !== null ? l.usual / 7 : null
+  const max = Math.max(10, perDay ?? 0, ...l.days.map((d) => d.value)) * 1.1
+  const H = 44, y = (v: number) => H - (v / max) * H
+  const r = l.ratio
+  const word = r === null ? 'Learning your usual week' : r >= 1.3 ? 'Heavier than usual' : r < 0.7 ? 'Lighter than usual' : 'About your usual'
+  const tone = r !== null && r >= 1.3 ? 'var(--color-carbs)' : 'var(--color-accent)'
+  return (
+    <div className="rounded-xl bg-canvas/60 p-3">
+      <div className="flex items-baseline justify-between"><p className="flex items-center gap-1 text-xs text-muted"><Dumbbell className="size-3.5" aria-hidden />{l.label}</p><p className="text-xs" style={{ color: r === null ? undefined : tone }}>{word}</p></div>
+      <p className="mt-0.5 text-xl font-semibold leading-none">{Math.round(l.week)}<span className="ml-1 text-xs font-normal text-muted">this week</span>{l.usual !== null ? <span className="ml-2 text-xs font-normal text-muted">usual {Math.round(l.usual)}{r !== null ? ` · ${r.toFixed(1)}×` : ''}</span> : null}</p>
+      <svg viewBox={`0 0 140 ${H + 12}`} className="mt-1 w-full" role="img" aria-label={`${l.label} over the last 7 days. ${word}`}>
+        {perDay !== null ? <line x1="0" x2="140" y1={y(perDay)} y2={y(perDay)} stroke="currentColor" className="text-muted" strokeDasharray="3 3" strokeWidth="1" /> : null}
+        {l.days.map((d, i) => (
+          <g key={d.date}>
+            <rect x={i * 20 + 3} y={d.value ? y(d.value) : H - 2} width="14" height={d.value ? H - y(d.value) : 2} rx="3" className={d.value ? (i === l.days.length - 1 ? 'fill-accent' : 'fill-muted') : 'fill-raised'} opacity={d.value && i !== l.days.length - 1 ? 0.6 : 1} />
+            <text x={i * 20 + 10} y={H + 10} textAnchor="middle" fontSize="9" className="fill-muted">{dow(d.date)}</text>
+          </g>
+        ))}
+      </svg>
+      <p className="text-xs text-muted">Dashed line = your usual day. Rest days are zero. Compared only with you.</p>
+    </div>
+  )
+}
+
 function Steps({ days }: { days: Glance['days'] }) {
   const last = days[days.length - 1]?.steps ?? null
   const max = Math.max(1000, ...days.map((d) => d.steps ?? 0))
@@ -98,17 +152,20 @@ function Steps({ days }: { days: Glance['days'] }) {
 }
 
 export function WatchGlance({ g }: { g: Glance }) {
-  const hasAny = g.days.some((d) => d.sleepMin !== null || d.hrv !== null || d.restingHr !== null || d.steps !== null)
+  const hasAny = g.load !== null || g.days.some((d) => d.sleepMin !== null || d.hrv !== null || d.restingHr !== null || d.steps !== null)
   if (!hasAny) return null
   return (
     <section className="mt-3 rounded-2xl bg-surface p-4" aria-label="From your watch">
       <div className="mb-3 flex items-center justify-between"><h2 className="flex items-center gap-2 text-sm font-semibold"><Activity className="size-4 text-accent" aria-hidden />Last night and this week</h2><Link href="/recovery" className="text-xs text-muted">Details ›</Link></div>
       <Sleep g={g} />
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <Line values={g.days.map((d) => d.hrv)} band={g.hrv} label="HRV" unit="ms" Icon={Activity} goodHigh status={g.hrv.status} />
-        <Line values={g.days.map((d) => d.restingHr)} band={g.rhr} label="Resting HR" unit="bpm" Icon={Heart} goodHigh={false} status={g.rhr.status} />
+      <div className="mt-3 space-y-2">
+        <div className="grid grid-cols-2 gap-2">
+          <Line values={g.days.map((d) => d.hrv)} band={g.hrv} label="HRV" unit="ms" Icon={Activity} goodHigh status={g.hrv.status} />
+          <Steps days={g.days} />
+        </div>
+        <RhrBar g={g} />
+        {g.load ? <LoadBars l={g.load} /> : null}
       </div>
-      <div className="mt-2"><Steps days={g.days} /></div>
       <p className="mt-2 text-xs text-muted">Shaded band = your usual range. Compared only with you, not a medical reading.</p>
     </section>
   )

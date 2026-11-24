@@ -43,6 +43,12 @@ class WatchService
         return array_slice(array_map(fn ($r) => $r['row'], $rows), 0, $n);
     }
 
+    /** Per month: distance, number of sessions, hours, and each session with its pace or speed. Newest month first. @return list<array<string,mixed>> */
+    public function months(User $user, int $days = 400): array
+    {
+        return \App\Domain\Watch\ActivityStats::months(array_map(fn ($r) => $r['row'], $this->kept($user, $days)));
+    }
+
     /** @return list<array{row:array<string,mixed>,start:int}> the sessions that count, newest first */
     public function kept(User $user, int $days): array
     {
@@ -56,7 +62,7 @@ class WatchService
         $out = [];
         foreach ($all as $a) {
             if (in_array((int) $a->id, $res['keep'], true)) {
-                $out[] = ['start' => strtotime($a->start_local . ' UTC'), 'row' => ['id' => (int) $a->id, 'date' => (string) $a->local_date, 'name' => $a->name, 'type' => $a->type, 'minutes' => $a->minutes, 'avgHr' => $a->avg_hr,
+                $out[] = ['start' => strtotime($a->start_local . ' UTC'), 'row' => ['id' => (int) $a->id, 'date' => (string) $a->local_date, 'name' => $a->name, 'type' => $a->type, 'minutes' => $a->minutes, 'distanceM' => $a->distance_m, 'secs' => $a->moving_secs, 'avgHr' => $a->avg_hr,
                     'maxHr' => $a->max_hr, 'load' => $a->load, 'source' => $a->source, 'alsoRecordedBy' => array_values(array_unique($also[(int) $a->id] ?? []))]];
             }
         }

@@ -151,3 +151,17 @@ it('gives Today seven oldest-first days for the charts, with gaps as nulls and t
     expect($g['days'])->toHaveCount(7)->and($g['days'][6]['date'])->toBe($g['today'])->and($g['days'][0]['date'] < $g['days'][6]['date'])->toBeTrue()
         ->and($g['sleepTargetMin'])->toBe(480)->and($g['hrv']['status'])->toBe('below')->and($g['hrv']['low'])->not->toBeNull();
 });
+
+it('shows one load stream on Today: the watch load when there is any, else session RPE x minutes, never both added', function () {
+    $u = loggedInUser();
+    recSeed($u);
+    $today = $this->actingAs($u)->get('/')->viewData('page')['props']['recovery']['glance']['today'];
+    DB::table('workout_logs')->where('user_id', $u->id)->delete();
+
+    expect($this->actingAs($u)->get('/')->viewData('page')['props']['recovery']['glance']['load'])->toBeNull();
+
+    DB::table('watch_activities')->insert(['user_id' => $u->id, 'ext_id' => 'x1', 'local_date' => $today, 'start_local' => $today . ' 06:00:00', 'name' => 'Run', 'type' => 'Run', 'minutes' => 40, 'load' => 80, 'source' => 'COROS', 'created_at' => now(), 'updated_at' => now()]);
+    $l = $this->actingAs($u)->get('/')->viewData('page')['props']['recovery']['glance']['load'];
+
+    expect($l['stream'])->toBe('watch')->and($l['days'])->toHaveCount(7)->and($l['days'][6]['value'])->toBe(80)->and($l['week'])->toBe(80.0);
+});

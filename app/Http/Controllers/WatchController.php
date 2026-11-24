@@ -28,7 +28,7 @@ class WatchController extends Controller
         return Inertia::render('Watch', [
             'connection' => $conn ? ['last_synced_at' => $conn->last_synced_at ? Carbon::parse($conn->last_synced_at, 'UTC')->toIso8601String() : null, 'last_error' => $conn->last_error] : null,
             'days' => $watch->days($user),
-            'activities' => $watch->activities($user),
+            'months' => $watch->months($user),
         ]);
     }
 
@@ -50,6 +50,16 @@ class WatchController extends Controller
     public function sync(Request $request): RedirectResponse
     {
         abort_unless(DB::table('intervals_connections')->where('user_id', $request->user()->id)->exists(), 404);
+        SyncIntervals::dispatch($request->user()->id);
+
+        return back();
+    }
+
+    /** Forget when we last synced so the next run re-reads the whole first-run window (a year). Rows are matched by id, so nothing is duplicated. */
+    public function resync(Request $request): RedirectResponse
+    {
+        abort_unless(DB::table('intervals_connections')->where('user_id', $request->user()->id)->exists(), 404);
+        DB::table('intervals_connections')->where('user_id', $request->user()->id)->update(['last_synced_at' => null, 'updated_at' => now()]);
         SyncIntervals::dispatch($request->user()->id);
 
         return back();

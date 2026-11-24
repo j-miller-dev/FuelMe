@@ -123,6 +123,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/recovery/deload', [\App\Http\Controllers\RecoveryController::class, 'deload'])->name('recovery.deload');
     Route::post('/watch/connect', [\App\Http\Controllers\WatchController::class, 'connect'])->middleware('throttle:10,1')->name('watch.connect');
     Route::post('/watch/sync', [\App\Http\Controllers\WatchController::class, 'sync'])->middleware('throttle:10,1')->name('watch.sync');
+    Route::post('/watch/resync', [\App\Http\Controllers\WatchController::class, 'resync'])->middleware('throttle:10,1')->name('watch.resync');
     Route::delete('/watch/connection', [\App\Http\Controllers\WatchController::class, 'disconnect'])->name('watch.disconnect');
     Route::post('/lifting/connect', [\App\Http\Controllers\HevyController::class, 'connect'])->middleware('throttle:10,1')->name('lifting.connect');
     Route::post('/lifting/sync', [\App\Http\Controllers\HevyController::class, 'sync'])->middleware('throttle:10,1')->name('lifting.sync');

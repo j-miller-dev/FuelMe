@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Pulls daily watch data (sleep, resting HR, HRV, steps) and activities from Intervals.icu. The first run reads the last 90 days; later runs
+ * Pulls daily watch data (sleep, resting HR, HRV, steps) and activities from Intervals.icu. The first run (or a full re-read) reads the last 365 days; later runs
  * re-read the last 14 days, because a night's sleep often lands hours after you wake up. Re-running is safe (rows are matched by date or id).
  * Display and insight data only: nothing here changes a calorie target.
  */
 class IntervalsSync
 {
-    public const FIRST_DAYS = 90;
+    public const FIRST_DAYS = 365;
     public const REFRESH_DAYS = 14;
 
     public function client(object $conn): IntervalsClient
