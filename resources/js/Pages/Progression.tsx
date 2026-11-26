@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react'
 import { TrendingUp } from 'lucide-react'
 import LiftingNav from '@/components/lifting/LiftingNav'
-import { FolderPicker } from '@/components/lifting/PhasePoster'
+import { FolderPicker, ProgramBanner } from '@/components/lifting/PhasePoster'
 import AppLayout from '@/layouts/AppLayout'
 import NextTime, { type Next, type Projection, type StepInfo, targetText } from '@/components/lifting/NextTime'
 
@@ -23,6 +23,7 @@ export default function Progression({ program: p }: { program: Program }) {
       <header className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-lg font-semibold"><TrendingUp className="size-5 text-accent" aria-hidden />Progression</h1>
       </header>
+      <ProgramBanner folders={p.folders.map((f) => f.title)} />
       <LiftingNav current="progression" />
       <p className="mt-1 text-sm text-muted">What to aim for next time on each exercise, from your own logged sets, with a rough projection. Suggestions only: you decide, and nothing is changed in Hevy.</p>
 

@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react'
 import { ChevronRight, ListChecks } from 'lucide-react'
 import { useState } from 'react'
 import LiftingNav from '@/components/lifting/LiftingNav'
-import { PhaseBanner } from '@/components/lifting/PhasePoster'
+import { PhaseBanner, ProgramBanner } from '@/components/lifting/PhasePoster'
 import AppLayout from '@/layouts/AppLayout'
 
 interface Item { id: number; title: string; folder: string | null; exercises: number; working_sets: number; muscles: string[]; last_done: string | null }
@@ -46,6 +46,7 @@ export default function Routines({ connected, data }: Props) {
       <header className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-lg font-semibold"><ListChecks className="size-5 text-accent" aria-hidden />Routines</h1>
       </header>
+      <ProgramBanner folders={(data?.routines ?? []).map((r) => r.folder)} />
       <LiftingNav current="routines" />
       <p className="mt-1 text-sm text-muted">Your Hevy routines, read-only. Edit them in Hevy; FUEL shows them next to your own last numbers.</p>
 

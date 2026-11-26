@@ -1,5 +1,12 @@
 import { Link } from '@inertiajs/react'
+import programBanner from '@/assets/modes/rational-intensity.webp'
 import { phaseOf } from '@/lib/phaseArt'
+
+/** The Rational Intensity title banner. Shown only when at least one of the folders is a phase, so it never labels some other program. */
+export function ProgramBanner({ folders }: { folders: (string | null)[] }) {
+  if (!folders.some((f) => phaseOf(f))) return null
+  return <img src={programBanner} alt="Rational Intensity, the Mentzer training system: Tension, Overload, Heavy Duty" className="mt-3 aspect-[8/3] w-full rounded-2xl object-cover" />
+}
 
 /** Wide strip from the top of a phase poster (title, tagline, head). Nothing for folders that are not a phase. */
 export function PhaseBanner({ folder }: { folder: string | null }) {
