@@ -11,18 +11,19 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Your Hevy routines (read-only copies) next to your own numbers: what the routine plans, what you did last time, what to beat, and your notes.
- * FUEL never edits the routine in Hevy and never decides what you should lift: "beat the log" is a prompt from your own last set.
+ * FUEL never edits the routine in Hevy. "Beat the log" and the suggestions are prompts from your own logged sets, never an order.
  */
 class RoutinesService
 {
-    public function __construct(private StrengthService $strength, private \App\Services\DeloadService $deloads, private ProgressionService $progression) {}
+    public function __construct(private StrengthService $strength, private \App\Services\DeloadService $deloads, private ProgressionService $progression, private RoutineFoldersService $folders) {}
 
     /** @return array<string,mixed> */
     public function list(User $user): array
     {
         $conn = DB::table('hevy_connections')->where('user_id', $user->id)->first();
         // sorted here, not in SQL: databases disagree on where NULL (no folder) sorts. Folders A to Z, no folder last, then by title.
-        $rows = DB::table('hevy_routines')->where('user_id', $user->id)->get()->sort(fn ($a, $b) => [$a->folder_title === null, mb_strtolower((string) $a->folder_title), mb_strtolower($a->title)] <=> [$b->folder_title === null, mb_strtolower((string) $b->folder_title), mb_strtolower($b->title)])->values();
+        $fs = $this->folders->state($user);
+        $rows = DB::table('hevy_routines')->where('user_id', $user->id)->get()->filter(fn ($r) => in_array((string) ($r->folder_id ?? 'none'), $fs['shown'], true))->sort(fn ($a, $b) => [$a->folder_title === null, mb_strtolower((string) $a->folder_title), mb_strtolower($a->title)] <=> [$b->folder_title === null, mb_strtolower((string) $b->folder_title), mb_strtolower($b->title)])->values();
         $ex = DB::table('hevy_routine_exercises')->whereIn('hevy_routine_id', $rows->pluck('id'))->get()->groupBy('hevy_routine_id');
         $tpl = DB::table('hevy_templates')->where('user_id', $user->id)->pluck('muscle', 'template_id');
         $done = DB::table('hevy_workouts')->where('user_id', $user->id)->orderBy('local_date')->get(['routine_id', 'title', 'local_date']);
@@ -41,7 +42,7 @@ class RoutinesService
             $out[] = ['id' => (int) $r->id, 'title' => $r->title, 'folder' => $r->folder_title, 'exercises' => $list->count(), 'working_sets' => $sets, 'muscles' => array_slice(array_keys($muscles), 0, 3), 'last_done' => $this->lastDone($done, $r)];
         }
 
-        return ['routines' => $out, 'synced_at' => $conn?->routines_synced_at ? \Illuminate\Support\Carbon::parse($conn->routines_synced_at, 'UTC')->toIso8601String() : null, 'error' => $conn?->routines_error];
+        return ['routines' => $out, 'folders' => $fs['folders'], 'auto_folders' => $fs['auto'], 'hidden_folders' => $fs['hidden'], 'synced_at' => $conn?->routines_synced_at ? \Illuminate\Support\Carbon::parse($conn->routines_synced_at, 'UTC')->toIso8601String() : null, 'error' => $conn?->routines_error];
     }
 
     /** @return array<string,mixed>|null */

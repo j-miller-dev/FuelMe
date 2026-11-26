@@ -103,6 +103,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/principles/{principle}', [\App\Http\Controllers\PrincipleController::class, 'archive'])->whereNumber('principle')->name('principles.archive');
     Route::get('/lifting', [\App\Http\Controllers\HevyController::class, 'show'])->name('lifting');
     Route::get('/lifting/routines', [\App\Http\Controllers\RoutinesController::class, 'index'])->name('lifting.routines');
+    Route::put('/lifting/routines/folders', [\App\Http\Controllers\RoutinesController::class, 'saveFolders'])->name('lifting.routines.folders');
+    Route::delete('/lifting/routines/folders', [\App\Http\Controllers\RoutinesController::class, 'resetFolders'])->name('lifting.routines.folders.reset');
     Route::get('/lifting/routines/{routine}', [\App\Http\Controllers\RoutinesController::class, 'show'])->whereNumber('routine')->name('lifting.routine');
     Route::get('/lifting/progression', [\App\Http\Controllers\RoutinesController::class, 'progression'])->name('lifting.progression');
     Route::post('/achievements/dismiss', [\App\Http\Controllers\AchievementController::class, 'dismiss'])->middleware('throttle:60,1')->name('achievements.dismiss');

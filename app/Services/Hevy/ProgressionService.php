@@ -74,7 +74,8 @@ class ProgressionService
     /** Folders of routines, and the suggestions for every exercise in one folder (default: "Rational Intensity", else the folder you did most recently). @return array<string,mixed> */
     public function program(User $user, ?string $folderKey): array
     {
-        $routines = DB::table('hevy_routines')->where('user_id', $user->id)->get();
+        $shownKeys = app(RoutineFoldersService::class)->shownKeys($user);
+        $routines = DB::table('hevy_routines')->where('user_id', $user->id)->get()->filter(fn ($r) => in_array((string) ($r->folder_id ?? 'none'), $shownKeys, true))->values();
         $folders = [];
         foreach ($routines as $r) {
             $k = $r->folder_id ?? 'none';

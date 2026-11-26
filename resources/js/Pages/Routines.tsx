@@ -1,11 +1,39 @@
-import { Head, Link } from '@inertiajs/react'
+import { Head, Link, router } from '@inertiajs/react'
 import { ChevronRight, ListChecks } from 'lucide-react'
+import { useState } from 'react'
 import AppLayout from '@/layouts/AppLayout'
 
 interface Item { id: number; title: string; folder: string | null; exercises: number; working_sets: number; muscles: string[]; last_done: string | null }
-interface Props { connected: boolean; data: { routines: Item[]; synced_at: string | null; error: string | null } | null }
+interface FolderOpt { key: string; title: string; routines: number; shown: boolean }
+interface Props { connected: boolean; data: { routines: Item[]; folders: FolderOpt[]; auto_folders: boolean; hidden_folders: number; synced_at: string | null; error: string | null } | null }
 
 const pretty = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+
+function FolderPicker({ folders, auto }: { folders: FolderOpt[]; auto: boolean }) {
+  const [open, setOpen] = useState(false)
+  const [sel, setSel] = useState<string[]>(folders.filter((f) => f.shown).map((f) => f.key))
+  const toggle = (k: string) => setSel((s) => (s.includes(k) ? s.filter((x) => x !== k) : [...s, k]))
+  return (
+    <div className="mt-3 rounded-2xl bg-surface p-3 text-sm">
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex min-h-11 w-full items-center justify-between text-left">
+        <span>{auto ? 'Showing your current program folders.' : 'Showing the folders you chose.'} <span className="text-muted">{folders.filter((f) => f.shown).length} of {folders.length}</span></span>
+        <span className="text-accent underline">{open ? 'Close' : 'Choose'}</span>
+      </button>
+      {open ? (
+        <div className="mt-2 border-t border-raised pt-2">
+          <p className="text-xs text-muted">Hiding a folder only hides it here. Nothing is deleted in Hevy or in FUEL.</p>
+          <ul className="mt-2">{folders.map((f) => (
+            <li key={f.key}><label className="flex min-h-11 items-center gap-3"><input type="checkbox" className="size-5" checked={sel.includes(f.key)} onChange={() => toggle(f.key)} /><span>{f.title} <span className="text-xs text-muted">({f.routines})</span></span></label></li>
+          ))}</ul>
+          <div className="mt-2 flex gap-2">
+            <button type="button" disabled={sel.length === 0} onClick={() => router.put('/lifting/routines/folders', { keys: sel }, { preserveScroll: true, onSuccess: () => setOpen(false) })} className="min-h-11 rounded-xl bg-accent px-4 text-sm font-medium text-on-accent disabled:opacity-40">Save</button>
+            {!auto ? <button type="button" onClick={() => router.delete('/lifting/routines/folders', { preserveScroll: true, onSuccess: () => setOpen(false) })} className="min-h-11 px-3 text-sm text-muted underline">Back to automatic</button> : null}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}
 
 export default function Routines({ connected, data }: Props) {
   const groups = new Map<string, Item[]>()
@@ -24,6 +52,7 @@ export default function Routines({ connected, data }: Props) {
       ) : (
         <>
           {data.error ? <p role="alert" className="mt-3 rounded-2xl bg-surface p-3 text-sm text-fat">Routines could not be read from Hevy: {data.error} Your workouts still sync.</p> : null}
+          {data.folders.length > 1 ? <FolderPicker key={data.folders.map((f) => f.key + f.shown).join()} folders={data.folders} auto={data.auto_folders} /> : null}
           {data.routines.length === 0 ? (
             <p className="mt-4 rounded-2xl bg-surface p-4 text-sm text-muted">{data.synced_at ? 'Hevy has no routines for this account.' : 'No routines yet. They appear after the next sync (press Sync now on Lifting).'}</p>
           ) : (

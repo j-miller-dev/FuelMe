@@ -48,13 +48,15 @@ it('opens on the Rational Intensity folder and suggests a jump when the top of t
     pgRoutine($u, 'r-other', 'Push', 'F2', 'Other plan', [['BP1', 'Bench Press', 3, 6, 8]]);
     pgRoutine($u, 'r-a', 'Day A: Optimized (Tension)', 'F1', 'Rational Intensity P1: Optimized (Tension)', [['BP1', 'Bench Press', 3, 8, 10], ['RW1', 'Row (Machine)', 2, 8, 10], ['JR', 'Jump Rope', 1, null, null]]);
     pgWorkout($u, '2026-11-20', [['BP1', 'Bench Press', [[80, 10], [80, 10], [80, 10]]], ['RW1', 'Row (Machine)', [[50, 9], [50, 8]]]], 'r-a');
-    $this->actingAs($u)->get('/lifting/progression')->assertInertia(fn ($p) => $p->component('Progression')->where('program.selected', 'F1')->has('program.folders', 2)
+    $this->actingAs($u)->get('/lifting/progression')->assertInertia(fn ($p) => $p->component('Progression')->where('program.selected', 'F1')->has('program.folders', 1)   // the old "Other plan" folder is hidden by default
         ->where('program.routines.0.title', 'Day A: Optimized (Tension)')
         ->where('program.routines.0.exercises.0.next.action', 'increase')->where('program.routines.0.exercises.0.next.kg', 82.5)->where('program.routines.0.exercises.0.next.reps_low', 8)
         ->where('program.routines.0.exercises.1.next.action', 'hold')->where('program.routines.0.exercises.1.next.kg', 50)
         ->where('program.routines.0.exercises.2.next.action', 'no_load')
         ->where('program.summary.increase', 1)->where('program.summary.hold', 1)->where('program.summary.no_load', 1));
-    // another folder on request, and an unknown key falls back to the default
+    // a hidden folder cannot be opened by key (falls back to the default) until you choose to show it
+    $this->actingAs($u)->get('/lifting/progression?folder=F2')->assertInertia(fn ($p) => $p->where('program.selected', 'F1'));
+    $this->actingAs($u)->put('/lifting/routines/folders', ['keys' => ['F1', 'F2']]);
     $this->actingAs($u)->get('/lifting/progression?folder=F2')->assertInertia(fn ($p) => $p->where('program.selected', 'F2')->where('program.routines.0.title', 'Push'));
     $this->actingAs($u)->get('/lifting/progression?folder=nope')->assertInertia(fn ($p) => $p->where('program.selected', 'F1'));
 });

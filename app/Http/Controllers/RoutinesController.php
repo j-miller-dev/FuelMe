@@ -24,6 +24,23 @@ class RoutinesController extends Controller
         return Inertia::render('Routines', ['connected' => $connected, 'data' => $connected ? $routines->list($user) : null]);
     }
 
+    /** Choose which folders FUEL shows (display only). */
+    public function saveFolders(Request $request, \App\Services\Hevy\RoutineFoldersService $folders): RedirectResponse
+    {
+        $d = $request->validate(['keys' => ['present', 'array', 'max:40'], 'keys.*' => ['string', 'max:64']]);
+        abort_unless(DB::table('hevy_connections')->where('user_id', $request->user()->id)->exists(), 404);
+        $folders->save($request->user(), $d['keys']);
+
+        return back();
+    }
+
+    public function resetFolders(Request $request, \App\Services\Hevy\RoutineFoldersService $folders): RedirectResponse
+    {
+        $folders->reset($request->user());
+
+        return back();
+    }
+
     public function show(Request $request, RoutinesService $routines, int $routine): Response|RedirectResponse
     {
         $user = $request->user();

@@ -139,3 +139,37 @@ it('needs a login, is private per user, and is removed with "delete synced data"
     $this->actingAs($u)->delete('/lifting/connection?delete_data=1');
     expect(DB::table('hevy_routines')->count())->toBe(0)->and(DB::table('hevy_routine_exercises')->count())->toBe(0);
 });
+
+function rfSeed($u, string $folderId, string $folder, string $title): void
+{
+    DB::table('hevy_connections')->updateOrInsert(['user_id' => $u->id], ['api_key' => 'x', 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('hevy_routines')->insert(['user_id' => $u->id, 'hevy_id' => 'r-' . $title, 'title' => $title, 'folder_id' => $folderId, 'folder_title' => $folder, 'created_at' => now(), 'updated_at' => now()]);
+}
+
+it('hides old program folders by default, lets you choose your own, and resets to automatic', function () {
+    $u = loggedInUser();
+    rfSeed($u, '10', 'Rational Intensity P1: Optimized (Tension)', 'Day A');
+    rfSeed($u, '11', 'Rational Intensity P2: Overload', 'Day A2');
+    rfSeed($u, '20', 'PHASE 1: ANATOMICAL ADAPTATION', 'Old Day A');
+
+    $titles = fn () => collect($this->actingAs($u)->get('/lifting/routines')->viewData('page')['props']['data']['routines'])->pluck('title')->all();
+    expect($titles())->toBe(['Day A', 'Day A2']);
+
+    $this->actingAs($u)->put('/lifting/routines/folders', ['keys' => ['20']])->assertRedirect();
+    expect($titles())->toBe(['Old Day A']);
+
+    $this->actingAs($u)->delete('/lifting/routines/folders')->assertRedirect();
+    expect($titles())->toBe(['Day A', 'Day A2']);
+
+    // the progression page and the coach list follow the same choice
+    $this->actingAs($u)->get('/lifting/progression')->assertInertia(fn ($p) => $p->where('program.folders.0.title', 'Rational Intensity P1: Optimized (Tension)')->has('program.folders', 2));
+    expect(array_column(app(\App\Services\Coach\CoachTools::class)->run('get_routines', [], $u)['routines'], 'title'))->toBe(['Day A', 'Day A2']);
+});
+
+it('refuses a junk folder choice', function () {
+    $u = loggedInUser();
+    rfSeed($u, '10', 'HIT', 'Day A');
+
+    $this->actingAs($u)->putJson('/lifting/routines/folders', [])->assertStatus(422);
+    $this->actingAs($u)->putJson('/lifting/routines/folders', ['keys' => [str_repeat('x', 65)]])->assertStatus(422);
+});
