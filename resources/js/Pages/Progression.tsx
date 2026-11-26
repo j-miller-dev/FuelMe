@@ -1,5 +1,7 @@
 import { Head, Link } from '@inertiajs/react'
 import { TrendingUp } from 'lucide-react'
+import LiftingNav from '@/components/lifting/LiftingNav'
+import { FolderPicker } from '@/components/lifting/PhasePoster'
 import AppLayout from '@/layouts/AppLayout'
 import NextTime, { type Next, type Projection, type StepInfo, targetText } from '@/components/lifting/NextTime'
 
@@ -20,21 +22,15 @@ export default function Progression({ program: p }: { program: Program }) {
       <Head title="Progression" />
       <header className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-lg font-semibold"><TrendingUp className="size-5 text-accent" aria-hidden />Progression</h1>
-        <Link href="/lifting/routines" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Routines</Link>
       </header>
+      <LiftingNav current="progression" />
       <p className="mt-1 text-sm text-muted">What to aim for next time on each exercise, from your own logged sets, with a rough projection. Suggestions only: you decide, and nothing is changed in Hevy.</p>
 
       {!p.connected && p.folders.length === 0 ? (
         <p className="mt-4 rounded-2xl bg-surface p-4 text-sm">No routines yet. Connect Hevy and press Sync now. <Link href="/lifting" className="text-accent underline">Go to Lifting</Link></p>
       ) : (
         <>
-          {p.folders.length > 1 ? (
-            <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1" role="group" aria-label="Folder">
-              {p.folders.map((f) => (
-                <Link key={f.key} href={`/lifting/progression?folder=${encodeURIComponent(f.key)}`} preserveScroll aria-current={f.key === p.selected} className={`flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm ${f.key === p.selected ? 'bg-accent text-on-accent' : 'bg-raised'}`}>{f.title}</Link>
-              ))}
-            </div>
-          ) : folder ? <p className="mt-3 text-sm font-medium">{folder.title}</p> : null}
+          {p.folders.length > 1 ? <FolderPicker folders={p.folders} selected={p.selected} /> : folder ? <p className="mt-3 text-sm font-medium">{folder.title}</p> : null}
 
           {p.effort_now ? <p className="mt-3 rounded-2xl bg-surface p-3 text-sm">Your effort plan this week: <span className="font-medium">{p.effort_now.label}</span>. The reps shown for a new weight assume that effort.</p> : null}
           {s ? <p className="mt-3 rounded-2xl bg-surface p-3 text-sm"><span className="font-medium">{s.increase ?? 0} ready to go up</span>, {s.hold ?? 0} same weight, {(s.repeat ?? 0) + (s.reduce ?? 0)} to repeat or ease back{(s.start ?? 0) ? `, ${s.start} not done yet` : ''}.</p> : null}

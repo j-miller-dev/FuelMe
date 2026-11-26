@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react'
 import { Dumbbell } from 'lucide-react'
+import LiftingNav from '@/components/lifting/LiftingNav'
 import AppLayout from '@/layouts/AppLayout'
 import { SessionCard, type LiftCard } from '@/components/lifting/SessionCard'
 
@@ -12,8 +13,8 @@ export default function Sessions({ connected, months, notes }: { connected: bool
       <Head title="Lifting sessions" />
       <header className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-lg font-semibold"><Dumbbell className="size-5 text-accent" aria-hidden />Lifting sessions</h1>
-        <Link href="/lifting" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Lifting</Link>
       </header>
+      <LiftingNav current="sessions" />
       {!connected ? <p className="mt-4 rounded-2xl bg-surface p-4 text-sm">Connect Hevy first and your sessions appear here. <Link href="/lifting" className="text-accent underline">Go to Lifting</Link></p>
         : months.length === 0 ? <p className="mt-4 rounded-2xl bg-surface p-4 text-sm">No synced sessions yet. Press Sync now on the Lifting page.</p>
         : months.map((m) => (

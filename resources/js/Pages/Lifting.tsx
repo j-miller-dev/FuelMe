@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Head, Link, router, useForm } from '@inertiajs/react'
+import LiftingNav from '@/components/lifting/LiftingNav'
 import AppLayout from '@/layouts/AppLayout'
 import { Button } from '@/components/ui/button'
 
@@ -67,10 +68,8 @@ export default function Lifting({ connection, data, insights, ramp, rampNow, tod
   return (
     <AppLayout>
       <Head title="Lifting" />
-      <header className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Lifting</h1>
-        <span className="flex gap-1"><Link href="/lifting/sessions" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Sessions</Link><Link href="/lifting/progression" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Progression</Link><Link href="/lifting/routines" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Routines</Link><Link href="/lifting/best" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Best lifts</Link><Link href="/training" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Training</Link></span>
-      </header>
+      <header><h1 className="text-lg font-semibold">Lifting</h1></header>
+      <LiftingNav current="lifting" />
       <p className="mt-1 text-sm text-muted">Your Hevy workouts, read-only. FUEL never changes anything in Hevy. Strength numbers are estimates, not measurements of muscle.</p>
 
       {!connection ? (

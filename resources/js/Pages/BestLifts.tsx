@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Head, Link } from '@inertiajs/react'
 import { ChevronRight, StickyNote, Trophy } from 'lucide-react'
+import LiftingNav from '@/components/lifting/LiftingNav'
 import AppLayout from '@/layouts/AppLayout'
 
 interface Rec { kg: number; reps: number; date: string; new: boolean }
@@ -28,8 +29,8 @@ export default function BestLifts({ connected, board }: Props) {
       <Head title="Best lifts" />
       <header className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-lg font-semibold"><Trophy className="size-5 text-accent" aria-hidden />Best lifts</h1>
-        <Link href="/lifting" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Lifting</Link>
       </header>
+      <LiftingNav current="best" />
       <p className="mt-1 text-sm text-muted">Your records from every synced Hevy session. Read-only: FUEL never changes anything in Hevy.</p>
 
       {!connected || !board ? (

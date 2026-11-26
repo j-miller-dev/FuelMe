@@ -1,6 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react'
 import { ChevronRight, ListChecks } from 'lucide-react'
 import { useState } from 'react'
+import LiftingNav from '@/components/lifting/LiftingNav'
+import { PhaseBanner } from '@/components/lifting/PhasePoster'
 import AppLayout from '@/layouts/AppLayout'
 
 interface Item { id: number; title: string; folder: string | null; exercises: number; working_sets: number; muscles: string[]; last_done: string | null }
@@ -43,8 +45,8 @@ export default function Routines({ connected, data }: Props) {
       <Head title="Routines" />
       <header className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-lg font-semibold"><ListChecks className="size-5 text-accent" aria-hidden />Routines</h1>
-        <span className="flex gap-1"><Link href="/lifting/progression" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Progression</Link><Link href="/lifting" className="min-h-11 px-2 text-sm text-accent underline leading-[2.75rem]">Lifting</Link></span>
       </header>
+      <LiftingNav current="routines" />
       <p className="mt-1 text-sm text-muted">Your Hevy routines, read-only. Edit them in Hevy; FUEL shows them next to your own last numbers.</p>
 
       {!connected || !data ? (
@@ -58,7 +60,8 @@ export default function Routines({ connected, data }: Props) {
           ) : (
             [...groups.entries()].map(([folder, items]) => (
               <section key={folder} className="mt-4" aria-label={folder}>
-                <h2 className="text-sm font-medium text-muted">{folder}</h2>
+                <PhaseBanner folder={folder} />
+                <h2 className="mt-2 text-sm font-medium text-muted">{folder}</h2>
                 <ul className="mt-1 space-y-2">
                   {items.map((r) => (
                     <li key={r.id}>
