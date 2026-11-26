@@ -1,22 +1,18 @@
 import { Link } from '@inertiajs/react'
-import programBanner from '@/assets/modes/rational-intensity.webp'
+import programLogo from '@/assets/modes/ri-logo.webp'
 import { phaseOf } from '@/lib/phaseArt'
 
 /** The Rational Intensity title banner. Shown only when at least one of the folders is a phase, so it never labels some other program. */
 export function ProgramBanner({ folders }: { folders: (string | null)[] }) {
   if (!folders.some((f) => phaseOf(f))) return null
-  return <img src={programBanner} alt="Rational Intensity, the Mentzer training system: Tension, Overload, Heavy Duty" className="mt-3 aspect-[8/3] w-full rounded-2xl object-cover" />
+  return <img src={programLogo} alt="Rational Intensity" className="mx-auto mt-3 block w-full max-w-xs" />
 }
 
-/** Wide strip from the top of a phase poster (title, tagline, head). Nothing for folders that are not a phase. */
+/** The coloured phase logo (Phase 1 Tension red, 2 Overload blue, 3 Heavy Duty yellow) for a folder. Nothing for folders that are not a phase. */
 export function PhaseBanner({ folder }: { folder: string | null }) {
   const p = phaseOf(folder)
   if (!p) return null
-  return (
-    <div className="relative mt-1 h-32 overflow-hidden rounded-2xl bg-black">
-      <img src={p.art} alt={`Phase ${p.n}: ${p.name}. ${p.line}.`} className="h-full w-full object-cover object-top" loading="lazy" />
-    </div>
-  )
+  return <img src={p.logo} alt={`Phase ${p.n}: ${p.name}`} className="mt-1 h-14 w-auto" loading="lazy" />
 }
 
 interface F { key: string; title: string; routines: number }
